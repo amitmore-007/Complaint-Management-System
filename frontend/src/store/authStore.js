@@ -12,6 +12,7 @@ const useAuthStore = create(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      isAutoLoginChecked: false,
 
       // Set auth data
       setAuth: (user, token) => {
@@ -88,6 +89,36 @@ const useAuthStore = create(
           console.error('❌ Get current user error:', error);
           get().logout();
           return null;
+        }
+      },
+
+      // Auto login check
+      checkAutoLogin: async () => {
+        const { token, user, isAutoLoginChecked } = get();
+        
+        if (isAutoLoginChecked) return;
+        
+        console.log('🔄 Checking auto-login...');
+        set({ isAutoLoginChecked: true });
+        
+        if (!token || !user?.role) {
+          console.log('❌ No token or user role found');
+          return false;
+        }
+
+        try {
+          console.log('👤 Verifying existing token for role:', user.role);
+          const response = await axios.get(`${API_BASE_URL}/${user.role}/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          console.log('✅ Auto-login successful:', response.data.user);
+          set({ user: response.data.user, isAuthenticated: true });
+          return true;
+        } catch (error) {
+          console.error('❌ Auto-login failed:', error);
+          get().logout();
+          return false;
         }
       },
 

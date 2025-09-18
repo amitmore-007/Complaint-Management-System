@@ -13,44 +13,40 @@ export const authenticateToken = async (req, res, next) => {
       });
     }
 
-    // Try to decode with regular secret first, then admin secret
+    // Verify token
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
-      try {
-        decoded = jwt.verify(token, process.env.JWT_ADMIN_SECRET);
-      } catch (adminError) {
-        return res.status(403).json({ 
-          success: false, 
-          message: 'Invalid token' 
-        });
-      }
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Invalid or expired token' 
+      });
     }
 
-    const user = await User.findById(decoded.userId);
+    // Find user based on role
+    let user;
+    const { userId, role } = decoded;
 
-    if (!user || !user.isUserActive()) {
+    if (role === 'admin') {
+      const Admin = (await import('../models/Admin.js')).default;
+      user = await Admin.findById(userId);
+    } else if (role === 'client') {
+      const Client = (await import('../models/Client.js')).default;
+      user = await Client.findById(userId);
+    } else if (role === 'technician') {
+      const Technician = (await import('../models/Technician.js')).default;
+      user = await Technician.findById(userId);
+    }
+
+    if (!user || !user.isActive) {
       return res.status(401).json({ 
         success: false, 
         message: 'Invalid or inactive user' 
       });
     }
 
-    // Check token expiry for non-admin users
-    if (user.role !== 'admin') {
-      const tokenAge = Date.now() - (decoded.iat * 1000);
-      const tenDays = 10 * 24 * 60 * 60 * 1000; // 10 days in milliseconds
-      
-      if (tokenAge > tenDays) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Token expired. Please login again.' 
-        });
-      }
-    }
-
-    req.user = user;
+    req.user = { id: user._id, role, ...user.toObject() };
     next();
   } catch (error) {
     console.error('Auth middleware error:', error);
@@ -92,3 +88,4 @@ export const requireRole = (roles) => {
     next();
   };
 };
+   

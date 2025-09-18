@@ -207,7 +207,7 @@ const Landing = () => {
           }`}></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative max-w-8xl mx-auto px-6 ml-6" >
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <motion.h1 
@@ -295,7 +295,7 @@ const Landing = () => {
               variants={itemVariants}
               className="relative"
             >
-              <div className={`relative rounded-3xl p-6 shadow-2xl ${
+              <div className={`relative rounded-3xl p-6 shadow-2xl ml-32 ${
                 isDarkMode 
                   ? 'bg-gradient-to-br from-gray-800/50 to-gray-700/50' 
                   : 'bg-gradient-to-br from-blue-100 to-green-100'

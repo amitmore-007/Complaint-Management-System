@@ -98,7 +98,7 @@ export const assignComplaint = async (req, res) => {
     await complaint.save();
     console.log('Complaint assigned successfully');
 
-    // Send WhatsApp notification to client with logging
+    // Send WhatsApp notification to client with improved error handling
     if (complaint.client && complaint.client.phoneNumber) {
       const notification = new Notification({
         complaint: complaint._id,
@@ -108,8 +108,16 @@ export const assignComplaint = async (req, res) => {
       });
 
       try {
+        // Ensure phone number is properly formatted
+        let phoneNumber = complaint.client.phoneNumber;
+        if (!phoneNumber.startsWith('+')) {
+          phoneNumber = '+91' + phoneNumber.replace(/^0+/, ''); // Assuming Indian numbers
+        }
+        
+        console.log('Sending WhatsApp notification to:', phoneNumber);
+        
         const result = await sendAssignmentNotification(
-          complaint.client.phoneNumber,
+          phoneNumber,
           technician.name,
           complaint.complaintId
         );

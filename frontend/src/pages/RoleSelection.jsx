@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Wrench, Shield, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext.jsx';
 import ThemeToggle from '../components/common/ThemeToggle.jsx';
+import useAuthStore from '../store/authStore';
 
 const RoleSelection = () => {
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
+  const { isAuthenticated, user, checkAutoLogin } = useAuthStore();
   const [selectedRole, setSelectedRole] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -40,6 +42,25 @@ const RoleSelection = () => {
       features: ['Manage Users', 'View All Complaints', 'Generate Reports', 'System Control']
     }
   ];
+
+  useEffect(() => {
+    // Check for auto-login when component mounts
+    const handleAutoLogin = async () => {
+      const loginSuccess = await checkAutoLogin();
+      if (loginSuccess && user) {
+        navigate(`/${user.role}/dashboard`, { replace: true });
+      }
+    };
+
+    handleAutoLogin();
+  }, [checkAutoLogin, user, navigate]);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      navigate(`/${user.role}/dashboard`, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const handleRoleSelect = (roleId) => {
     if (isAnimating) return;

@@ -8,7 +8,7 @@ const generateOTP = () => {
 };
 
 const generateToken = (userId) => {
-  return jwt.sign({ userId, role: 'admin' }, process.env.JWT_ADMIN_SECRET, { expiresIn: '365d' });
+  return jwt.sign({ userId, role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '999y' }); // Admin never expires
 };
 
 export const sendAdminOTP = async (req, res) => {

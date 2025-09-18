@@ -1,9 +1,9 @@
 import Complaint from '../models/Complaint.js';
 import Client from '../models/Client.js';
 import Technician from '../models/Technician.js';
-import { uploadToCloudinary, deleteFromCloudinary } from '../config/cloudinary.js';
-import { sendAssignmentNotification, sendProgressUpdate } from '../config/twilio.js';
 import Notification from '../models/Notification.js';
+import { uploadToCloudinary, deleteFromCloudinary } from '../config/cloudinary.js';
+import { sendAssignmentNotification, sendProgressUpdate, sendStatusUpdateNotification } from '../config/twilio.js';
 import fs from 'fs';
 
 export const createComplaint = async (req, res) => {
@@ -275,17 +275,45 @@ export const getAssignedComplaints = async (req, res) => {
   try {
     const technicianId = req.user.id;
 
-    const complaints = await Complaint.find({
-      assignedTechnician: technicianId,
-      status: { $in: ['assigned', 'in-progress'] }
-    })
-      .populate('client', 'name phoneNumber')
-      .populate('assignedBy', 'name')
-      .sort({ assignedAt: -1 });
+    console.log('📋 Fetching complaints for technician:', technicianId);
+
+    // Get all complaints assigned to this technician
+    const complaints = await Complaint.find({ assignedTo: technicianId })
+      .populate('clientId', 'name phoneNumber')
+      .sort({ createdAt: -1 });
+
+    console.log('📊 Found complaints:', complaints.length);
+
+    // Transform complaints to include client data properly
+    const transformedComplaints = complaints.map(complaint => ({
+      ...complaint.toObject(),
+      client: complaint.clientId // Map clientId to client for frontend compatibility
+    }));
+
+    // Calculate stats
+    const totalComplaints = complaints.length;
+    const assignedComplaints = complaints.filter(c => c.status === 'assigned' || c.status === 'pending').length;
+    const inProgressComplaints = complaints.filter(c => c.status === 'in-progress').length;
+    const resolvedComplaints = complaints.filter(c => c.status === 'resolved' || c.status === 'completed').length;
+
+    const statsData = {
+      total: totalComplaints,
+      assigned: assignedComplaints,
+      inProgress: inProgressComplaints,
+      completed: resolvedComplaints
+    };
+
+    console.log(`📊 Technician ${technicianId} stats:`, statsData);
 
     res.status(200).json({
       success: true,
-      complaints
+      data: {
+        complaints: transformedComplaints,
+        stats: statsData
+      },
+      // Also provide flat structure for backward compatibility
+      complaints: transformedComplaints,
+      stats: statsData
     });
   } catch (error) {
     console.error('Get assigned complaints error:', error);
@@ -302,7 +330,8 @@ export const updateComplaintStatus = async (req, res) => {
     const { status, notes } = req.body;
     const technicianId = req.user.id;
 
-    // Find complaint with client information for notifications
+    console.log('Updating complaint status:', { id, status, notes, technicianId });
+
     const complaint = await Complaint.findOne({
       _id: id,
       assignedTechnician: technicianId
@@ -328,7 +357,10 @@ export const updateComplaintStatus = async (req, res) => {
       });
     }
 
+    // Store previous status for notification
     const previousStatus = complaint.status;
+
+    // Update complaint
     complaint.status = status;
     if (notes) {
       complaint.technicianNotes = notes;
@@ -342,8 +374,8 @@ export const updateComplaintStatus = async (req, res) => {
 
     await complaint.save();
 
-    // Send WhatsApp notification to client for status updates
-    if (complaint.client && complaint.client.phoneNumber && (status === 'in-progress' || status === 'resolved')) {
+    // Send WhatsApp notification to client
+    if (complaint.client && complaint.client.phoneNumber) {
       const notification = new Notification({
         complaint: complaint._id,
         recipient: complaint.client.phoneNumber,
@@ -352,30 +384,43 @@ export const updateComplaintStatus = async (req, res) => {
       });
 
       try {
-        const result = await sendProgressUpdate(
-          complaint.client.phoneNumber,
+        // Ensure phone number is properly formatted
+        let phoneNumber = complaint.client.phoneNumber;
+        if (!phoneNumber.startsWith('+')) {
+          phoneNumber = '+91' + phoneNumber.replace(/^0+/, ''); // Assuming Indian numbers
+        }
+        
+        console.log('Sending status update notification to:', phoneNumber);
+        
+        const result = await sendStatusUpdateNotification(
+          phoneNumber,
           complaint.complaintId,
-          status
+          status,
+          complaint.client.name
         );
         
         if (result.success) {
           notification.status = 'sent';
           notification.twilioMessageId = result.messageId;
           notification.sentAt = new Date();
-          console.log(`WhatsApp ${status} notification sent successfully to ${complaint.client.phoneNumber}`);
+          console.log('WhatsApp status update notification sent successfully');
         } else {
           notification.status = 'failed';
           notification.error = result.error;
-          console.error('Failed to send WhatsApp progress notification:', result.error);
+          console.error('Failed to send WhatsApp notification:', result.error);
         }
       } catch (notificationError) {
         notification.status = 'failed';
         notification.error = notificationError.message;
-        console.error('Failed to send WhatsApp progress notification:', notificationError);
+        console.error('Failed to send WhatsApp notification:', notificationError);
       }
 
       await notification.save();
+    } else {
+      console.log('Skipping notification - client or phone number not found');
     }
+
+    console.log('Complaint status updated successfully');
 
     res.status(200).json({
       success: true,
@@ -386,7 +431,7 @@ export const updateComplaintStatus = async (req, res) => {
     console.error('Update complaint status error:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Failed to update complaint status'
     });
   }
 };

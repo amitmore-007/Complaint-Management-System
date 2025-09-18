@@ -4,7 +4,7 @@ import { BarChart3, Users, CheckCircle, Clock } from 'lucide-react';
 
 const DashboardPreview = ({ isDarkMode }) => {
   return (
-    <div className={`w-full h-80 rounded-2xl p-6 ${
+    <div className={`w-140  h-100 rounded-2xl p-20  ${
       isDarkMode ? 'bg-gray-800' : 'bg-white'
     } shadow-lg`}>
       {/* Header */}

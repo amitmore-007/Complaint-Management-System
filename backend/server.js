@@ -58,7 +58,7 @@ app.use((req, res, next) => {
 app.use('/api/client', clientRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/technician', technicianRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminRoutes); // This should handle both auth and other admin routes
 
 // Health check
 app.get('/api/health', (req, res) => {

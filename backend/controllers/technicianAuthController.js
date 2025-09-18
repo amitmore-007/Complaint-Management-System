@@ -8,7 +8,7 @@ const generateOTP = () => {
 };
 
 const generateToken = (userId) => {
-  return jwt.sign({ userId, role: 'technician' }, process.env.JWT_SECRET, { expiresIn: '10d' });
+  return jwt.sign({ userId, role: 'technician' }, process.env.JWT_SECRET, { expiresIn: '20d' });
 };
 
 export const sendTechnicianOTP = async (req, res) => {

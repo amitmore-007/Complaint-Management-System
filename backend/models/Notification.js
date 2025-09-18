@@ -8,33 +8,37 @@ const notificationSchema = new mongoose.Schema({
   },
   recipient: {
     type: String,
-    required: true // Phone number
+    required: true
   },
   type: {
     type: String,
-    enum: ['assignment', 'status_update', 'custom'],
+    enum: ['assignment', 'status_update', 'completion'],
     required: true
-  },
-  status: {
-    type: String,
-    enum: ['sent', 'failed', 'pending'],
-    default: 'pending'
   },
   message: {
     type: String,
     required: true
   },
-  twilioMessageId: {
-    type: String
+  status: {
+    type: String,
+    enum: ['pending', 'sent', 'failed'],
+    default: 'pending'
   },
-  error: {
+  twilioMessageId: {
     type: String
   },
   sentAt: {
     type: Date
+  },
+  error: {
+    type: String
   }
 }, {
   timestamps: true
 });
+
+// Index for better query performance
+notificationSchema.index({ complaint: 1, type: 1 });
+notificationSchema.index({ recipient: 1, createdAt: -1 });
 
 export default mongoose.model('Notification', notificationSchema);

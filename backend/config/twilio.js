@@ -24,17 +24,39 @@ const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TO
 
 export const sendOTP = async (phoneNumber, otp) => {
   try {
-    const message = await client.messages.create({
-      from: process.env.TWILIO_WHATSAPP_NUMBER,
-      to: `whatsapp:${phoneNumber}`,
-      body: `Your FixFlow verification code is: ${otp}. Valid for 10 minutes. Do not share this code with anyone.`
-    });
+    console.log('📱 Sending OTP:', { phoneNumber, otp });
     
-    console.log('OTP sent successfully:', message.sid);
-    return { success: true, messageId: message.sid };
+    // Ensure phone number is in correct format
+    let formattedPhone = phoneNumber;
+    if (!formattedPhone.startsWith('whatsapp:+')) {
+      if (!formattedPhone.startsWith('+')) {
+        formattedPhone = '+91' + formattedPhone.replace(/^0+/, '');
+      }
+      formattedPhone = 'whatsapp:' + formattedPhone;
+    }
+    
+    console.log('📱 Formatted phone number:', formattedPhone);
+    
+    const message = `🔐 Your FixFlow verification code is: *${otp}*\n\nThis code will expire in 10 minutes.\n\nDo not share this code with anyone. 🔒`;
+
+    const result = await client.messages.create({
+      body: message,
+      from: process.env.TWILIO_WHATSAPP_NUMBER,
+      to: formattedPhone
+    });
+
+    console.log('✅ OTP sent successfully:', result.sid);
+    
+    return {
+      success: true,
+      messageId: result.sid
+    };
   } catch (error) {
-    console.error('Twilio OTP error:', error);
-    return { success: false, error: error.message };
+    console.error('❌ Failed to send OTP:', error);
+    return {
+      success: false,
+      error: error.message
+    };
   }
 };
 
@@ -54,16 +76,45 @@ export const sendStatusUpdate = async (phoneNumber, message) => {
   }
 };
 
-export const sendAssignmentNotification = async (clientPhone, technicianName, complaintId) => {
-  const message = `🔧 *FixFlow Update*
+export const sendAssignmentNotification = async (phoneNumber, technicianName, complaintId) => {
+  try {
+    console.log('📱 Sending assignment notification:', { phoneNumber, technicianName, complaintId });
+    
+    // Ensure phone number is in correct format
+    let formattedPhone = phoneNumber;
+    if (!formattedPhone.startsWith('whatsapp:+')) {
+      if (!formattedPhone.startsWith('+')) {
+        formattedPhone = '+91' + formattedPhone.replace(/^0+/, '');
+      }
+      formattedPhone = 'whatsapp:' + formattedPhone;
+    }
+    
+    console.log('📱 Formatted phone number:', formattedPhone);
+    
+    const message = `🔧 *Complaint Assignment Update*\n\n` +
+                   `Your complaint #${complaintId} has been assigned to our technician *${technicianName}*.\n\n` +
+                   `The technician will contact you soon to resolve your issue.\n\n` +
+                   `Thank you for choosing FixFlow! 🚀`;
 
-Your complaint *${complaintId}* has been assigned to our technician *${technicianName}*.
+    const result = await client.messages.create({
+      body: message,
+      from: process.env.TWILIO_WHATSAPP_NUMBER,
+      to: formattedPhone
+    });
 
-You will receive updates as work progresses. Thank you for choosing FixFlow!
-
-Need help? Reply to this message.`;
-  
-  return await sendStatusUpdate(clientPhone, message);
+    console.log('✅ Assignment notification sent successfully:', result.sid);
+    
+    return {
+      success: true,
+      messageId: result.sid
+    };
+  } catch (error) {
+    console.error('❌ Failed to send assignment notification:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 };
 
 export const sendProgressUpdate = async (clientPhone, complaintId, status) => {
@@ -104,6 +155,73 @@ ${customMessage}
 Thank you for choosing FixFlow!`;
   
   return await sendStatusUpdate(clientPhone, message);
+};
+
+export const sendStatusUpdateNotification = async (phoneNumber, complaintId, status, clientName) => {
+  try {
+    console.log('📱 Sending status update notification:', { phoneNumber, complaintId, status, clientName });
+    
+    // Ensure phone number is in correct format
+    let formattedPhone = phoneNumber;
+    if (!formattedPhone.startsWith('whatsapp:+')) {
+      if (!formattedPhone.startsWith('+')) {
+        formattedPhone = '+91' + formattedPhone.replace(/^0+/, '');
+      }
+      formattedPhone = 'whatsapp:' + formattedPhone;
+    }
+    
+    console.log('📱 Formatted phone number:', formattedPhone);
+    
+    let message = '';
+    let emoji = '';
+    
+    switch (status) {
+      case 'in-progress':
+        emoji = '🔄';
+        message = `${emoji} *Complaint Status Update*\n\n` +
+                 `Hi ${clientName}!\n\n` +
+                 `Great news! Our technician has started working on your complaint #${complaintId}.\n\n` +
+                 `Status: *Work in Progress*\n\n` +
+                 `We'll keep you updated on the progress. Thank you for your patience! 🛠️`;
+        break;
+        
+      case 'resolved':
+        emoji = '✅';
+        message = `${emoji} *Complaint Resolved*\n\n` +
+                 `Hi ${clientName}!\n\n` +
+                 `Excellent news! Your complaint #${complaintId} has been successfully resolved.\n\n` +
+                 `Status: *Completed*\n\n` +
+                 `Thank you for using FixFlow! We hope you're satisfied with our service. 🎉`;
+        break;
+        
+      default:
+        emoji = '📋';
+        message = `${emoji} *Complaint Status Update*\n\n` +
+                 `Hi ${clientName}!\n\n` +
+                 `Your complaint #${complaintId} status has been updated.\n\n` +
+                 `Status: *${status.replace('-', ' ').toUpperCase()}*\n\n` +
+                 `Thank you for choosing FixFlow! 🚀`;
+    }
+
+    const result = await client.messages.create({
+      body: message,
+      from: process.env.TWILIO_WHATSAPP_NUMBER,
+      to: formattedPhone
+    });
+
+    console.log('✅ Status update notification sent successfully:', result.sid);
+    
+    return {
+      success: true,
+      messageId: result.sid
+    };
+  } catch (error) {
+    console.error('❌ Failed to send status update notification:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
 };
 
 export default client;

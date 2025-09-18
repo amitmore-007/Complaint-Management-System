@@ -9,9 +9,15 @@ import {
   getDashboardStats,
   getComplaintById
 } from '../controllers/adminController.js';
+import { sendAdminOTP, verifyAdminOTP, getCurrentAdmin } from '../controllers/adminAuthController.js';
 import { authenticateAdmin } from '../middleware/roleAuth.js';
 
 const router = express.Router();
+
+// Authentication routes - matching the pattern
+router.post('/auth/send-otp', sendAdminOTP);
+router.post('/auth/verify-otp', verifyAdminOTP);
+router.get('/auth/me', authenticateAdmin, getCurrentAdmin);
 
 // Dashboard
 router.get('/dashboard/stats', authenticateAdmin, getDashboardStats);
