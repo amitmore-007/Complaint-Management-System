@@ -274,52 +274,49 @@ export const deleteComplaint = async (req, res) => {
 export const getAssignedComplaints = async (req, res) => {
   try {
     const technicianId = req.user.id;
+    
+    console.log('🔍 Fetching assignments for technician:', technicianId);
 
-    console.log('📋 Fetching complaints for technician:', technicianId);
+    // Find complaints assigned to this technician
+    const complaints = await Complaint.find({
+      assignedTechnician: technicianId,
+      status: { $in: ['assigned', 'in-progress'] } // Only active assignments
+    })
+    .populate('client', 'name phoneNumber')
+    .populate('assignedBy', 'name')
+    .sort({ assignedAt: -1 });
 
-    // Get all complaints assigned to this technician
-    const complaints = await Complaint.find({ assignedTo: technicianId })
-      .populate('clientId', 'name phoneNumber')
-      .sort({ createdAt: -1 });
-
-    console.log('📊 Found complaints:', complaints.length);
-
-    // Transform complaints to include client data properly
-    const transformedComplaints = complaints.map(complaint => ({
-      ...complaint.toObject(),
-      client: complaint.clientId // Map clientId to client for frontend compatibility
-    }));
+    console.log('📋 Found complaints:', complaints.length);
 
     // Calculate stats
-    const totalComplaints = complaints.length;
-    const assignedComplaints = complaints.filter(c => c.status === 'assigned' || c.status === 'pending').length;
-    const inProgressComplaints = complaints.filter(c => c.status === 'in-progress').length;
-    const resolvedComplaints = complaints.filter(c => c.status === 'resolved' || c.status === 'completed').length;
-
-    const statsData = {
-      total: totalComplaints,
-      assigned: assignedComplaints,
-      inProgress: inProgressComplaints,
-      completed: resolvedComplaints
+    const stats = {
+      total: complaints.length,
+      assigned: complaints.filter(c => c.status === 'assigned').length,
+      inProgress: complaints.filter(c => c.status === 'in-progress').length,
+      completed: 0 // Will be calculated separately if needed
     };
 
-    console.log(`📊 Technician ${technicianId} stats:`, statsData);
+    // Get completed count for stats
+    const completedCount = await Complaint.countDocuments({
+      assignedTechnician: technicianId,
+      status: 'resolved'
+    });
+    stats.completed = completedCount;
+    stats.total = complaints.length + completedCount;
 
     res.status(200).json({
       success: true,
       data: {
-        complaints: transformedComplaints,
-        stats: statsData
-      },
-      // Also provide flat structure for backward compatibility
-      complaints: transformedComplaints,
-      stats: statsData
+        complaints,
+        stats
+      }
     });
   } catch (error) {
     console.error('Get assigned complaints error:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -330,8 +327,9 @@ export const updateComplaintStatus = async (req, res) => {
     const { status, notes } = req.body;
     const technicianId = req.user.id;
 
-    console.log('Updating complaint status:', { id, status, notes, technicianId });
+    console.log('🔄 Updating complaint status:', { id, status, notes, technicianId });
 
+    // Find complaint assigned to this technician with client info
     const complaint = await Complaint.findOne({
       _id: id,
       assignedTechnician: technicianId
@@ -353,14 +351,12 @@ export const updateComplaintStatus = async (req, res) => {
     if (!validTransitions[complaint.status]?.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid status transition'
+        message: `Cannot change status from ${complaint.status} to ${status}`
       });
     }
 
-    // Store previous status for notification
-    const previousStatus = complaint.status;
-
     // Update complaint
+    const oldStatus = complaint.status;
     complaint.status = status;
     if (notes) {
       complaint.technicianNotes = notes;
@@ -384,16 +380,10 @@ export const updateComplaintStatus = async (req, res) => {
       });
 
       try {
-        // Ensure phone number is properly formatted
-        let phoneNumber = complaint.client.phoneNumber;
-        if (!phoneNumber.startsWith('+')) {
-          phoneNumber = '+91' + phoneNumber.replace(/^0+/, ''); // Assuming Indian numbers
-        }
-        
-        console.log('Sending status update notification to:', phoneNumber);
+        console.log('📱 Sending status update notification to client:', complaint.client.phoneNumber);
         
         const result = await sendStatusUpdateNotification(
-          phoneNumber,
+          complaint.client.phoneNumber,
           complaint.complaintId,
           status,
           complaint.client.name
@@ -403,24 +393,22 @@ export const updateComplaintStatus = async (req, res) => {
           notification.status = 'sent';
           notification.twilioMessageId = result.messageId;
           notification.sentAt = new Date();
-          console.log('WhatsApp status update notification sent successfully');
+          console.log('✅ Status update notification sent successfully');
         } else {
           notification.status = 'failed';
           notification.error = result.error;
-          console.error('Failed to send WhatsApp notification:', result.error);
+          console.error('❌ Failed to send status update notification:', result.error);
         }
       } catch (notificationError) {
         notification.status = 'failed';
         notification.error = notificationError.message;
-        console.error('Failed to send WhatsApp notification:', notificationError);
+        console.error('❌ Notification error:', notificationError);
       }
 
       await notification.save();
     } else {
-      console.log('Skipping notification - client or phone number not found');
+      console.log('⚠️ Skipping notification - client or phone number not found');
     }
-
-    console.log('Complaint status updated successfully');
 
     res.status(200).json({
       success: true,
@@ -431,7 +419,7 @@ export const updateComplaintStatus = async (req, res) => {
     console.error('Update complaint status error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to update complaint status'
+      message: 'Internal server error'
     });
   }
 };

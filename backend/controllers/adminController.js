@@ -108,16 +108,10 @@ export const assignComplaint = async (req, res) => {
       });
 
       try {
-        // Ensure phone number is properly formatted
-        let phoneNumber = complaint.client.phoneNumber;
-        if (!phoneNumber.startsWith('+')) {
-          phoneNumber = '+91' + phoneNumber.replace(/^0+/, ''); // Assuming Indian numbers
-        }
-        
-        console.log('Sending WhatsApp notification to:', phoneNumber);
+        console.log('📱 Sending assignment notification to client:', complaint.client.phoneNumber);
         
         const result = await sendAssignmentNotification(
-          phoneNumber,
+          complaint.client.phoneNumber,
           technician.name,
           complaint.complaintId
         );
@@ -126,21 +120,21 @@ export const assignComplaint = async (req, res) => {
           notification.status = 'sent';
           notification.twilioMessageId = result.messageId;
           notification.sentAt = new Date();
-          console.log('WhatsApp assignment notification sent successfully');
+          console.log('✅ Assignment notification sent successfully');
         } else {
           notification.status = 'failed';
           notification.error = result.error;
-          console.error('Failed to send WhatsApp notification:', result.error);
+          console.error('❌ Failed to send assignment notification:', result.error);
         }
       } catch (notificationError) {
         notification.status = 'failed';
         notification.error = notificationError.message;
-        console.error('Failed to send WhatsApp notification:', notificationError);
+        console.error('❌ Assignment notification error:', notificationError);
       }
 
       await notification.save();
     } else {
-      console.log('Skipping notification - client or phone number not found');
+      console.log('⚠️ Skipping assignment notification - client or phone number not found');
     }
 
     // Populate the complaint for response
@@ -512,3 +506,4 @@ export const getDashboardStats = async (req, res) => {
     });
   }
 };
+    

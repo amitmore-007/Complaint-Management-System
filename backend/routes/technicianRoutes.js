@@ -10,7 +10,7 @@ router.post('/auth/send-otp', sendTechnicianOTP);
 router.post('/auth/verify-otp', verifyTechnicianOTP);
 router.get('/auth/me', authenticateTechnician, getCurrentTechnician);
 
-// Complaint routes - using consistent naming
+// Complaint routes - ensure these are working
 router.get('/assignments', authenticateTechnician, getAssignedComplaints);
 router.patch('/assignments/:id/status', authenticateTechnician, updateComplaintStatus);
 

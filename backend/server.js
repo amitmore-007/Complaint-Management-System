@@ -11,6 +11,7 @@ import technicianRoutes from './routes/technicianRoutes.js';
 import adminAuthRoutes from './routes/adminAuthRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import complaintRoutes from './routes/complaintRoutes.js';
+import equipmentRoutes from './routes/equipmentRoutes.js';
 
 // For ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -58,7 +59,25 @@ app.use((req, res, next) => {
 app.use('/api/client', clientRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/technician', technicianRoutes);
-app.use('/api/admin', adminRoutes); // This should handle both auth and other admin routes
+app.use('/api/admin', adminRoutes);
+app.use('/api/equipment', equipmentRoutes);
+
+// Debug route to check if equipment routes are loaded
+app.get('/api/debug/routes', (req, res) => {
+  const routes = [];
+  app._router.stack.forEach((middleware) => {
+    if (middleware.route) {
+      routes.push(middleware.route.path);
+    } else if (middleware.name === 'router') {
+      middleware.handle.stack.forEach((handler) => {
+        if (handler.route) {
+          routes.push(handler.route.path);
+        }
+      });
+    }
+  });
+  res.json({ routes });
+});
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -72,11 +91,15 @@ app.get('/api/debug/collections', async (req, res) => {
     const Technician = (await import('./models/Technician.js')).default;
     const Admin = (await import('./models/Admin.js')).default;
     const Complaint = (await import('./models/Complaint.js')).default;
+    const Equipment = (await import('./models/Equipment.js')).default;
+    const AssetRecord = (await import('./models/AssetRecord.js')).default;
 
     const clientCount = await Client.countDocuments();
     const technicianCount = await Technician.countDocuments();
     const adminCount = await Admin.countDocuments();
     const complaintCount = await Complaint.countDocuments();
+    const equipmentCount = await Equipment.countDocuments();
+    const assetRecordCount = await AssetRecord.countDocuments();
 
     res.json({
       success: true,
@@ -84,7 +107,9 @@ app.get('/api/debug/collections', async (req, res) => {
         clients: clientCount,
         technicians: technicianCount,
         admins: adminCount,
-        complaints: complaintCount
+        complaints: complaintCount,
+        equipment: equipmentCount,
+        assetRecords: assetRecordCount
       }
     });
   } catch (error) {

@@ -10,7 +10,8 @@ import {
   Settings, 
   LogOut,
   Shield,
-  ClipboardList
+  ClipboardList,
+  Package
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import useAuthStore from '../../store/authStore';
@@ -33,11 +34,13 @@ const Sidebar = ({ isOpen, onClose }) => {
           { icon: LayoutDashboard, label: 'Dashboard', path: '/client/dashboard' },
           { icon: Plus, label: 'Create Complaint', path: '/client/create-complaint' },
           { icon: FileText, label: 'My Complaints', path: '/client/complaints' },
+          { icon: Package, label: 'Asset Records', path: '/client/assets' },
         ];
       case 'technician':
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/technician/dashboard' },
           { icon: ClipboardList, label: 'My Assignments', path: '/technician/assignments' },
+          { icon: Package, label: 'Asset Management', path: '/technician/assets' },
         ];
       case 'admin':
         return [
@@ -45,6 +48,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           { icon: FileText, label: 'All Complaints', path: '/admin/complaints' },
           { icon: Users, label: 'Manage Clients', path: '/admin/clients' },
           { icon: Wrench, label: 'Manage Technicians', path: '/admin/technicians' },
+          { icon: Package, label: 'Asset Management', path: '/admin/assets' },
         ];
       default:
         return [];

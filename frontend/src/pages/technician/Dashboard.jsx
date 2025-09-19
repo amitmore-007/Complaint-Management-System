@@ -45,32 +45,49 @@ const TechnicianDashboard = () => {
   const fetchAssignments = async () => {
     try {
       setIsLoading(true);
+      console.log('🔄 Fetching technician assignments...');
+      
       const response = await api.get('/technician/assignments');
       
-      console.log('📊 Assignments response:', response.data);
+      console.log('📊 Full API response:', response);
+      console.log('📊 Response data:', response.data);
       
-      // Handle both possible response structures
-      const data = response.data.data || response.data;
-      const complaints = Array.isArray(data) ? data : (data.complaints || []);
-      const statsData = data.stats || {};
+      // Handle the response structure
+      const responseData = response.data;
       
-      setAssignments(complaints);
-      
-      // Calculate stats if not provided
-      if (!statsData.total) {
-        const calculatedStats = {
-          total: complaints.length,
-          assigned: complaints.filter(c => c.status === 'assigned').length,
-          inProgress: complaints.filter(c => c.status === 'in-progress').length,
-          completed: complaints.filter(c => c.status === 'resolved' || c.status === 'completed').length
+      if (responseData.success) {
+        const data = responseData.data || {};
+        const complaints = data.complaints || [];
+        const stats = data.stats || {
+          total: 0,
+          assigned: 0,
+          inProgress: 0,
+          completed: 0
         };
-        setStats(calculatedStats);
+        
+        console.log('📋 Processed complaints:', complaints);
+        console.log('📊 Processed stats:', stats);
+        
+        setAssignments(complaints);
+        setStats(stats);
+        
+        if (complaints.length === 0) {
+          console.log('ℹ️ No assignments found for technician');
+        }
       } else {
-        setStats(statsData);
+        console.error('❌ API returned success: false', responseData);
+        throw new Error(responseData.message || 'Failed to fetch assignments');
       }
     } catch (error) {
-      console.error('Failed to fetch assignments:', error);
-      toast.error('Failed to load assignments');
+      console.error('❌ Failed to fetch assignments:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      toast.error(error.response?.data?.message || 'Failed to load assignments');
+      
       // Set empty state on error
       setAssignments([]);
       setStats({ total: 0, assigned: 0, inProgress: 0, completed: 0 });

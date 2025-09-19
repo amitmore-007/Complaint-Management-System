@@ -13,15 +13,18 @@ import Login from './pages/auth/Login';
 import ClientDashboard from './pages/client/Dashboard';
 import CreateComplaint from './pages/client/CreateComplaint';
 import MyComplaints from './pages/client/MyComplaints';
+import ClientAssets from './pages/client/Assets';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import ComplaintManagement from './pages/admin/ComplaintManagement';
 import ClientManagement from './pages/admin/ClientManagement';
 import TechnicianManagement from './pages/admin/TechnicianManagement';
+import AdminAssets from './pages/admin/Assets';
 
 // Technician Pages
 import TechnicianDashboard from './pages/technician/Dashboard';
+import TechnicianAssets from './pages/technician/Assets';
 
 import './App.css'
 
@@ -187,6 +190,12 @@ function App() {
               </ProtectedRoute>
             } />
 
+            <Route path="/client/assets" element={
+              <ProtectedRoute allowedRoles={['client']}>
+                <ClientAssets />
+              </ProtectedRoute>
+            } />
+
             {/* Admin Routes */}
             <Route path="/admin/dashboard" element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -212,6 +221,12 @@ function App() {
               </ProtectedRoute>
             } />
 
+            <Route path="/admin/assets" element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminAssets />
+              </ProtectedRoute>
+            } />
+
             {/* Technician Routes */}
             <Route path="/technician/dashboard" element={
               <ProtectedRoute allowedRoles={['technician']}>
@@ -222,6 +237,12 @@ function App() {
             <Route path="/technician/assignments" element={
               <ProtectedRoute allowedRoles={['technician']}>
                 <TechnicianDashboard />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/technician/assets" element={
+              <ProtectedRoute allowedRoles={['technician']}>
+                <TechnicianAssets />
               </ProtectedRoute>
             } />
 

@@ -57,6 +57,9 @@ export const authenticateToken = async (req, res, next) => {
   }
 };
 
+// Add this alias for consistency
+export const authenticate = authenticateToken;
+
 export const authenticateAdmin = async (req, res, next) => {
   try {
     await authenticateToken(req, res, () => {});
@@ -88,4 +91,4 @@ export const requireRole = (roles) => {
     next();
   };
 };
-   
+
