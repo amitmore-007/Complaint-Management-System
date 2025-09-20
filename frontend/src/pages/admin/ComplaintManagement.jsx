@@ -182,16 +182,16 @@ const ComplaintManagement = () => {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <h1 className={`text-2xl sm:text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Complaint Management
           </h1>
-          <p className={`mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+          <p className={`mt-2 text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Review, assign, and manage all complaints
           </p>
         </div>
 
         {/* Filters */}
-        <div className={`p-6 rounded-2xl shadow-lg border ${
+        <div className={`p-4 sm:p-6 rounded-2xl shadow-lg border ${
           isDarkMode 
             ? 'bg-gray-800 border-gray-700' 
             : 'bg-white border-gray-200'
@@ -206,7 +206,7 @@ const ComplaintManagement = () => {
                   placeholder="Search complaints..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-all duration-200 ${
+                  className={`w-full pl-10 pr-4 py-2 sm:py-3 border rounded-xl transition-all duration-200 text-sm sm:text-base ${
                     isDarkMode 
                       ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent' 
                       : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
@@ -222,7 +222,7 @@ const ComplaintManagement = () => {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-all duration-200 ${
+                  className={`w-full pl-10 pr-4 py-2 sm:py-3 border rounded-xl transition-all duration-200 text-sm sm:text-base ${
                     isDarkMode 
                       ? 'bg-gray-700 border-gray-600 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent' 
                       : 'bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
@@ -242,7 +242,7 @@ const ComplaintManagement = () => {
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 ${
+                className={`w-full px-4 py-2 sm:py-3 border rounded-xl transition-all duration-200 text-sm sm:text-base ${
                   isDarkMode 
                     ? 'bg-gray-700 border-gray-600 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent' 
                     : 'bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
@@ -261,10 +261,10 @@ const ComplaintManagement = () => {
         {/* Complaints List */}
         <div className="space-y-4">
           {filteredComplaints.length === 0 ? (
-            <div className={`text-center py-12 rounded-2xl ${
+            <div className={`text-center py-8 sm:py-12 rounded-2xl ${
               isDarkMode ? 'bg-gray-800' : 'bg-white'
             } shadow-lg`}>
-              <p className={`text-lg font-medium ${
+              <p className={`text-base sm:text-lg font-medium ${
                 isDarkMode ? 'text-gray-400' : 'text-gray-600'
               }`}>
                 {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' 
@@ -278,45 +278,47 @@ const ComplaintManagement = () => {
                 key={complaint._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`p-6 rounded-2xl shadow-lg border ${
+                className={`p-4 sm:p-6 rounded-2xl shadow-lg border ${
                   isDarkMode 
                     ? 'bg-gray-800 border-gray-700' 
                     : 'bg-white border-gray-200'
                 } hover:shadow-xl transition-all duration-200`}
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <h3 className={`text-xl font-semibold ${
+                <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                      <h3 className={`text-lg sm:text-xl font-semibold truncate ${
                         isDarkMode ? 'text-white' : 'text-gray-900'
                       }`}>
                         {complaint.title}
                       </h3>
-                      <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(complaint.status)}`}>
-                        {complaint.status.replace('-', ' ').toUpperCase()}
-                      </span>
-                      <span className={`text-sm font-medium capitalize ${getPriorityColor(complaint.priority)}`}>
-                        {complaint.priority} Priority
-                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        <span className={`px-3 py-1 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap ${getStatusColor(complaint.status)}`}>
+                          {complaint.status.replace('-', ' ').toUpperCase()}
+                        </span>
+                        <span className={`text-xs sm:text-sm font-medium capitalize whitespace-nowrap ${getPriorityColor(complaint.priority)}`}>
+                          {complaint.priority} Priority
+                        </span>
+                      </div>
                     </div>
                     
-                    <p className={`mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <p className={`mb-4 text-sm sm:text-base line-clamp-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       {complaint.description}
                     </p>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm mb-4">
                       <div className="space-y-2">
                         <div className={`flex items-center space-x-2 ${
                           isDarkMode ? 'text-gray-400' : 'text-gray-600'
                         }`}>
-                          <Users className="h-4 w-4" />
-                          <span><strong>Client:</strong> {complaint.client?.name}</span>
+                          <Users className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                          <span className="truncate"><strong>Client:</strong> {complaint.client?.name}</span>
                         </div>
                         <div className={`flex items-center space-x-2 ${
                           isDarkMode ? 'text-gray-400' : 'text-gray-600'
                         }`}>
-                          <MapPin className="h-4 w-4" />
-                          <span><strong>Location:</strong> {complaint.location}</span>
+                          <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                          <span className="truncate"><strong>Location:</strong> {complaint.location}</span>
                         </div>
                       </div>
                       
@@ -324,10 +326,10 @@ const ComplaintManagement = () => {
                         <div className={`flex items-center space-x-2 ${
                           isDarkMode ? 'text-gray-400' : 'text-gray-600'
                         }`}>
-                          <Calendar className="h-4 w-4" />
-                          <span><strong>Created:</strong> {new Date(complaint.createdAt).toLocaleDateString()}</span>
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                          <span className="whitespace-nowrap"><strong>Created:</strong> {new Date(complaint.createdAt).toLocaleDateString()}</span>
                         </div>
-                        <div className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                        <div className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} whitespace-nowrap`}>
                           <strong>ID:</strong> {complaint.complaintId}
                         </div>
                       </div>
@@ -335,7 +337,7 @@ const ComplaintManagement = () => {
 
                     {complaint.assignedTechnician && (
                       <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                        <p className={`text-sm ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>
+                        <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>
                           <strong>Assigned to:</strong> {complaint.assignedTechnician.name}
                         </p>
                       </div>
@@ -343,21 +345,21 @@ const ComplaintManagement = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center space-x-2 ml-4">
+                  <div className="flex lg:flex-col items-center gap-2 lg:ml-4 justify-end lg:justify-start">
                     <button
                       onClick={() => openDetailsModal(complaint)}
                       className="p-2 text-primary-600 hover:bg-primary-100 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
                       title="View Details"
                     >
-                      <Eye className="h-5 w-5" />
+                      <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                     </button>
                     
                     {complaint.status === 'pending' && (
                       <button
                         onClick={() => openAssignModal(complaint)}
-                        className="px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 flex items-center space-x-2"
+                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 flex items-center space-x-2 text-sm whitespace-nowrap"
                       >
-                        <UserPlus className="h-4 w-4" />
+                        <UserPlus className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span>Assign</span>
                       </button>
                     )}

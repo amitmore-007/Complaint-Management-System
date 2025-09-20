@@ -202,10 +202,10 @@ const AdminDashboard = () => {
       <div className="space-y-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
+          <h1 className={`text-4xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Admin Dashboard
           </h1>
-          <p className="text-gray-400 text-lg">
+          <p className={`text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Welcome back, {user?.name}! Here's your system overview.
           </p>
         </div>
@@ -220,16 +220,26 @@ const AdminDashboard = () => {
               transition={{ delay: index * 0.1 }}
             >
               <Link to={card.link}>
-                <div className="group relative p-6 rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 hover:border-gray-600 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 overflow-hidden">
-                  {/* Background gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className={`group relative p-6 rounded-2xl border transition-all duration-300 hover:shadow-2xl overflow-hidden ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700 hover:border-gray-600 hover:shadow-blue-500/10'
+                    : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-lg'
+                }`}>
+                  {/* Background gradient overlay - only show in dark mode */}
+                  {isDarkMode && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  )}
                   
                   <div className="relative flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="text-gray-400 text-sm font-medium mb-1">
+                      <p className={`text-sm font-medium mb-1 ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
                         {card.title}
                       </p>
-                      <p className="text-white text-3xl font-bold">
+                      <p className={`text-3xl font-bold ${
+                        isDarkMode ? 'text-white' : 'text-gray-900'
+                      }`}>
                         {card.value}
                       </p>
                     </div>
@@ -238,8 +248,10 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                   
-                  {/* Shine effect */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                  {/* Shine effect - only show in dark mode */}
+                  {isDarkMode && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                  )}
                 </div>
               </Link>
             </motion.div>
@@ -251,15 +263,25 @@ const AdminDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-2xl p-6 shadow-2xl"
+          className={`border rounded-2xl p-6 shadow-2xl ${
+            isDarkMode 
+              ? 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700'
+              : 'bg-white border-gray-200'
+          }`}
         >
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-white">
+            <h2 className={`text-2xl font-bold ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}>
               Recent Complaints
             </h2>
             <Link 
               to="/admin/complaints"
-              className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+              className={`font-medium transition-colors ${
+                isDarkMode 
+                  ? 'text-blue-400 hover:text-blue-300'
+                  : 'text-blue-600 hover:text-blue-700'
+              }`}
             >
               View All
             </Link>
@@ -267,11 +289,15 @@ const AdminDashboard = () => {
 
           {stats.recentComplaints.length === 0 ? (
             <div className="text-center py-16">
-              <FileText className="h-16 w-16 mx-auto mb-4 text-gray-600" />
-              <p className="text-xl font-medium text-gray-400 mb-2">
+              <FileText className={`h-16 w-16 mx-auto mb-4 ${
+                isDarkMode ? 'text-gray-600' : 'text-gray-400'
+              }`} />
+              <p className={`text-xl font-medium mb-2 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>
                 No complaints yet
               </p>
-              <p className="text-gray-500">
+              <p className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>
                 Complaints will appear here as they are submitted
               </p>
             </div>
@@ -280,13 +306,19 @@ const AdminDashboard = () => {
               {stats.recentComplaints.map((complaint) => (
                 <motion.div
                   key={complaint._id}
-                  className="group bg-gradient-to-r from-gray-800 to-gray-800/50 border border-gray-700 hover:border-gray-600 rounded-xl p-5 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5"
+                  className={`group border rounded-xl p-5 transition-all duration-300 hover:shadow-lg ${
+                    isDarkMode 
+                      ? 'bg-gradient-to-r from-gray-800 to-gray-800/50 border-gray-700 hover:border-gray-600 hover:shadow-blue-500/5'
+                      : 'bg-gray-50 border-gray-200 hover:border-gray-300 hover:shadow-md'
+                  }`}
                   whileHover={{ scale: 1.01 }}
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-3">
-                        <h3 className="font-bold text-white text-lg">
+                        <h3 className={`font-bold text-lg ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>
                           {complaint.title}
                         </h3>
                         <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(complaint.status)}`}>
@@ -297,24 +329,28 @@ const AdminDashboard = () => {
                         </span>
                       </div>
                       
-                      <p className="text-gray-300 mb-4 line-clamp-2">
+                      <p className={`mb-4 line-clamp-2 ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      }`}>
                         {complaint.description}
                       </p>
                       
-                      <div className="flex items-center space-x-6 text-sm">
-                        <span className="flex items-center space-x-2 text-gray-400">
+                      <div className={`flex items-center space-x-6 text-sm ${
+                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                      }`}>
+                        <span className="flex items-center space-x-2">
                           <Users className="h-4 w-4" />
                           <span>{complaint.client?.name}</span>
                         </span>
-                        <span className="flex items-center space-x-2 text-gray-400">
+                        <span className="flex items-center space-x-2">
                           <MapPin className="h-4 w-4" />
                           <span>{complaint.location}</span>
                         </span>
-                        <span className="flex items-center space-x-2 text-gray-400">
+                        <span className="flex items-center space-x-2">
                           <Calendar className="h-4 w-4" />
                           <span>{new Date(complaint.createdAt).toLocaleDateString()}</span>
                         </span>
-                        <span className="text-gray-500">
+                        <span className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>
                           ID: {complaint.complaintId}
                         </span>
                       </div>
@@ -417,25 +453,39 @@ const AdminDashboard = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="w-full max-w-4xl max-h-[95vh] mx-4 my-4 overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-2xl shadow-2xl"
+                className={`w-full max-w-4xl max-h-[95vh] mx-4 my-4 overflow-hidden border rounded-2xl shadow-2xl ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700'
+                    : 'bg-white border-gray-200'
+                }`}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
-                <div className="sticky top-0 p-6 border-b border-gray-700 bg-gray-900/90 backdrop-blur-sm">
+                <div className={`sticky top-0 p-6 border-b backdrop-blur-sm ${
+                  isDarkMode 
+                    ? 'border-gray-700 bg-gray-900/90'
+                    : 'border-gray-200 bg-white/90'
+                }`}>
                   <div className="flex justify-between items-start">
                     <div>
-                      <h2 className="text-2xl font-bold text-white mb-2">
+                      <h2 className={`text-2xl font-bold mb-2 ${
+                        isDarkMode ? 'text-white' : 'text-gray-900'
+                      }`}>
                         {selectedComplaint.title}
                       </h2>
-                      <p className="text-gray-400">
+                      <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
                         ID: {selectedComplaint.complaintId}
                       </p>
                     </div>
                     <button
                       onClick={closeDetailsModal}
-                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                      className={`p-2 rounded-lg transition-colors ${
+                        isDarkMode 
+                          ? 'hover:bg-gray-800 text-gray-400'
+                          : 'hover:bg-gray-100 text-gray-500'
+                      }`}
                     >
-                      <X className="h-6 w-6 text-gray-400" />
+                      <X className="h-6 w-6" />
                     </button>
                   </div>
                 </div>
@@ -454,38 +504,74 @@ const AdminDashboard = () => {
                     </div>
 
                     {/* Description */}
-                    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-                      <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
-                      <p className="text-gray-300 leading-relaxed">
+                    <div className={`border rounded-xl p-4 ${
+                      isDarkMode 
+                        ? 'bg-gray-800/50 border-gray-700'
+                        : 'bg-gray-50 border-gray-200'
+                    }`}>
+                      <h3 className={`text-lg font-semibold mb-2 ${
+                        isDarkMode ? 'text-white' : 'text-gray-900'
+                      }`}>Description</h3>
+                      <p className={`leading-relaxed ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
                         {selectedComplaint.description}
                       </p>
                     </div>
 
                     {/* Details Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-                        <h4 className="font-semibold text-white mb-3">Client Information</h4>
+                      <div className={`border rounded-xl p-4 ${
+                        isDarkMode 
+                          ? 'bg-gray-800/50 border-gray-700'
+                          : 'bg-gray-50 border-gray-200'
+                      }`}>
+                        <h4 className={`font-semibold mb-3 ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>Client Information</h4>
                         <div className="space-y-2 text-sm">
-                          <div className="flex items-center space-x-2 text-gray-300">
-                            <Users className="h-4 w-4 text-gray-400" />
+                          <div className={`flex items-center space-x-2 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            <Users className={`h-4 w-4 ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`} />
                             <span>{selectedComplaint.client?.name}</span>
                           </div>
-                          <div className="flex items-center space-x-2 text-gray-300">
-                            <Phone className="h-4 w-4 text-gray-400" />
+                          <div className={`flex items-center space-x-2 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            <Phone className={`h-4 w-4 ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`} />
                             <span>{selectedComplaint.client?.phoneNumber}</span>
                           </div>
                         </div>
                       </div>
                       
-                      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-                        <h4 className="font-semibold text-white mb-3">Complaint Details</h4>
+                      <div className={`border rounded-xl p-4 ${
+                        isDarkMode 
+                          ? 'bg-gray-800/50 border-gray-700'
+                          : 'bg-gray-50 border-gray-200'
+                      }`}>
+                        <h4 className={`font-semibold mb-3 ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>Complaint Details</h4>
                         <div className="space-y-2 text-sm">
-                          <div className="flex items-center space-x-2 text-gray-300">
-                            <MapPin className="h-4 w-4 text-gray-400" />
+                          <div className={`flex items-center space-x-2 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            <MapPin className={`h-4 w-4 ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`} />
                             <span>{selectedComplaint.location}</span>
                           </div>
-                          <div className="flex items-center space-x-2 text-gray-300">
-                            <Calendar className="h-4 w-4 text-gray-400" />
+                          <div className={`flex items-center space-x-2 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                          }`}>
+                            <Calendar className={`h-4 w-4 ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`} />
                             <span>{new Date(selectedComplaint.createdAt).toLocaleString()}</span>
                           </div>
                         </div>
@@ -494,16 +580,22 @@ const AdminDashboard = () => {
 
                     {/* Technician Info */}
                     {selectedComplaint.assignedTechnician && (
-                      <div className="bg-blue-900/20 border border-blue-700/50 rounded-xl p-4">
-                        <h4 className="font-semibold text-blue-300 mb-3">Assigned Technician</h4>
+                      <div className={`border rounded-xl p-4 ${
+                        isDarkMode 
+                          ? 'bg-blue-900/20 border-blue-700/50'
+                          : 'bg-blue-50 border-blue-200'
+                      }`}>
+                        <h4 className={`font-semibold mb-3 ${
+                          isDarkMode ? 'text-blue-300' : 'text-blue-700'
+                        }`}>Assigned Technician</h4>
                         <div className="space-y-1 text-sm">
-                          <p className="text-blue-200">
+                          <p className={isDarkMode ? 'text-blue-200' : 'text-blue-700'}>
                             <strong>Name:</strong> {selectedComplaint.assignedTechnician.name}
                           </p>
-                          <p className="text-blue-200">
+                          <p className={isDarkMode ? 'text-blue-200' : 'text-blue-700'}>
                             <strong>Phone:</strong> {selectedComplaint.assignedTechnician.phoneNumber}
                           </p>
-                          <p className="text-blue-200">
+                          <p className={isDarkMode ? 'text-blue-200' : 'text-blue-700'}>
                             <strong>Assigned:</strong> {new Date(selectedComplaint.assignedAt).toLocaleString()}
                           </p>
                         </div>
@@ -512,8 +604,14 @@ const AdminDashboard = () => {
 
                     {/* Photos */}
                     {selectedComplaint.photos && selectedComplaint.photos.length > 0 && (
-                      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-                        <h4 className="font-semibold text-white mb-4">
+                      <div className={`border rounded-xl p-4 ${
+                        isDarkMode 
+                          ? 'bg-gray-800/50 border-gray-700'
+                          : 'bg-gray-50 border-gray-200'
+                      }`}>
+                        <h4 className={`font-semibold mb-4 ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>
                           Photos ({selectedComplaint.photos.length})
                         </h4>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -555,9 +653,15 @@ const AdminDashboard = () => {
 
                     {/* Technician Notes */}
                     {selectedComplaint.technicianNotes && (
-                      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-                        <h4 className="font-semibold text-white mb-2">Technician Notes</h4>
-                        <p className="text-gray-300">
+                      <div className={`border rounded-xl p-4 ${
+                        isDarkMode 
+                          ? 'bg-gray-800/50 border-gray-700'
+                          : 'bg-gray-50 border-gray-200'
+                      }`}>
+                        <h4 className={`font-semibold mb-2 ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>Technician Notes</h4>
+                        <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
                           {selectedComplaint.technicianNotes}
                         </p>
                       </div>
@@ -589,39 +693,63 @@ const AdminDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
               to="/admin/complaints?status=pending"
-              className={`p-4 rounded-xl border-2 border-dashed border-yellow-300 dark:border-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-all duration-200 text-center`}
+              className={`p-4 rounded-xl border-2 border-dashed transition-all duration-200 text-center ${
+                isDarkMode 
+                  ? 'border-yellow-600 hover:bg-yellow-900/20'
+                  : 'border-yellow-300 hover:bg-yellow-50'
+              }`}
             >
               <Clock className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
-              <p className={`font-medium ${isDarkMode ? 'text-yellow-400' : 'text-yellow-700'}`}>
+              <p className={`font-medium ${
+                isDarkMode ? 'text-yellow-400' : 'text-yellow-700'
+              }`}>
                 Review Pending Complaints
               </p>
-              <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p className={`text-sm mt-1 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>
                 {stats.pendingComplaints} waiting for assignment
               </p>
             </Link>
             
             <Link
               to="/admin/technicians"
-              className={`p-4 rounded-xl border-2 border-dashed border-purple-300 dark:border-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200 text-center`}
+              className={`p-4 rounded-xl border-2 border-dashed transition-all duration-200 text-center ${
+                isDarkMode 
+                  ? 'border-purple-600 hover:bg-purple-900/20'
+                  : 'border-purple-300 hover:bg-purple-50'
+              }`}
             >
               <Wrench className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-              <p className={`font-medium ${isDarkMode ? 'text-purple-400' : 'text-purple-700'}`}>
+              <p className={`font-medium ${
+                isDarkMode ? 'text-purple-400' : 'text-purple-700'
+              }`}>
                 Manage Technicians
               </p>
-              <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p className={`text-sm mt-1 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>
                 {stats.activeTechnicians} active technicians
               </p>
             </Link>
             
             <Link
               to="/admin/clients"
-              className={`p-4 rounded-xl border-2 border-dashed border-blue-300 dark:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 text-center`}
+              className={`p-4 rounded-xl border-2 border-dashed transition-all duration-200 text-center ${
+                isDarkMode 
+                  ? 'border-blue-600 hover:bg-blue-900/20'
+                  : 'border-blue-300 hover:bg-blue-50'
+              }`}
             >
               <Users className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-              <p className={`font-medium ${isDarkMode ? 'text-blue-400' : 'text-blue-700'}`}>
+              <p className={`font-medium ${
+                isDarkMode ? 'text-blue-400' : 'text-blue-700'
+              }`}>
                 Manage Clients
               </p>
-              <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p className={`text-sm mt-1 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>
                 {stats.totalClients} registered clients
               </p>
             </Link>

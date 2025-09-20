@@ -103,17 +103,17 @@ const ClientManagement = () => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h1 className={`text-2xl sm:text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               Client Management
             </h1>
-            <p className={`mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p className={`mt-2 text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               Manage all registered clients
             </p>
           </div>
         </div>
 
         {/* Search and Filters */}
-        <div className={`p-6 rounded-2xl shadow-lg border ${
+        <div className={`p-4 sm:p-6 rounded-2xl shadow-lg border ${
           isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
         }`}>
           <div className="flex flex-col sm:flex-row gap-4">
@@ -126,7 +126,7 @@ const ClientManagement = () => {
                 placeholder="Search by name or phone number..."
                 value={searchTerm}
                 onChange={handleSearch}
-                className={`w-full pl-10 pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 sm:py-3 rounded-xl border focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm sm:text-base ${
                   isDarkMode 
                     ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
@@ -140,20 +140,20 @@ const ClientManagement = () => {
         <div className={`rounded-2xl shadow-lg border ${
           isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
         }`}>
-          <div className="p-6">
-            <div className="flex items-center space-x-3 mb-6">
-              <Users className={`h-6 w-6 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-              <h2 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          <div className="p-4 sm:p-6">
+            <div className="flex items-center space-x-3 mb-4 sm:mb-6">
+              <Users className={`h-5 w-5 sm:h-6 sm:w-6 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+              <h2 className={`text-lg sm:text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                 All Clients ({pagination.total})
               </h2>
             </div>
 
             {clients.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className={`h-12 w-12 mx-auto mb-4 ${
+              <div className="text-center py-8 sm:py-12">
+                <Users className={`h-12 w-12 sm:h-12 sm:w-12 mx-auto mb-4 ${
                   isDarkMode ? 'text-gray-600' : 'text-gray-400'
                 }`} />
-                <p className={`text-lg font-medium ${
+                <p className={`text-base sm:text-lg font-medium ${
                   isDarkMode ? 'text-gray-400' : 'text-gray-600'
                 }`}>
                   No clients found
@@ -167,30 +167,30 @@ const ClientManagement = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className={`p-4 rounded-xl border ${
+                    className={`p-3 sm:p-4 rounded-xl border ${
                       isDarkMode 
                         ? 'bg-gray-700/50 border-gray-600' 
                         : 'bg-gray-50 border-gray-200'
                     } hover:shadow-md transition-all duration-200`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
                           client.isActive 
                             ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' 
                             : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
                         }`}>
-                          <Users className="h-6 w-6" />
+                          <Users className="h-5 w-5 sm:h-6 sm:w-6" />
                         </div>
                         
-                        <div>
-                          <div className="flex items-center space-x-3">
-                            <h3 className={`font-semibold ${
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                            <h3 className={`font-semibold text-sm sm:text-base truncate ${
                               isDarkMode ? 'text-white' : 'text-gray-900'
                             }`}>
                               {client.name}
                             </h3>
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${
                               client.isActive 
                                 ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                                 : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
@@ -199,52 +199,52 @@ const ClientManagement = () => {
                             </span>
                           </div>
                           
-                          <div className="flex items-center space-x-4 mt-2 text-sm">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-2 text-xs sm:text-sm">
                             <span className={`flex items-center space-x-1 ${
                               isDarkMode ? 'text-gray-400' : 'text-gray-600'
                             }`}>
-                              <Phone className="h-4 w-4" />
+                              <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
                               <span>{client.phoneNumber}</span>
                             </span>
                             <span className={`flex items-center space-x-1 ${
                               isDarkMode ? 'text-gray-400' : 'text-gray-600'
                             }`}>
-                              <FileText className="h-4 w-4" />
+                              <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
                               <span>{client.complaintCount} complaints</span>
                             </span>
                             <span className={`flex items-center space-x-1 ${
                               isDarkMode ? 'text-gray-400' : 'text-gray-600'
                             }`}>
-                              <Calendar className="h-4 w-4" />
+                              <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                               <span>Joined {new Date(client.createdAt).toLocaleDateString()}</span>
                             </span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center gap-2 justify-end sm:justify-start">
                         <button
                           onClick={() => toggleUserStatus(client._id, !client.isActive)}
                           disabled={actionLoading === client._id}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          className={`px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                             client.isActive
                               ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50'
                               : 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
                           }`}
                         >
                           {actionLoading === client._id ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                            <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-current"></div>
                           ) : (
                             <>
                               {client.isActive ? (
                                 <>
-                                  <UserX className="h-4 w-4 inline mr-1" />
-                                  Disable
+                                  <UserX className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1" />
+                                  <span className="hidden sm:inline">Disable</span>
                                 </>
                               ) : (
                                 <>
-                                  <UserCheck className="h-4 w-4 inline mr-1" />
-                                  Enable
+                                  <UserCheck className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1" />
+                                  <span className="hidden sm:inline">Enable</span>
                                 </>
                               )}
                             </>
@@ -254,9 +254,9 @@ const ClientManagement = () => {
                         <button
                           onClick={() => setShowDeleteModal(client)}
                           disabled={actionLoading === client._id}
-                          className="px-3 py-2 bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 rounded-lg text-sm font-medium transition-colors"
+                          className="px-2 sm:px-3 py-1 sm:py-2 bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 rounded-lg text-xs sm:text-sm font-medium transition-colors"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                         </button>
                       </div>
                     </div>

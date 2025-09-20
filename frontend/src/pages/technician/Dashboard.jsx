@@ -243,42 +243,55 @@ const TechnicianDashboard = () => {
     <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className={`text-3xl sm:text-4xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
             Welcome back, {user?.name}!
           </h1>
-          <p className="text-gray-400 text-lg">
+          <p className={`text-base sm:text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
             Here are your current assignments and tasks.
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {statsCards.map((card, index) => (
             <motion.div
               key={card.title}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="group relative p-6 rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 hover:border-gray-600 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/10 overflow-hidden"
+              className={`group relative p-4 sm:p-6 rounded-2xl border transition-all duration-300 hover:shadow-2xl overflow-hidden ${
+                isDarkMode 
+                  ? 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700 hover:border-gray-600 hover:shadow-blue-500/10'
+                  : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-lg'
+              }`}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className={`absolute inset-0 bg-gradient-to-br from-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                isDarkMode ? '' : 'hidden'
+              }`}></div>
               
               <div className="relative flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm font-medium mb-1">
+                <div className="min-w-0 flex-1">
+                  <p className={`text-xs sm:text-sm font-medium mb-1 truncate ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
                     {card.title}
                   </p>
-                  <p className="text-white text-3xl font-bold">
+                  <p className={`text-2xl sm:text-3xl font-bold ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}>
                     {card.value}
                   </p>
                 </div>
-                <div className={`w-14 h-14 bg-gradient-to-r ${card.bgColor} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                  <card.icon className="h-7 w-7 text-white" />
+                <div className={`w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r ${card.bgColor} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0 ml-3`}>
+                  <card.icon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
               </div>
               
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+              {/* Shine effect - only show in dark mode */}
+              {isDarkMode && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 translate-x-[-100%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+              )}
             </motion.div>
           ))}
         </div>
@@ -344,19 +357,31 @@ const TechnicianDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-2xl p-6 shadow-2xl"
+          className={`border rounded-2xl p-4 sm:p-6 shadow-2xl ${
+            isDarkMode 
+              ? 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700'
+              : 'bg-white border-gray-200'
+          }`}
         >
-          <h2 className="text-2xl font-bold text-white mb-6">
+          <h2 className={`text-xl sm:text-2xl font-bold mb-4 sm:mb-6 ${
+            isDarkMode ? 'text-white' : 'text-gray-900'
+          }`}>
             Active Assignments
           </h2>
 
           {assignments.length === 0 ? (
-            <div className="text-center py-16">
-              <ClipboardList className="h-16 w-16 mx-auto mb-4 text-gray-600" />
-              <p className="text-xl font-medium text-gray-400 mb-2">
+            <div className="text-center py-12 sm:py-16">
+              <ClipboardList className={`h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 ${
+                isDarkMode ? 'text-gray-600' : 'text-gray-400'
+              }`} />
+              <p className={`text-lg sm:text-xl font-medium mb-2 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+              }`}>
                 No assignments yet
               </p>
-              <p className="text-gray-500">
+              <p className={`text-sm sm:text-base ${
+                isDarkMode ? 'text-gray-500' : 'text-gray-500'
+              }`}>
                 New assignments will appear here when they are assigned to you
               </p>
             </div>
@@ -365,45 +390,51 @@ const TechnicianDashboard = () => {
               {assignments.map((complaint) => (
                 <motion.div
                   key={complaint._id}
-                  className="group bg-gradient-to-r from-gray-800 to-gray-800/50 border border-gray-700 hover:border-gray-600 rounded-xl p-6 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/5"
+                  className={`group border rounded-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-lg ${
+                    isDarkMode 
+                      ? 'bg-gradient-to-r from-gray-800 to-gray-800/50 border-gray-700 hover:border-gray-600 hover:shadow-blue-500/5'
+                      : 'bg-gray-50 border-gray-200 hover:border-gray-300 hover:shadow-md'
+                  }`}
                   whileHover={{ scale: 1.01 }}
                 >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <h3 className="text-xl font-bold text-white">
+                  <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                        <h3 className="text-lg sm:text-xl font-bold text-white truncate">
                           {complaint.title}
                         </h3>
-                        <span className={`px-3 py-1 text-sm font-semibold rounded-full ${getStatusColor(complaint.status)}`}>
-                          {complaint.status.replace('-', ' ').toUpperCase()}
-                        </span>
-                        <span className={`text-sm font-semibold capitalize ${getPriorityColor(complaint.priority)}`}>
-                          {complaint.priority} Priority
-                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          <span className={`px-3 py-1 text-xs sm:text-sm font-semibold rounded-full whitespace-nowrap ${getStatusColor(complaint.status)}`}>
+                            {complaint.status.replace('-', ' ').toUpperCase()}
+                          </span>
+                          <span className={`text-xs sm:text-sm font-semibold capitalize whitespace-nowrap ${getPriorityColor(complaint.priority)}`}>
+                            {complaint.priority} Priority
+                          </span>
+                        </div>
                       </div>
                       
-                      <p className="text-gray-300 mb-4">
+                      <p className="text-gray-300 mb-4 text-sm sm:text-base line-clamp-2">
                         {complaint.description}
                       </p>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm mb-4">
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2 text-gray-400">
-                            <User className="h-4 w-4" />
-                            <span><strong>Client:</strong> {complaint.client?.name}</span>
+                            <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                            <span className="truncate"><strong>Client:</strong> {complaint.client?.name}</span>
                           </div>
                           <div className="flex items-center space-x-2 text-gray-400">
-                            <MapPin className="h-4 w-4" />
-                            <span><strong>Location:</strong> {complaint.location}</span>
+                            <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                            <span className="truncate"><strong>Location:</strong> {complaint.location}</span>
                           </div>
                         </div>
                         
                         <div className="space-y-2">
                           <div className="flex items-center space-x-2 text-gray-400">
-                            <Calendar className="h-4 w-4" />
-                            <span><strong>Assigned:</strong> {new Date(complaint.assignedAt).toLocaleDateString()}</span>
+                            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                            <span className="whitespace-nowrap"><strong>Assigned:</strong> {new Date(complaint.assignedAt).toLocaleDateString()}</span>
                           </div>
-                          <div className="text-gray-400">
+                          <div className="text-gray-400 whitespace-nowrap">
                             <strong>ID:</strong> {complaint.complaintId}
                           </div>
                         </div>
@@ -413,17 +444,17 @@ const TechnicianDashboard = () => {
                       {complaint.photos && Array.isArray(complaint.photos) && complaint.photos.length > 0 && (
                         <div className="mb-4">
                           <div className="flex items-center justify-between mb-3">
-                            <p className="text-sm font-semibold text-gray-300">
+                            <p className="text-xs sm:text-sm font-semibold text-gray-300">
                               Photos ({complaint.photos.length})
                             </p>
                           </div>
-                          <div className="flex flex-wrap gap-3">
-                            {complaint.photos.slice(0, 6).map((photo, index) => (
+                          <div className="flex flex-wrap gap-2 sm:gap-3">
+                            {complaint.photos.slice(0, 4).map((photo, index) => (
                               <div key={index} className="relative group">
                                 <img
                                   src={photo.url}
                                   alt={`Complaint photo ${index + 1}`}
-                                  className="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border border-gray-600"
+                                  className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border border-gray-600"
                                   onClick={() => openPhotoModal(complaint.photos, index)}
                                 />
                                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
@@ -435,7 +466,7 @@ const TechnicianDashboard = () => {
                                       }}
                                       className="p-1 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all"
                                     >
-                                      <Eye className="h-3 w-3 text-white" />
+                                      <Eye className="h-2 w-2 sm:h-3 sm:w-3 text-white" />
                                     </button>
                                     <button
                                       onClick={(e) => {
@@ -444,18 +475,18 @@ const TechnicianDashboard = () => {
                                       }}
                                       className="p-1 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all"
                                     >
-                                      <Download className="h-3 w-3 text-white" />
+                                      <Download className="h-2 w-2 sm:h-3 sm:w-3 text-white" />
                                     </button>
                                   </div>
                                 </div>
                               </div>
                             ))}
-                            {complaint.photos.length > 6 && (
+                            {complaint.photos.length > 4 && (
                               <div 
-                                className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-600 flex items-center justify-center text-xs font-medium text-gray-400 cursor-pointer hover:bg-gray-700/50 transition-all"
-                                onClick={() => openPhotoModal(complaint.photos, 6)}
+                                className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg border-2 border-dashed border-gray-600 flex items-center justify-center text-xs font-medium text-gray-400 cursor-pointer hover:bg-gray-700/50 transition-all"
+                                onClick={() => openPhotoModal(complaint.photos, 4)}
                               >
-                                +{complaint.photos.length - 6}
+                                +{complaint.photos.length - 4}
                               </div>
                             )}
                           </div>
@@ -465,7 +496,7 @@ const TechnicianDashboard = () => {
                       {/* Technician Notes */}
                       {complaint.technicianNotes && (
                         <div className="p-3 bg-blue-900/20 border border-blue-700/50 rounded-lg">
-                          <p className="text-sm text-blue-300">
+                          <p className="text-xs sm:text-sm text-blue-300">
                             <strong>Notes:</strong> {complaint.technicianNotes}
                           </p>
                         </div>
@@ -473,15 +504,15 @@ const TechnicianDashboard = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex flex-col space-y-2 ml-4">
+                    <div className="flex lg:flex-col gap-2 lg:ml-4 justify-end lg:justify-start">
                       {complaint.status === 'assigned' && (
                         <motion.button
                           onClick={() => updateComplaintStatus(complaint._id, 'in-progress')}
-                          className="px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 flex items-center space-x-2 font-medium"
+                          className="px-3 sm:px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <Play className="h-4 w-4" />
+                          <Play className="h-3 w-3 sm:h-4 sm:w-4" />
                           <span>Start Work</span>
                         </motion.button>
                       )}
@@ -489,12 +520,12 @@ const TechnicianDashboard = () => {
                       {complaint.status === 'in-progress' && (
                         <motion.button
                           onClick={() => updateComplaintStatus(complaint._id, 'resolved')}
-                          className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 flex items-center space-x-2 font-medium"
+                          className="px-3 sm:px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <CheckSquare className="h-4 w-4" />
-                          <span>Mark Complete</span>
+                          <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4" />
+                          <span>Complete</span>
                         </motion.button>
                       )}
                     </div>

@@ -192,7 +192,7 @@ const Landing = () => {
 
       {/* Hero Section */}
       <motion.section 
-        className="relative py-24 lg:py-32"
+        className="relative py-16 lg:py-24"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -207,12 +207,12 @@ const Landing = () => {
           }`}></div>
         </div>
         
-        <div className="relative max-w-8xl mx-auto px-6 ml-6" >
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div className="text-center lg:text-left">
               <motion.h1 
                 variants={itemVariants}
-                className="text-5xl lg:text-7xl font-bold mb-8"
+                className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 lg:mb-8"
               >
                 <span className={`bg-gradient-to-r bg-clip-text text-transparent ${
                   isDarkMode 
@@ -229,7 +229,7 @@ const Landing = () => {
               
               <motion.p 
                 variants={itemVariants}
-                className={`text-xl lg:text-2xl mb-8 leading-relaxed ${
+                className={`text-lg sm:text-xl lg:text-2xl mb-6 lg:mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0 ${
                   isDarkMode ? 'text-gray-300' : 'text-gray-600'
                 }`}
               >
@@ -239,24 +239,24 @@ const Landing = () => {
               
               <motion.div 
                 variants={itemVariants}
-                className="flex flex-col sm:flex-row gap-4 mb-8"
+                className="flex flex-col sm:flex-row gap-4 mb-6 lg:mb-8 justify-center lg:justify-start"
               >
                 <motion.button
                   onClick={handleGetStarted}
-                  className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-xl font-semibold text-lg flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-base sm:text-lg flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-300"
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <span className="relative z-10 flex items-center">
-                    <Zap className="mr-3 h-6 w-6" />
+                    <Zap className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
                     Start Managing Complaints
-                    <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform duration-200" />
+                    <ArrowRight className="ml-2 sm:ml-3 h-5 w-5 sm:h-6 sm:w-6 group-hover:translate-x-1 transition-transform duration-200" />
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </motion.button>
                 
                 <motion.button
-                  className={`group border-2 px-8 py-4 rounded-xl font-semibold text-lg flex items-center justify-center transition-all duration-300 ${
+                  className={`group border-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-base sm:text-lg flex items-center justify-center transition-all duration-300 ${
                     isDarkMode 
                       ? 'border-gray-600 text-gray-300 hover:border-blue-500 hover:text-blue-400' 
                       : 'border-gray-300 text-gray-700 hover:border-blue-500 hover:text-blue-600'
@@ -264,14 +264,14 @@ const Landing = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <Camera className="mr-3 h-6 w-6" />
+                  <Camera className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
                   View Demo
                 </motion.button>
               </motion.div>
               
               <motion.div 
                 variants={itemVariants}
-                className={`flex items-center space-x-6 text-sm ${
+                className={`flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm justify-center lg:justify-start ${
                   isDarkMode ? 'text-gray-400' : 'text-gray-600'
                 }`}
               >
@@ -293,18 +293,18 @@ const Landing = () => {
             {/* Hero Dashboard Preview */}
             <motion.div 
               variants={itemVariants}
-              className="relative"
+              className="relative order-first lg:order-last mt-8 lg:mt-0"
             >
-              <div className={`relative rounded-3xl p-6 shadow-2xl ml-32 ${
+              <div className={`relative rounded-3xl p-4 sm:p-6 shadow-2xl mx-auto max-w-md lg:max-w-none lg:ml-8 xl:ml-16 ${
                 isDarkMode 
                   ? 'bg-gradient-to-br from-gray-800/50 to-gray-700/50' 
                   : 'bg-gradient-to-br from-blue-100 to-green-100'
               }`}>
                 <DashboardPreview isDarkMode={isDarkMode} />
                 
-                {/* Floating Status Cards */}
+                {/* Floating Status Cards - Hide on mobile for better UX */}
                 <motion.div
-                  className={`absolute -top-3 -right-3 p-3 rounded-xl shadow-lg ${
+                  className={`hidden sm:block absolute -top-3 -right-3 p-3 rounded-xl shadow-lg ${
                     isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white'
                   }`}
                   animate={{ y: [0, -8, 0] }}
@@ -321,7 +321,7 @@ const Landing = () => {
                 </motion.div>
                 
                 <motion.div
-                  className={`absolute -bottom-3 -left-3 p-3 rounded-xl shadow-lg ${
+                  className={`hidden sm:block absolute -bottom-3 -left-3 p-3 rounded-xl shadow-lg ${
                     isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white'
                   }`}
                   animate={{ y: [0, 8, 0] }}
@@ -385,7 +385,7 @@ const Landing = () => {
 
       {/* Features Section */}
       <motion.section 
-        className={`py-20 transition-colors duration-300 ${
+        className={`py-16 lg:py-20 transition-colors duration-300 ${
           isDarkMode 
             ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50' 
             : 'bg-gradient-to-br from-gray-50 to-white'
@@ -396,20 +396,20 @@ const Landing = () => {
         viewport={{ once: true, amount: 0.3 }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div variants={itemVariants} className="text-center mb-16">
-            <h2 className={`text-4xl lg:text-5xl font-bold mb-6 ${
+          <motion.div variants={itemVariants} className="text-center mb-12 lg:mb-16">
+            <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 lg:mb-6 ${
               isDarkMode ? 'text-white' : 'text-gray-900'
             }`}>
               Powerful Features for <span className="text-blue-600">Every User</span>
             </h2>
-            <p className={`text-xl max-w-3xl mx-auto ${
+            <p className={`text-lg sm:text-xl max-w-3xl mx-auto ${
               isDarkMode ? 'text-gray-300' : 'text-gray-600'
             }`}>
               Experience the future of complaint management with our comprehensive suite of features designed for efficiency and user satisfaction.
             </p>
           </motion.div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
@@ -417,7 +417,7 @@ const Landing = () => {
                 className="group"
               >
                 <motion.div 
-                  className={`text-center h-full p-8 rounded-2xl backdrop-blur-sm transition-all duration-300 border-2 hover:shadow-2xl ${
+                  className={`text-center h-full p-6 lg:p-8 rounded-2xl backdrop-blur-sm transition-all duration-300 border-2 hover:shadow-2xl ${
                     isDarkMode 
                       ? 'bg-gray-800/30 border-gray-700/50 hover:border-blue-500/50 hover:bg-gray-800/50' 
                       : 'bg-white/60 border-gray-200 hover:border-blue-200 hover:bg-white/80'
@@ -425,19 +425,19 @@ const Landing = () => {
                   whileHover={{ y: -8, scale: 1.02 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
-                  <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 ${
+                  <div className={`w-16 h-16 lg:w-20 lg:h-20 rounded-3xl flex items-center justify-center mx-auto mb-4 lg:mb-6 group-hover:scale-110 transition-transform duration-300 ${
                     isDarkMode ? 'bg-blue-800/80 shadow-lg' : 'bg-blue-100 shadow-md'
                   }`}>
                     <div className={`${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`}>
                       {feature.icon}
                     </div>
                   </div>
-                  <h3 className={`text-xl font-semibold mb-4 ${
+                  <h3 className={`text-lg lg:text-xl font-semibold mb-3 lg:mb-4 ${
                     isDarkMode ? 'text-white' : 'text-gray-900'
                   }`}>
                     {feature.title}
                   </h3>
-                  <p className={`leading-relaxed ${
+                  <p className={`leading-relaxed text-sm lg:text-base ${
                     isDarkMode ? 'text-gray-300' : 'text-gray-600'
                   }`}>
                     {feature.description}
@@ -451,7 +451,7 @@ const Landing = () => {
 
       {/* CTA Section */}
       <motion.section 
-        className="py-24 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 relative overflow-hidden"
+        className="py-16 lg:py-24 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 relative overflow-hidden"
         variants={containerVariants}
         initial="hidden"
         whileInView="visible"
@@ -460,32 +460,32 @@ const Landing = () => {
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.h2 
             variants={itemVariants}
-            className="text-4xl lg:text-6xl font-bold text-white mb-6"
+            className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 lg:mb-6"
           >
             Ready to Transform Your Service?
           </motion.h2>
           
           <motion.p 
             variants={itemVariants}
-            className="text-xl text-blue-100 mb-12 leading-relaxed max-w-2xl mx-auto"
+            className="text-lg sm:text-xl text-blue-100 mb-8 lg:mb-12 leading-relaxed max-w-2xl mx-auto"
           >
             Join thousands of satisfied users who have streamlined their complaint management process with FixFlow. Start your free trial today.
           </motion.p>
           
           <motion.div
             variants={itemVariants}
-            className="flex flex-col sm:flex-row gap-6 justify-center items-center"
+            className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center"
           >
             <motion.button
               onClick={handleGetStarted}
-              className="group relative overflow-hidden bg-white text-blue-700 px-8 py-4 rounded-xl font-bold text-lg flex items-center shadow-lg hover:shadow-xl transition-all duration-300"
+              className="group relative overflow-hidden bg-white text-blue-700 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg flex items-center shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto justify-center"
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.98 }}
             >
               <span className="relative z-10 flex items-center">
-                <Zap className="mr-3 h-6 w-6" />
+                <Zap className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
                 Start Free Trial
-                <ArrowRight className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform duration-200" />
+                <ArrowRight className="ml-2 sm:ml-3 h-5 w-5 sm:h-6 sm:w-6 group-hover:translate-x-1 transition-transform duration-200" />
               </span>
             </motion.button>
           </motion.div>

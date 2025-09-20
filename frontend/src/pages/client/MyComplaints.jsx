@@ -850,9 +850,9 @@ const MyComplaints = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
-            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h1 className={`text-2xl sm:text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               My Complaints
             </h1>
             <p className={`mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -862,18 +862,18 @@ const MyComplaints = () => {
           
           <Link to="/client/create-complaint">
             <motion.button
-              className="bg-gradient-to-r from-primary-600 to-primary-700 text-white px-6 py-3 rounded-xl font-semibold flex items-center space-x-2 hover:from-primary-700 hover:to-primary-800 shadow-lg"
+              className="bg-gradient-to-r from-primary-600 to-primary-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold flex items-center space-x-2 hover:from-primary-700 hover:to-primary-800 shadow-lg w-full sm:w-auto justify-center"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
               <span>New Complaint</span>
             </motion.button>
           </Link>
         </div>
 
         {/* Filters */}
-        <div className={`p-6 rounded-2xl shadow-lg border ${
+        <div className={`p-4 sm:p-6 rounded-2xl shadow-lg border ${
           isDarkMode 
             ? 'bg-gray-800 border-gray-700' 
             : 'bg-white border-gray-200'
@@ -898,7 +898,7 @@ const MyComplaints = () => {
             </div>
 
             {/* Status Filter */}
-            <div className="md:w-48">
+            <div className="w-full md:w-48">
               <div className="relative">
                 <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <select
@@ -924,15 +924,15 @@ const MyComplaints = () => {
         {/* Complaints List */}
         <div className="space-y-4">
           {filteredComplaints.length === 0 ? (
-            <div className={`text-center py-12 rounded-2xl ${
+            <div className={`text-center py-8 sm:py-12 rounded-2xl ${
               isDarkMode ? 'bg-gray-800' : 'bg-white'
             } shadow-lg`}>
-              <p className={`text-lg font-medium ${
+              <p className={`text-base sm:text-lg font-medium ${
                 isDarkMode ? 'text-gray-400' : 'text-gray-600'
               }`}>
                 {searchTerm || statusFilter !== 'all' ? 'No complaints match your filters' : 'No complaints yet'}
               </p>
-              <p className={`mt-2 ${
+              <p className={`mt-2 text-sm sm:text-base ${
                 isDarkMode ? 'text-gray-500' : 'text-gray-500'
               }`}>
                 {searchTerm || statusFilter !== 'all' ? 'Try adjusting your search or filters' : 'Create your first complaint to get started'}
@@ -944,46 +944,48 @@ const MyComplaints = () => {
                 key={complaint._id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`p-6 rounded-2xl shadow-lg border ${
+                className={`p-4 sm:p-6 rounded-2xl shadow-lg border ${
                   isDarkMode 
                     ? 'bg-gray-800 border-gray-700' 
                     : 'bg-white border-gray-200'
                 } hover:shadow-xl transition-all duration-200`}
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className={`text-xl font-semibold ${
+                <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                      <h3 className={`text-lg sm:text-xl font-semibold truncate ${
                         isDarkMode ? 'text-white' : 'text-gray-900'
                       }`}>
                         {complaint.title}
                       </h3>
-                      <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(complaint.status)}`}>
-                        {complaint.status.replace('-', ' ').toUpperCase()}
-                      </span>
-                      <span className={`text-sm font-medium capitalize ${getPriorityColor(complaint.priority)}`}>
-                        {complaint.priority} Priority
-                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        <span className={`px-3 py-1 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap ${getStatusColor(complaint.status)}`}>
+                          {complaint.status.replace('-', ' ').toUpperCase()}
+                        </span>
+                        <span className={`text-xs sm:text-sm font-medium capitalize whitespace-nowrap ${getPriorityColor(complaint.priority)}`}>
+                          {complaint.priority} Priority
+                        </span>
+                      </div>
                     </div>
                     
-                    <p className={`mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <p className={`mb-3 text-sm sm:text-base line-clamp-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       {complaint.description}
                     </p>
                     
-                    <div className="flex items-center space-x-6 text-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-xs sm:text-sm">
                       <span className={`flex items-center space-x-1 ${
                         isDarkMode ? 'text-gray-400' : 'text-gray-600'
                       }`}>
-                        <MapPin className="h-4 w-4" />
-                        <span>{complaint.location}</span>
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <span className="truncate">{complaint.location}</span>
                       </span>
                       <span className={`flex items-center space-x-1 ${
                         isDarkMode ? 'text-gray-400' : 'text-gray-600'
                       }`}>
-                        <Calendar className="h-4 w-4" />
-                        <span>{new Date(complaint.createdAt).toLocaleDateString()}</span>
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <span className="whitespace-nowrap">{new Date(complaint.createdAt).toLocaleDateString()}</span>
                       </span>
-                      <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+                      <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} whitespace-nowrap`}>
                         ID: {complaint.complaintId}
                       </span>
                     </div>
@@ -991,18 +993,18 @@ const MyComplaints = () => {
                     {/* Photos */}
                     {complaint.photos && complaint.photos.length > 0 && (
                       <div className="mt-4">
-                        <p className={`text-sm font-medium mb-2 ${
+                        <p className={`text-xs sm:text-sm font-medium mb-2 ${
                           isDarkMode ? 'text-gray-300' : 'text-gray-700'
                         }`}>
                           Photos ({complaint.photos.length})
                         </p>
-                        <div className="flex space-x-2">
-                          {complaint.photos.map((photo, index) => (
+                        <div className="flex flex-wrap gap-2">
+                          {complaint.photos.slice(0, 4).map((photo, index) => (
                             <div key={index} className="relative group">
                               <img
                                 src={photo.url}
                                 alt={`Complaint photo ${index + 1}`}
-                                className="w-16 h-16 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                                className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
                                 onClick={() => setSelectedImage(photo)}
                               />
                               <button
@@ -1010,12 +1012,17 @@ const MyComplaints = () => {
                                   e.stopPropagation();
                                   downloadImage(photo.url, photo.originalName);
                                 }}
-                                className="absolute top-1 right-1 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-0.5 right-0.5 w-4 h-4 sm:w-6 sm:h-6 bg-black/70 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                               >
-                                <Download className="h-3 w-3" />
+                                <Download className="h-2 w-2 sm:h-3 sm:w-3" />
                               </button>
                             </div>
                           ))}
+                          {complaint.photos.length > 4 && (
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400">
+                              +{complaint.photos.length - 4}
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -1023,7 +1030,7 @@ const MyComplaints = () => {
                     {/* Technician Info */}
                     {complaint.assignedTechnician && (
                       <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                        <p className={`text-sm ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>
+                        <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>
                           <span className="font-medium">Assigned to:</span> {complaint.assignedTechnician.name}
                         </p>
                       </div>
@@ -1031,12 +1038,13 @@ const MyComplaints = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center space-x-2 ml-4">
+                  <div className="flex lg:flex-col items-center gap-2 lg:ml-4 justify-end lg:justify-start">
                     <button
                       onClick={() => setSelectedComplaint(complaint)}
                       className="p-2 text-primary-600 hover:bg-primary-100 dark:hover:bg-primary-900/20 rounded-lg transition-colors"
+                      title="View Details"
                     >
-                      <Eye className="h-5 w-5" />
+                      <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                     </button>
                     
                     {complaint.status === 'pending' && (
@@ -1044,14 +1052,16 @@ const MyComplaints = () => {
                         <button
                           onClick={() => setEditComplaint(complaint)}
                           className="p-2 text-yellow-600 hover:bg-yellow-100 dark:hover:bg-yellow-900/20 rounded-lg transition-colors"
+                          title="Edit"
                         >
-                          <Edit className="h-5 w-5" />
+                          <Edit className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                         <button
                           onClick={() => setDeleteConfirmation(complaint)}
                           className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Delete"
                         >
-                          <Trash2 className="h-5 w-5" />
+                          <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                         </button>
                       </>
                     )}

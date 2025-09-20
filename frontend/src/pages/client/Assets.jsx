@@ -74,19 +74,25 @@ const ClientAssets = () => {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-white">Asset Records</h1>
-          <p className="text-gray-400 mt-1">View equipment records submitted for your stores</p>
+          <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Asset Records</h1>
+          <p className={`mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>View equipment records submitted for your stores</p>
         </div>
 
         {/* Search */}
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-500'
+          }`} />
           <input
             type="text"
             placeholder="Search by store or technician..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-colors ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+            }`}
           />
         </div>
 
@@ -97,11 +103,15 @@ const ClientAssets = () => {
           </div>
         ) : filteredRecords.length === 0 ? (
           <div className="text-center py-16">
-            <Package className="h-16 w-16 mx-auto mb-4 text-gray-600" />
-            <p className="text-xl font-medium text-gray-400 mb-2">
+            <Package className={`h-16 w-16 mx-auto mb-4 ${
+              isDarkMode ? 'text-gray-600' : 'text-gray-400'
+            }`} />
+            <p className={`text-xl font-medium mb-2 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-600'
+            }`}>
               {searchTerm ? 'No matching records found' : 'No asset records yet'}
             </p>
-            <p className="text-gray-500">
+            <p className={isDarkMode ? 'text-gray-500' : 'text-gray-500'}>
               {searchTerm 
                 ? 'Try adjusting your search terms' 
                 : 'Asset records submitted for your stores will appear here'
@@ -113,14 +123,22 @@ const ClientAssets = () => {
             {filteredRecords.map((record) => (
               <motion.div
                 key={record._id}
-                className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 hover:border-gray-600 transition-colors cursor-pointer"
+                className={`border rounded-xl p-6 transition-colors cursor-pointer ${
+                  isDarkMode 
+                    ? 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
+                    : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+                }`}
                 onClick={() => openDetailModal(record)}
                 whileHover={{ scale: 1.01 }}
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="font-semibold text-white text-lg">{record.storeName}</h3>
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-400">
+                    <h3 className={`font-semibold text-lg ${
+                      isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>{record.storeName}</h3>
+                    <div className={`flex items-center space-x-4 mt-2 text-sm ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
                       <div className="flex items-center space-x-1">
                         <User className="h-4 w-4" />
                         <span>{record.technician?.name}</span>
@@ -131,21 +149,31 @@ const ClientAssets = () => {
                       </div>
                     </div>
                   </div>
-                  <button className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
+                  <button className={`p-2 rounded-lg transition-colors ${
+                    isDarkMode 
+                      ? 'text-blue-400 hover:bg-blue-500/10'
+                      : 'text-blue-600 hover:bg-blue-50'
+                  }`}>
                     <Eye className="h-5 w-5" />
                   </button>
                 </div>
                 
                 <div className="space-y-2">
-                  <div className="text-sm text-gray-300">
+                  <div className={`text-sm ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
                     <span className="font-medium">{record.equipment?.length || 0}</span> equipment items recorded
                   </div>
-                  <div className="text-sm text-gray-300">
+                  <div className={`text-sm ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
                     <span className="font-medium text-green-400">
                       {record.equipment?.filter(item => item.isPresent).length || 0}
                     </span> items present
                   </div>
-                  <div className="text-sm text-gray-300">
+                  <div className={`text-sm ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
                     <span className="font-medium text-red-400">
                       {record.equipment?.filter(item => !item.isPresent).length || 0}
                     </span> items missing
@@ -153,8 +181,14 @@ const ClientAssets = () => {
                 </div>
 
                 {record.notes && (
-                  <div className="mt-4 p-3 bg-gray-700/50 rounded-lg">
-                    <p className="text-sm text-gray-300 line-clamp-2">
+                  <div className={`mt-4 p-3 rounded-lg ${
+                    isDarkMode 
+                      ? 'bg-gray-700/50'
+                      : 'bg-gray-50'
+                  }`}>
+                    <p className={`text-sm line-clamp-2 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       <span className="font-medium">Notes:</span> {record.notes}
                     </p>
                   </div>
@@ -178,13 +212,19 @@ const ClientAssets = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-gray-800 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+                className={`rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto ${
+                  isDarkMode ? 'bg-gray-800' : 'bg-white'
+                }`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex justify-between items-center mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-white">{selectedRecord.storeName}</h2>
-                    <div className="flex items-center space-x-4 mt-2 text-gray-400">
+                    <h2 className={`text-2xl font-bold ${
+                      isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>{selectedRecord.storeName}</h2>
+                    <div className={`flex items-center space-x-4 mt-2 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
                       <span>By: {selectedRecord.technician?.name}</span>
                       <span>•</span>
                       <span>{new Date(selectedRecord.submissionDate).toLocaleString()}</span>
@@ -192,7 +232,11 @@ const ClientAssets = () => {
                   </div>
                   <button
                     onClick={closeDetailModal}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                    className={`p-2 rounded-lg transition-colors ${
+                      isDarkMode 
+                        ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                    }`}
                   >
                     <X className="h-6 w-6" />
                   </button>
@@ -218,10 +262,14 @@ const ClientAssets = () => {
                             <X className="h-5 w-5 text-white" />
                           )}
                         </div>
-                        <span className="text-white font-medium">{item.name}</span>
+                        <span className={`font-medium ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>{item.name}</span>
                       </div>
                       {item.isPresent && (
-                        <span className="text-white font-semibold">
+                        <span className={`font-semibold ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>
                           Count: {item.count}
                         </span>
                       )}
@@ -235,15 +283,25 @@ const ClientAssets = () => {
                 </div>
 
                 {selectedRecord.notes && (
-                  <div className="mt-6 p-4 bg-gray-700/50 rounded-xl">
-                    <h4 className="font-semibold text-white mb-2">Technician Notes:</h4>
-                    <p className="text-gray-300">{selectedRecord.notes}</p>
+                  <div className={`mt-6 p-4 rounded-xl ${
+                    isDarkMode 
+                      ? 'bg-gray-700/50'
+                      : 'bg-gray-50'
+                  }`}>
+                    <h4 className={`font-semibold mb-2 ${
+                      isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>Technician Notes:</h4>
+                    <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{selectedRecord.notes}</p>
                   </div>
                 )}
 
-                <div className="mt-6 p-4 bg-blue-900/20 border border-blue-700/50 rounded-xl">
+                <div className={`mt-6 p-4 rounded-xl border ${
+                  isDarkMode 
+                    ? 'bg-blue-900/20 border-blue-700/50'
+                    : 'bg-blue-50 border-blue-200'
+                }`}>
                   <div className="flex items-center justify-between text-sm">
-                    <div className="text-blue-300">
+                    <div className={isDarkMode ? 'text-blue-300' : 'text-blue-700'}>
                       <span className="font-medium">Total Items:</span> {selectedRecord.equipment?.length || 0}
                     </div>
                     <div className="text-green-400">

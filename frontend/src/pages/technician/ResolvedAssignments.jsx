@@ -123,11 +123,11 @@ const ResolvedAssignments = () => {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-white">My Resolved Assignments</h1>
-          <p className="text-gray-400 mt-1">View all complaints you have successfully resolved</p>
+          <h1 className={`text-2xl sm:text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>My Resolved Assignments</h1>
+          <p className={`mt-1 text-sm sm:text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>View all complaints you have successfully resolved</p>
         </div>
 
-        {/* Photo Modal */}
+        {/* Photo Modal - keep existing dark overlay as it should stay dark */}
         {photoModalOpen && selectedPhoto && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -185,12 +185,12 @@ const ResolvedAssignments = () => {
 
         {/* Resolved Complaints List */}
         {resolvedComplaints.length === 0 ? (
-          <div className="text-center py-16">
-            <CheckCircle className="h-16 w-16 mx-auto mb-4 text-gray-600" />
-            <p className="text-xl font-medium text-gray-400 mb-2">
+          <div className="text-center py-12 sm:py-16">
+            <CheckCircle className={`h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-4 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
+            <p className={`text-lg sm:text-xl font-medium mb-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
               No resolved assignments yet
             </p>
-            <p className="text-gray-500">
+            <p className={`text-sm sm:text-base ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
               Complaints you resolve will appear here
             </p>
           </div>
@@ -199,67 +199,75 @@ const ResolvedAssignments = () => {
             {resolvedComplaints.map((complaint) => (
               <motion.div
                 key={complaint._id}
-                className="bg-gradient-to-r from-gray-800 to-gray-800/50 border border-gray-700 hover:border-gray-600 rounded-xl p-6 transition-all duration-300 hover:shadow-lg hover:shadow-green-500/5"
+                className={`border rounded-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-lg ${
+                  isDarkMode 
+                    ? 'bg-gradient-to-r from-gray-800 to-gray-800/50 border-gray-700 hover:border-gray-600 hover:shadow-green-500/5'
+                    : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+                }`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ scale: 1.01 }}
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <h3 className="text-xl font-bold text-white">
+                <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
+                      <h3 className={`text-lg sm:text-xl font-bold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                         {complaint.title}
                       </h3>
-                      <span className="px-3 py-1 text-sm font-semibold rounded-full text-green-600 bg-green-100 dark:bg-green-900/30">
-                        RESOLVED
-                      </span>
-                      <span className="text-sm font-semibold capitalize text-gray-400">
-                        {complaint.priority} Priority
-                      </span>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="px-3 py-1 text-xs sm:text-sm font-semibold rounded-full text-green-600 bg-green-100 dark:bg-green-900/30 whitespace-nowrap">
+                          RESOLVED
+                        </span>
+                        <span className={`text-xs sm:text-sm font-semibold capitalize whitespace-nowrap ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          {complaint.priority} Priority
+                        </span>
+                      </div>
                     </div>
                     
-                    <p className="text-gray-300 mb-4">
+                    <p className={`mb-4 text-sm sm:text-base line-clamp-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                       {complaint.description}
                     </p>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm mb-4">
                       <div className="space-y-2">
-                        <div className="flex items-center space-x-2 text-gray-400">
-                          <User className="h-4 w-4" />
-                          <span><strong>Client:</strong> {complaint.client?.name}</span>
+                        <div className={`flex items-center space-x-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                          <span className="truncate"><strong>Client:</strong> {complaint.client?.name}</span>
                         </div>
-                        <div className="flex items-center space-x-2 text-gray-400">
-                          <MapPin className="h-4 w-4" />
-                          <span><strong>Location:</strong> {complaint.location}</span>
+                        <div className={`flex items-center space-x-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                          <span className="truncate"><strong>Location:</strong> {complaint.location}</span>
                         </div>
                       </div>
                       
                       <div className="space-y-2">
-                        <div className="flex items-center space-x-2 text-gray-400">
-                          <Calendar className="h-4 w-4" />
-                          <span><strong>Resolved:</strong> {new Date(complaint.updatedAt).toLocaleDateString()}</span>
+                        <div className={`flex items-center space-x-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                          <span className="whitespace-nowrap"><strong>Resolved:</strong> {new Date(complaint.updatedAt).toLocaleDateString()}</span>
                         </div>
-                        <div className="text-gray-400">
+                        <div className={`whitespace-nowrap ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                           <strong>ID:</strong> {complaint.complaintId}
                         </div>
                       </div>
                     </div>
 
-                    {/* Photos */}
+                    {/* Photos section with theme updates */}
                     {complaint.photos && Array.isArray(complaint.photos) && complaint.photos.length > 0 && (
                       <div className="mb-4">
                         <div className="flex items-center justify-between mb-3">
-                          <p className="text-sm font-semibold text-gray-300">
+                          <p className={`text-xs sm:text-sm font-semibold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                             Photos ({complaint.photos.length})
                           </p>
                         </div>
-                        <div className="flex flex-wrap gap-3">
-                          {complaint.photos.slice(0, 6).map((photo, index) => (
+                        <div className="flex flex-wrap gap-2 sm:gap-3">
+                          {complaint.photos.slice(0, 4).map((photo, index) => (
                             <div key={index} className="relative group">
                               <img
                                 src={photo.url}
                                 alt={`Complaint photo ${index + 1}`}
-                                className="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border border-gray-600"
+                                className={`w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border ${
+                                  isDarkMode ? 'border-gray-600' : 'border-gray-300'
+                                }`}
                                 onClick={() => openPhotoModal(complaint.photos, index)}
                               />
                               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
@@ -271,7 +279,7 @@ const ResolvedAssignments = () => {
                                     }}
                                     className="p-1 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all"
                                   >
-                                    <Eye className="h-3 w-3 text-white" />
+                                    <Eye className="h-2 w-2 sm:h-3 sm:w-3 text-white" />
                                   </button>
                                   <button
                                     onClick={(e) => {
@@ -280,18 +288,19 @@ const ResolvedAssignments = () => {
                                     }}
                                     className="p-1 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all"
                                   >
-                                    <Download className="h-3 w-3 text-white" />
+                                    <Download className="h-2 w-2 sm:h-3 sm:w-3 text-white" />
                                   </button>
                                 </div>
                               </div>
                             </div>
                           ))}
-                          {complaint.photos.length > 6 && (
-                            <div 
-                              className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-600 flex items-center justify-center text-xs font-medium text-gray-400 cursor-pointer hover:bg-gray-700/50 transition-all"
-                              onClick={() => openPhotoModal(complaint.photos, 6)}
-                            >
-                              +{complaint.photos.length - 6}
+                          {complaint.photos.length > 4 && (
+                            <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-lg border-2 border-dashed flex items-center justify-center text-xs font-medium cursor-pointer transition-all ${
+                              isDarkMode 
+                                ? 'border-gray-600 text-gray-400 hover:bg-gray-700/50'
+                                : 'border-gray-300 text-gray-500 hover:bg-gray-100'
+                            }`}>
+                              +{complaint.photos.length - 4}
                             </div>
                           )}
                         </div>
@@ -300,8 +309,14 @@ const ResolvedAssignments = () => {
 
                     {/* Technician Notes */}
                     {complaint.technicianNotes && (
-                      <div className="p-3 bg-green-900/20 border border-green-700/50 rounded-lg">
-                        <p className="text-sm text-green-300">
+                      <div className={`p-3 rounded-lg border ${
+                        isDarkMode 
+                          ? 'bg-green-900/20 border-green-700/50'
+                          : 'bg-green-50 border-green-200'
+                      }`}>
+                        <p className={`text-xs sm:text-sm ${
+                          isDarkMode ? 'text-green-300' : 'text-green-700'
+                        }`}>
                           <strong>Resolution Notes:</strong> {complaint.technicianNotes}
                         </p>
                       </div>
@@ -309,9 +324,9 @@ const ResolvedAssignments = () => {
                   </div>
 
                   {/* Status Icon */}
-                  <div className="ml-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg">
-                      <CheckCircle className="h-6 w-6 text-white" />
+                  <div className="flex justify-center lg:ml-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg">
+                      <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                     </div>
                   </div>
                 </div>

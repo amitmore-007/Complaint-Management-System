@@ -153,19 +153,21 @@ const AdminAssets = () => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-white">Asset Management</h1>
-            <p className="text-gray-400 mt-1">Manage equipment and view submission records</p>
+            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Asset Management</h1>
+            <p className={`mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Manage equipment and view submission records</p>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-1 bg-gray-800/50 rounded-xl p-1">
+        <div className={`flex space-x-1 rounded-xl p-1 ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-100'}`}>
           <button
             onClick={() => setActiveTab('manage')}
             className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
               activeTab === 'manage'
                 ? 'bg-blue-600 text-white shadow-lg'
-                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                : isDarkMode 
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white'
             }`}
           >
             Manage List
@@ -175,7 +177,9 @@ const AdminAssets = () => {
             className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
               activeTab === 'records'
                 ? 'bg-blue-600 text-white shadow-lg'
-                : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                : isDarkMode 
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white'
             }`}
           >
             View Submitted Records
@@ -195,18 +199,23 @@ const AdminAssets = () => {
               {/* Search and Add */}
               <div className="flex justify-between items-center gap-4">
                 <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`} />
                   <input
                     type="text"
                     placeholder="Search equipment..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-colors ${
+                      isDarkMode 
+                        ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                    }`}
                   />
                 </div>
                 <button
-                  onClick={() => setShowAddModal(true)
-                  }
+                  onClick={() => setShowAddModal(true)}
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium flex items-center space-x-2 transition-colors"
                 >
                   <Plus className="h-5 w-5" />
@@ -224,38 +233,60 @@ const AdminAssets = () => {
                   {filteredEquipment.map((item) => (
                     <motion.div
                       key={item._id}
-                      className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 hover:border-gray-600 transition-colors"
+                      className={`border rounded-xl p-6 transition-colors ${
+                        isDarkMode 
+                          ? 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
+                          : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+                      }`}
                       whileHover={{ scale: 1.02 }}
                     >
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-blue-600/20 rounded-xl flex items-center justify-center">
-                            <Package className="h-6 w-6 text-blue-400" />
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                            isDarkMode ? 'bg-blue-600/20' : 'bg-blue-100'
+                          }`}>
+                            <Package className={`h-6 w-6 ${
+                              isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                            }`} />
                           </div>
                           <div>
-                            <h3 className="font-semibold text-white">{item.name}</h3>
+                            <h3 className={`font-semibold ${
+                              isDarkMode ? 'text-white' : 'text-gray-900'
+                            }`}>{item.name}</h3>
                             {item.category && (
-                              <span className="text-sm text-gray-400">{item.category}</span>
+                              <span className={`text-sm ${
+                                isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                              }`}>{item.category}</span>
                             )}
                           </div>
                         </div>
                         <div className="flex space-x-2">
                           <button
                             onClick={() => openEditModal(item)}
-                            className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                            className={`p-2 rounded-lg transition-colors ${
+                              isDarkMode 
+                                ? 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/10'
+                                : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                            }`}
                           >
                             <Edit className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteEquipment(item._id)}
-                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                            className={`p-2 rounded-lg transition-colors ${
+                              isDarkMode 
+                                ? 'text-gray-400 hover:text-red-400 hover:bg-red-500/10'
+                                : 'text-gray-500 hover:text-red-600 hover:bg-red-50'
+                            }`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </div>
                       {item.description && (
-                        <p className="text-gray-300 text-sm">{item.description}</p>
+                        <p className={`text-sm ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                        }`}>{item.description}</p>
                       )}
                     </motion.div>
                   ))}
@@ -272,13 +303,19 @@ const AdminAssets = () => {
             >
               {/* Search */}
               <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 ${
+                  isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                }`} />
                 <input
                   type="text"
                   placeholder="Search by store or technician..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-colors ${
+                    isDarkMode 
+                      ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                  }`}
                 />
               </div>
 
@@ -292,14 +329,22 @@ const AdminAssets = () => {
                   {filteredRecords.map((record) => (
                     <motion.div
                       key={record._id}
-                      className="bg-gray-800/50 border border-gray-700 rounded-xl p-6 hover:border-gray-600 transition-colors cursor-pointer"
+                      className={`border rounded-xl p-6 transition-colors cursor-pointer ${
+                        isDarkMode 
+                          ? 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
+                          : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-md'
+                      }`}
                       onClick={() => openRecordModal(record)}
                       whileHover={{ scale: 1.01 }}
                     >
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h3 className="font-semibold text-white text-lg">{record.storeName}</h3>
-                          <div className="flex items-center space-x-4 mt-2 text-sm text-gray-400">
+                          <h3 className={`font-semibold text-lg ${
+                            isDarkMode ? 'text-white' : 'text-gray-900'
+                          }`}>{record.storeName}</h3>
+                          <div className={`flex items-center space-x-4 mt-2 text-sm ${
+                            isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                          }`}>
                             <div className="flex items-center space-x-1">
                               <User className="h-4 w-4" />
                               <span>{record.technician?.name}</span>
@@ -310,11 +355,17 @@ const AdminAssets = () => {
                             </div>
                           </div>
                         </div>
-                        <button className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
+                        <button className={`p-2 rounded-lg transition-colors ${
+                          isDarkMode 
+                            ? 'text-blue-400 hover:bg-blue-500/10'
+                            : 'text-blue-600 hover:bg-blue-50'
+                        }`}>
                           <Eye className="h-5 w-5" />
                         </button>
                       </div>
-                      <div className="text-sm text-gray-300">
+                      <div className={`text-sm ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                      }`}>
                         <span className="font-medium">{record.equipment?.length || 0}</span> equipment items recorded
                       </div>
                     </motion.div>
@@ -339,13 +390,19 @@ const AdminAssets = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-gray-800 rounded-2xl p-6 w-full max-w-md"
+                className={`rounded-2xl p-6 w-full max-w-md ${
+                  isDarkMode ? 'bg-gray-800' : 'bg-white'
+                }`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h2 className="text-xl font-bold text-white mb-6">Add New Equipment</h2>
+                <h2 className={`text-xl font-bold mb-6 ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>Add New Equipment</h2>
                 <form onSubmit={handleAddEquipment} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className={`block text-sm font-medium mb-2 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       Equipment Name *
                     </label>
                     <input
@@ -353,36 +410,56 @@ const AdminAssets = () => {
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className={`w-full px-4 py-3 border rounded-xl transition-colors ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                      }`}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className={`block text-sm font-medium mb-2 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       Category
                     </label>
                     <input
                       type="text"
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className={`w-full px-4 py-3 border rounded-xl transition-colors ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                      }`}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className={`block text-sm font-medium mb-2 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       Description
                     </label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className={`w-full px-4 py-3 border rounded-xl transition-colors ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                      }`}
                     />
                   </div>
                   <div className="flex space-x-3">
                     <button
                       type="button"
                       onClick={() => setShowAddModal(false)}
-                      className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"
+                      className={`flex-1 py-3 px-4 rounded-xl transition-colors ${
+                        isDarkMode 
+                          ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                      }`}
                     >
                       Cancel
                     </button>
@@ -413,14 +490,20 @@ const AdminAssets = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-gray-800 rounded-2xl p-6 w-full max-w-md"
+                className={`rounded-2xl p-6 w-full max-w-md ${
+                  isDarkMode ? 'bg-gray-800' : 'bg-white'
+                }`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <h2 className="text-xl font-bold text-white mb-6">Edit Equipment</h2>
+                <h2 className={`text-xl font-bold mb-6 ${
+                  isDarkMode ? 'text-white' : 'text-gray-900'
+                }`}>Edit Equipment</h2>
                 <form onSubmit={handleEditEquipment} className="space-y-4">
                   {/* Same form fields as Add Modal */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className={`block text-sm font-medium mb-2 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       Equipment Name *
                     </label>
                     <input
@@ -428,36 +511,56 @@ const AdminAssets = () => {
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className={`w-full px-4 py-3 border rounded-xl transition-colors ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                      }`}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className={`block text-sm font-medium mb-2 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       Category
                     </label>
                     <input
                       type="text"
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className={`w-full px-4 py-3 border rounded-xl transition-colors ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                      }`}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className={`block text-sm font-medium mb-2 ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       Description
                     </label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
-                      className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      className={`w-full px-4 py-3 border rounded-xl transition-colors ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                      }`}
                     />
                   </div>
                   <div className="flex space-x-3">
                     <button
                       type="button"
                       onClick={() => setShowEditModal(false)}
-                      className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"
+                      className={`flex-1 py-3 px-4 rounded-xl transition-colors ${
+                        isDarkMode 
+                          ? 'bg-gray-700 hover:bg-gray-600 text-white'
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                      }`}
                     >
                       Cancel
                     </button>
@@ -488,13 +591,19 @@ const AdminAssets = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-gray-800 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+                className={`rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto ${
+                  isDarkMode ? 'bg-gray-800' : 'bg-white'
+                }`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex justify-between items-center mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-white">{selectedRecord.storeName}</h2>
-                    <div className="flex items-center space-x-4 mt-2 text-gray-400">
+                    <h2 className={`text-2xl font-bold ${
+                      isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>{selectedRecord.storeName}</h2>
+                    <div className={`flex items-center space-x-4 mt-2 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                    }`}>
                       <span>By: {selectedRecord.technician?.name}</span>
                       <span>•</span>
                       <span>{new Date(selectedRecord.submissionDate).toLocaleString()}</span>
@@ -502,7 +611,11 @@ const AdminAssets = () => {
                   </div>
                   <button
                     onClick={() => setShowRecordModal(false)}
-                    className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                    className={`p-2 rounded-lg transition-colors ${
+                      isDarkMode 
+                        ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                    }`}
                   >
                     <X className="h-6 w-6" />
                   </button>
@@ -515,12 +628,14 @@ const AdminAssets = () => {
                       className={`flex justify-between items-center p-4 rounded-xl border ${
                         item.isPresent 
                           ? 'bg-green-500/10 border-green-500/30' 
-                          : 'bg-gray-700/50 border-gray-600'
+                          : isDarkMode 
+                            ? 'bg-gray-700/50 border-gray-600'
+                            : 'bg-gray-50 border-gray-200'
                       }`}
                     >
                       <div className="flex items-center space-x-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          item.isPresent ? 'bg-green-500' : 'bg-gray-600'
+                          item.isPresent ? 'bg-green-500' : isDarkMode ? 'bg-gray-600' : 'bg-gray-400'
                         }`}>
                           {item.isPresent ? (
                             <Check className="h-5 w-5 text-white" />
@@ -528,10 +643,14 @@ const AdminAssets = () => {
                             <X className="h-5 w-5 text-white" />
                           )}
                         </div>
-                        <span className="text-white font-medium">{item.name}</span>
+                        <span className={`font-medium ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>{item.name}</span>
                       </div>
                       {item.isPresent && (
-                        <span className="text-white font-semibold">
+                        <span className={`font-semibold ${
+                          isDarkMode ? 'text-white' : 'text-gray-900'
+                        }`}>
                           Count: {item.count}
                         </span>
                       )}
@@ -540,9 +659,13 @@ const AdminAssets = () => {
                 </div>
 
                 {selectedRecord.notes && (
-                  <div className="mt-6 p-4 bg-gray-700/50 rounded-xl">
-                    <h4 className="font-semibold text-white mb-2">Notes:</h4>
-                    <p className="text-gray-300">{selectedRecord.notes}</p>
+                  <div className={`mt-6 p-4 rounded-xl ${
+                    isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'
+                  }`}>
+                    <h4 className={`font-semibold mb-2 ${
+                      isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>Notes:</h4>
+                    <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>{selectedRecord.notes}</p>
                   </div>
                 )}
               </motion.div>
