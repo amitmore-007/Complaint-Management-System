@@ -22,10 +22,23 @@ export const getEquipmentList = async (req, res) => {
 // Create new equipment
 export const createEquipment = async (req, res) => {
   try {
-    const { name, description, category } = req.body;
+    const { name } = req.body;
 
-    // Check if equipment already exists
-    const existingEquipment = await Equipment.findOne({ name: name.trim() });
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Equipment name is required'
+      });
+    }
+
+    const trimmedName = name.trim();
+    
+    // Check if equipment already exists (case-insensitive)
+    const existingEquipment = await Equipment.findOne({ 
+      name: { $regex: new RegExp(`^${trimmedName}$`, 'i') },
+      isActive: true 
+    });
+    
     if (existingEquipment) {
       return res.status(400).json({
         success: false,
@@ -34,9 +47,7 @@ export const createEquipment = async (req, res) => {
     }
 
     const equipment = new Equipment({
-      name: name.trim(),
-      description: description?.trim(),
-      category: category?.trim()
+      name: trimmedName
     });
 
     await equipment.save();
@@ -59,7 +70,7 @@ export const createEquipment = async (req, res) => {
 export const updateEquipment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, category, isActive } = req.body;
+    const { name, isActive } = req.body;
 
     const equipment = await Equipment.findById(id);
     if (!equipment) {
@@ -69,12 +80,15 @@ export const updateEquipment = async (req, res) => {
       });
     }
 
-    // Check if name is being changed and if it conflicts
+    // Check if name is being changed and if it conflicts (case-insensitive)
     if (name && name.trim() !== equipment.name) {
+      const trimmedName = name.trim();
       const existingEquipment = await Equipment.findOne({ 
-        name: name.trim(),
-        _id: { $ne: id }
+        name: { $regex: new RegExp(`^${trimmedName}$`, 'i') },
+        _id: { $ne: id },
+        isActive: true
       });
+      
       if (existingEquipment) {
         return res.status(400).json({
           success: false,
@@ -83,18 +97,9 @@ export const updateEquipment = async (req, res) => {
       }
     }
 
-    // Update fields - handle empty strings properly
-    if (name !== undefined) {
+    // Update fields
+    if (name !== undefined && name.trim()) {
       equipment.name = name.trim();
-    }
-    
-    // For description and category, allow empty strings to clear the field
-    if (description !== undefined) {
-      equipment.description = description ? description.trim() : '';
-    }
-    
-    if (category !== undefined) {
-      equipment.category = category ? category.trim() : '';
     }
     
     if (isActive !== undefined) {
@@ -274,8 +279,7 @@ export const getAssetRecordById = async (req, res) => {
     const { id } = req.params;
 
     const record = await AssetRecord.findById(id)
-      .populate('technician', 'name phoneNumber')
-      .populate('equipment.equipmentId', 'name description category');
+      .populate('technician', 'name phoneNumber');
 
     if (!record) {
       return res.status(404).json({

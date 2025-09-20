@@ -23,6 +23,7 @@ import { useTheme } from '../../context/ThemeContext';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import useAuthStore from '../../store/authStore';
 import api from '../../lib/axios';
+import { toast } from 'react-toastify';
 
 const AdminDashboard = () => {
   const { isDarkMode } = useTheme();
@@ -44,6 +45,10 @@ const AdminDashboard = () => {
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [currentComplaintPhotos, setCurrentComplaintPhotos] = useState([]);
+  const [formData, setFormData] = useState({ name: '' });
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedEquipment, setSelectedEquipment] = useState(null);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -186,6 +191,33 @@ const AdminDashboard = () => {
       link: '/admin/technicians'
     }
   ];
+
+  const handleAddEquipment = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/equipment/create', formData);
+      toast.success('Equipment added successfully');
+      setShowAddModal(false);
+      setFormData({ name: '' });
+      fetchEquipment();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to add equipment');
+    }
+  };
+
+  const handleEditEquipment = async (e) => {
+    e.preventDefault();
+    try {
+      await api.put(`/equipment/${selectedEquipment._id}`, formData);
+      toast.success('Equipment updated successfully');
+      setShowEditModal(false);
+      setSelectedEquipment(null);
+      setFormData({ name: '' });
+      fetchEquipment();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update equipment');
+    }
+  };
 
   if (isLoading) {
     return (

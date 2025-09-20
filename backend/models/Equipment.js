@@ -6,14 +6,6 @@ const equipmentSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  description: {
-    type: String,
-    trim: true
-  },
-  category: {
-    type: String,
-    trim: true
-  },
   isActive: {
     type: Boolean,
     default: true
@@ -23,3 +15,4 @@ const equipmentSchema = new mongoose.Schema({
 });
 
 export default mongoose.model('Equipment', equipmentSchema);
+  

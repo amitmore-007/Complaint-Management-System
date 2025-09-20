@@ -32,9 +32,7 @@ const AdminAssets = () => {
   const [selectedEquipment, setSelectedEquipment] = useState(null);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: ''
+    name: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -80,28 +78,44 @@ const AdminAssets = () => {
 
   const handleAddEquipment = async (e) => {
     e.preventDefault();
+    
+    if (!formData.name || !formData.name.trim()) {
+      toast.error('Please enter equipment name');
+      return;
+    }
+    
     try {
-      await api.post('/equipment/create', formData);
+      await api.post('/equipment/create', { name: formData.name.trim() });
       toast.success('Equipment added successfully');
       setShowAddModal(false);
-      setFormData({ name: '', description: '', category: '' });
+      setFormData({ name: '' });
       fetchEquipment();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to add equipment');
+      console.error('Add equipment error:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to add equipment';
+      toast.error(errorMessage);
     }
   };
 
   const handleEditEquipment = async (e) => {
     e.preventDefault();
+    
+    if (!formData.name || !formData.name.trim()) {
+      toast.error('Please enter equipment name');
+      return;
+    }
+    
     try {
-      await api.put(`/equipment/${selectedEquipment._id}`, formData);
+      await api.put(`/equipment/${selectedEquipment._id}`, { name: formData.name.trim() });
       toast.success('Equipment updated successfully');
       setShowEditModal(false);
       setSelectedEquipment(null);
-      setFormData({ name: '', description: '', category: '' });
+      setFormData({ name: '' });
       fetchEquipment();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update equipment');
+      console.error('Edit equipment error:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to update equipment';
+      toast.error(errorMessage);
     }
   };
 
@@ -120,9 +134,7 @@ const AdminAssets = () => {
   const openEditModal = (item) => {
     setSelectedEquipment(item);
     setFormData({
-      name: item.name,
-      description: item.description || '',
-      category: item.category || ''
+      name: item.name
     });
     setShowEditModal(true);
   };
@@ -138,8 +150,7 @@ const AdminAssets = () => {
   };
 
   const filteredEquipment = equipment.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.category && item.category.toLowerCase().includes(searchTerm.toLowerCase()))
+    item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const filteredRecords = assetRecords.filter(record =>
@@ -253,11 +264,6 @@ const AdminAssets = () => {
                             <h3 className={`font-semibold ${
                               isDarkMode ? 'text-white' : 'text-gray-900'
                             }`}>{item.name}</h3>
-                            {item.category && (
-                              <span className={`text-sm ${
-                                isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                              }`}>{item.category}</span>
-                            )}
                           </div>
                         </div>
                         <div className="flex space-x-2">
@@ -283,11 +289,6 @@ const AdminAssets = () => {
                           </button>
                         </div>
                       </div>
-                      {item.description && (
-                        <p className={`text-sm ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                        }`}>{item.description}</p>
-                      )}
                     </motion.div>
                   ))}
                 </div>
@@ -409,52 +410,22 @@ const AdminAssets = () => {
                       type="text"
                       required
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) => setFormData({ name: e.target.value })}
+                      placeholder="Enter equipment name"
                       className={`w-full px-4 py-3 border rounded-xl transition-colors ${
                         isDarkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Category
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className={`w-full px-4 py-3 border rounded-xl transition-colors ${
-                        isDarkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Description
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      rows={3}
-                      className={`w-full px-4 py-3 border rounded-xl transition-colors ${
-                        isDarkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
                       }`}
                     />
                   </div>
                   <div className="flex space-x-3">
                     <button
                       type="button"
-                      onClick={() => setShowAddModal(false)}
+                      onClick={() => {
+                        setShowAddModal(false);
+                        setFormData({ name: '' });
+                      }}
                       className={`flex-1 py-3 px-4 rounded-xl transition-colors ${
                         isDarkMode 
                           ? 'bg-gray-700 hover:bg-gray-600 text-white'
@@ -499,7 +470,6 @@ const AdminAssets = () => {
                   isDarkMode ? 'text-white' : 'text-gray-900'
                 }`}>Edit Equipment</h2>
                 <form onSubmit={handleEditEquipment} className="space-y-4">
-                  {/* Same form fields as Add Modal */}
                   <div>
                     <label className={`block text-sm font-medium mb-2 ${
                       isDarkMode ? 'text-gray-300' : 'text-gray-700'
@@ -510,52 +480,23 @@ const AdminAssets = () => {
                       type="text"
                       required
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={(e) => setFormData({ name: e.target.value })}
+                      placeholder="Enter equipment name"
                       className={`w-full px-4 py-3 border rounded-xl transition-colors ${
                         isDarkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Category
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className={`w-full px-4 py-3 border rounded-xl transition-colors ${
-                        isDarkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Description
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      rows={3}
-                      className={`w-full px-4 py-3 border rounded-xl transition-colors ${
-                        isDarkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
                       }`}
                     />
                   </div>
                   <div className="flex space-x-3">
                     <button
                       type="button"
-                      onClick={() => setShowEditModal(false)}
+                      onClick={() => {
+                        setShowEditModal(false);
+                        setSelectedEquipment(null);
+                        setFormData({ name: '' });
+                      }}
                       className={`flex-1 py-3 px-4 rounded-xl transition-colors ${
                         isDarkMode 
                           ? 'bg-gray-700 hover:bg-gray-600 text-white'

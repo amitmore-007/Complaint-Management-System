@@ -159,32 +159,38 @@ const Landing = () => {
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="flex justify-between items-center py-4 sm:py-6">
             <motion.div 
-              className="flex items-center space-x-3"
+              className="flex items-center space-x-2 sm:space-x-3"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
-                <Shield className="h-6 w-6 text-white" />
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
+                <Shield className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
                 FixFlow
               </span>
             </motion.div>
             
-            <div className="flex items-center space-x-4">
-              <ThemeToggle />
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="hidden sm:block">
+                <ThemeToggle />
+              </div>
               <motion.button
                 onClick={handleGetStarted}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold text-lg flex items-center group transition-all duration-300"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 sm:px-6 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-lg flex items-center group transition-all duration-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
-                Get Started
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-200" />
+                <span className="hidden sm:inline">Get Started</span>
+                <span className="sm:hidden">Start</span>
+                <ArrowRight className="ml-1 sm:ml-2 h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform duration-200" />
               </motion.button>
+              <div className="sm:hidden">
+                <ThemeToggle />
+              </div>
             </div>
           </div>
         </div>
@@ -192,7 +198,7 @@ const Landing = () => {
 
       {/* Hero Section */}
       <motion.section 
-        className="relative py-16 lg:py-24"
+        className="relative py-12 sm:py-16 lg:py-24"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -209,10 +215,11 @@ const Landing = () => {
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <div className="text-center lg:text-left">
+            {/* Content Section - Always first on mobile */}
+            <div className="text-center lg:text-left order-1 lg:order-1">
               <motion.h1 
                 variants={itemVariants}
-                className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold mb-6 lg:mb-8"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 sm:mb-6 lg:mb-8"
               >
                 <span className={`bg-gradient-to-r bg-clip-text text-transparent ${
                   isDarkMode 
@@ -229,7 +236,7 @@ const Landing = () => {
               
               <motion.p 
                 variants={itemVariants}
-                className={`text-lg sm:text-xl lg:text-2xl mb-6 lg:mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0 ${
+                className={`text-base sm:text-lg md:text-xl lg:text-2xl mb-6 lg:mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0 ${
                   isDarkMode ? 'text-gray-300' : 'text-gray-600'
                 }`}
               >
@@ -239,7 +246,7 @@ const Landing = () => {
               
               <motion.div 
                 variants={itemVariants}
-                className="flex flex-col sm:flex-row gap-4 mb-6 lg:mb-8 justify-center lg:justify-start"
+                className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 lg:mb-8 justify-center lg:justify-start"
               >
                 <motion.button
                   onClick={handleGetStarted}
@@ -249,7 +256,8 @@ const Landing = () => {
                 >
                   <span className="relative z-10 flex items-center">
                     <Zap className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-                    Start Managing Complaints
+                    <span className="hidden sm:inline">Start Managing Complaints</span>
+                    <span className="sm:hidden">Get Started</span>
                     <ArrowRight className="ml-2 sm:ml-3 h-5 w-5 sm:h-6 sm:w-6 group-hover:translate-x-1 transition-transform duration-200" />
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -265,46 +273,47 @@ const Landing = () => {
                   whileTap={{ scale: 0.98 }}
                 >
                   <Camera className="mr-2 sm:mr-3 h-5 w-5 sm:h-6 sm:w-6" />
-                  View Demo
+                  <span className="hidden sm:inline">View Demo</span>
+                  <span className="sm:hidden">Demo</span>
                 </motion.button>
               </motion.div>
               
               <motion.div 
                 variants={itemVariants}
-                className={`flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm justify-center lg:justify-start ${
+                className={`flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-6 text-xs sm:text-sm justify-center lg:justify-start ${
                   isDarkMode ? 'text-gray-400' : 'text-gray-600'
                 }`}
               >
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
+                <div className="flex items-center justify-center lg:justify-start space-x-2">
+                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
                   <span className="font-medium">Free to get started</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
+                <div className="flex items-center justify-center lg:justify-start space-x-2">
+                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
                   <span className="font-medium">No credit card required</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
+                <div className="flex items-center justify-center lg:justify-start space-x-2">
+                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
                   <span className="font-medium">Setup in 5 minutes</span>
                 </div>
               </motion.div>
             </div>
             
-            {/* Hero Dashboard Preview */}
+            {/* Hero Dashboard Preview - Now second on mobile */}
             <motion.div 
               variants={itemVariants}
-              className="relative order-first lg:order-last mt-8 lg:mt-0"
+              className="relative order-2 lg:order-2 mt-8 lg:mt-0"
             >
-              <div className={`relative rounded-3xl p-4 sm:p-6 shadow-2xl mx-auto max-w-md lg:max-w-none lg:ml-8 xl:ml-16 ${
+              <div className={`relative rounded-2xl sm:rounded-3xl p-3 sm:p-4 md:p-6 shadow-2xl mx-auto max-w-sm sm:max-w-md lg:max-w-none lg:ml-8 xl:ml-16 ${
                 isDarkMode 
                   ? 'bg-gradient-to-br from-gray-800/50 to-gray-700/50' 
                   : 'bg-gradient-to-br from-blue-100 to-green-100'
               }`}>
                 <DashboardPreview isDarkMode={isDarkMode} />
                 
-                {/* Floating Status Cards - Hide on mobile for better UX */}
+                {/* Floating Status Cards */}
                 <motion.div
-                  className={`hidden sm:block absolute -top-3 -right-3 p-3 rounded-xl shadow-lg ${
+                  className={`hidden md:block absolute -top-3 -right-3 p-3 rounded-xl shadow-lg ${
                     isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white'
                   }`}
                   animate={{ y: [0, -8, 0] }}
@@ -321,7 +330,7 @@ const Landing = () => {
                 </motion.div>
                 
                 <motion.div
-                  className={`hidden sm:block absolute -bottom-3 -left-3 p-3 rounded-xl shadow-lg ${
+                  className={`hidden md:block absolute -bottom-3 -left-3 p-3 rounded-xl shadow-lg ${
                     isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white'
                   }`}
                   animate={{ y: [0, 8, 0] }}
@@ -407,7 +416,8 @@ const Landing = () => {
             }`}>
               Experience the future of complaint management with our comprehensive suite of features designed for efficiency and user satisfaction.
             </p>
-          </motion.div>
+          </motion.div
+          >
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {features.map((feature, index) => (
