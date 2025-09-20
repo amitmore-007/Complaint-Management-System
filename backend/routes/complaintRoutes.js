@@ -47,4 +47,37 @@ router.delete('/:id', authenticateClient, deleteComplaint);
 // Technician routes
 router.patch('/:id/status', authenticateTechnician, updateComplaintStatus);
 
+// Debug routes (only in development)
+if (process.env.NODE_ENV !== 'production') {
+  router.get('/debug/message-status/:messageId', async (req, res) => {
+    try {
+      const { messageId } = req.params;
+      const client = (await import('../config/twilio.js')).default;
+      
+      const message = await client.messages(messageId).fetch();
+      
+      res.json({
+        success: true,
+        message: {
+          sid: message.sid,
+          status: message.status,
+          errorCode: message.errorCode,
+          errorMessage: message.errorMessage,
+          dateCreated: message.dateCreated,
+          dateSent: message.dateSent,
+          dateUpdated: message.dateUpdated,
+          to: message.to,
+          from: message.from,
+          body: message.body
+        }
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+}
+
 export default router;

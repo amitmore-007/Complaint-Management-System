@@ -16,7 +16,7 @@ import {
 import toast from 'react-hot-toast';
 import { useTheme } from '../../context/ThemeContext';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import axios from 'axios';
+import api from '../../lib/axios';
 
 const CreateComplaint = () => {
   const { isDarkMode } = useTheme();
@@ -77,7 +77,7 @@ const CreateComplaint = () => {
         formData.append('photos', photo.file);
       });
 
-      await axios.post('/api/complaints', formData, {
+      await api.post('/client/complaints', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }

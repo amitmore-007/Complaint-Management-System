@@ -83,10 +83,23 @@ export const updateEquipment = async (req, res) => {
       }
     }
 
-    equipment.name = name?.trim() || equipment.name;
-    equipment.description = description?.trim() || equipment.description;
-    equipment.category = category?.trim() || equipment.category;
-    equipment.isActive = isActive !== undefined ? isActive : equipment.isActive;
+    // Update fields - handle empty strings properly
+    if (name !== undefined) {
+      equipment.name = name.trim();
+    }
+    
+    // For description and category, allow empty strings to clear the field
+    if (description !== undefined) {
+      equipment.description = description ? description.trim() : '';
+    }
+    
+    if (category !== undefined) {
+      equipment.category = category ? category.trim() : '';
+    }
+    
+    if (isActive !== undefined) {
+      equipment.isActive = isActive;
+    }
 
     await equipment.save();
 
@@ -283,4 +296,3 @@ export const getAssetRecordById = async (req, res) => {
     });
   }
 };
-    

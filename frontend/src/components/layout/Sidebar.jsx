@@ -11,7 +11,8 @@ import {
   LogOut,
   Shield,
   ClipboardList,
-  Package
+  Package,
+  CheckCircle
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import useAuthStore from '../../store/authStore';
@@ -40,6 +41,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/technician/dashboard' },
           { icon: ClipboardList, label: 'My Assignments', path: '/technician/assignments' },
+          { icon: CheckCircle, label: 'My Resolved Assignments', path: '/technician/resolved-assignments' },
           { icon: Package, label: 'Asset Management', path: '/technician/assets' },
         ];
       case 'admin':

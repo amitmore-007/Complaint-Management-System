@@ -25,6 +25,8 @@ import AdminAssets from './pages/admin/Assets';
 // Technician Pages
 import TechnicianDashboard from './pages/technician/Dashboard';
 import TechnicianAssets from './pages/technician/Assets';
+import TechnicianAssignments from './pages/technician/Assignments';
+import ResolvedAssignments from './pages/technician/ResolvedAssignments';
 
 import './App.css'
 
@@ -236,7 +238,13 @@ function App() {
             
             <Route path="/technician/assignments" element={
               <ProtectedRoute allowedRoles={['technician']}>
-                <TechnicianDashboard />
+                <TechnicianAssignments />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/technician/resolved-assignments" element={
+              <ProtectedRoute allowedRoles={['technician']}>
+                <ResolvedAssignments />
               </ProtectedRoute>
             } />
 

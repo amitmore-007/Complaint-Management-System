@@ -350,10 +350,11 @@ const AdminDashboard = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
+              className="fixed inset-0 bg-black/95 flex items-center justify-center z-[60]"
+              style={{ margin: 0, padding: 0 }}
               onClick={closePhotoModal}
             >
-              <div className="relative max-w-6xl max-h-[90vh] p-4" onClick={(e) => e.stopPropagation()}>
+              <div className="relative max-w-6xl max-h-[95vh] p-4" onClick={(e) => e.stopPropagation()}>
                 <button
                   onClick={closePhotoModal}
                   className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-10"
@@ -408,14 +409,15 @@ const AdminDashboard = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+              className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+              style={{ margin: 0, padding: 0, top: 0, left: 0, right: 0, bottom: 0 }}
               onClick={closeDetailsModal}
             >
               <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-2xl shadow-2xl"
+                className="w-full max-w-4xl max-h-[95vh] mx-4 my-4 overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-2xl shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
@@ -438,127 +440,129 @@ const AdminDashboard = () => {
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-6 space-y-6">
-                  {/* Status and Priority */}
-                  <div className="flex items-center space-x-4">
-                    <span className={`px-4 py-2 text-sm font-semibold rounded-full ${getStatusColor(selectedComplaint.status)}`}>
-                      {selectedComplaint.status.replace('-', ' ').toUpperCase()}
-                    </span>
-                    <span className={`text-sm font-semibold capitalize ${getPriorityColor(selectedComplaint.priority)}`}>
-                      {selectedComplaint.priority} Priority
-                    </span>
-                  </div>
-
-                  {/* Description */}
-                  <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-                    <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
-                    <p className="text-gray-300 leading-relaxed">
-                      {selectedComplaint.description}
-                    </p>
-                  </div>
-
-                  {/* Details Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-                      <h4 className="font-semibold text-white mb-3">Client Information</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center space-x-2 text-gray-300">
-                          <Users className="h-4 w-4 text-gray-400" />
-                          <span>{selectedComplaint.client?.name}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-gray-300">
-                          <Phone className="h-4 w-4 text-gray-400" />
-                          <span>{selectedComplaint.client?.phoneNumber}</span>
-                        </div>
-                      </div>
+                {/* Content - Make it scrollable */}
+                <div className="overflow-y-auto max-h-[calc(95vh-120px)]">
+                  <div className="p-6 space-y-6">
+                    {/* Status and Priority */}
+                    <div className="flex items-center space-x-4">
+                      <span className={`px-4 py-2 text-sm font-semibold rounded-full ${getStatusColor(selectedComplaint.status)}`}>
+                        {selectedComplaint.status.replace('-', ' ').toUpperCase()}
+                      </span>
+                      <span className={`text-sm font-semibold capitalize ${getPriorityColor(selectedComplaint.priority)}`}>
+                        {selectedComplaint.priority} Priority
+                      </span>
                     </div>
-                    
-                    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-                      <h4 className="font-semibold text-white mb-3">Complaint Details</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center space-x-2 text-gray-300">
-                          <MapPin className="h-4 w-4 text-gray-400" />
-                          <span>{selectedComplaint.location}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-gray-300">
-                          <Calendar className="h-4 w-4 text-gray-400" />
-                          <span>{new Date(selectedComplaint.createdAt).toLocaleString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Technician Info */}
-                  {selectedComplaint.assignedTechnician && (
-                    <div className="bg-blue-900/20 border border-blue-700/50 rounded-xl p-4">
-                      <h4 className="font-semibold text-blue-300 mb-3">Assigned Technician</h4>
-                      <div className="space-y-1 text-sm">
-                        <p className="text-blue-200">
-                          <strong>Name:</strong> {selectedComplaint.assignedTechnician.name}
-                        </p>
-                        <p className="text-blue-200">
-                          <strong>Phone:</strong> {selectedComplaint.assignedTechnician.phoneNumber}
-                        </p>
-                        <p className="text-blue-200">
-                          <strong>Assigned:</strong> {new Date(selectedComplaint.assignedAt).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Photos */}
-                  {selectedComplaint.photos && selectedComplaint.photos.length > 0 && (
+                    {/* Description */}
                     <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-                      <h4 className="font-semibold text-white mb-4">
-                        Photos ({selectedComplaint.photos.length})
-                      </h4>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {selectedComplaint.photos.map((photo, index) => (
-                          <div key={index} className="relative group">
-                            <img
-                              src={photo.url}
-                              alt={`Complaint photo ${index + 1}`}
-                              className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() => openPhotoModal(selectedComplaint.photos, index)}
-                            />
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openPhotoModal(selectedComplaint.photos, index);
-                                  }}
-                                  className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all"
-                                >
-                                  <Eye className="h-4 w-4 text-white" />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    downloadPhoto(photo.url, `complaint-${selectedComplaint.complaintId}-photo-${index + 1}.jpg`);
-                                  }}
-                                  className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all"
-                                >
-                                  <Download className="h-4 w-4 text-white" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Technician Notes */}
-                  {selectedComplaint.technicianNotes && (
-                    <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
-                      <h4 className="font-semibold text-white mb-2">Technician Notes</h4>
-                      <p className="text-gray-300">
-                        {selectedComplaint.technicianNotes}
+                      <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
+                      <p className="text-gray-300 leading-relaxed">
+                        {selectedComplaint.description}
                       </p>
                     </div>
-                  )}
+
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
+                        <h4 className="font-semibold text-white mb-3">Client Information</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center space-x-2 text-gray-300">
+                            <Users className="h-4 w-4 text-gray-400" />
+                            <span>{selectedComplaint.client?.name}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 text-gray-300">
+                            <Phone className="h-4 w-4 text-gray-400" />
+                            <span>{selectedComplaint.client?.phoneNumber}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
+                        <h4 className="font-semibold text-white mb-3">Complaint Details</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center space-x-2 text-gray-300">
+                            <MapPin className="h-4 w-4 text-gray-400" />
+                            <span>{selectedComplaint.location}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 text-gray-300">
+                            <Calendar className="h-4 w-4 text-gray-400" />
+                            <span>{new Date(selectedComplaint.createdAt).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Technician Info */}
+                    {selectedComplaint.assignedTechnician && (
+                      <div className="bg-blue-900/20 border border-blue-700/50 rounded-xl p-4">
+                        <h4 className="font-semibold text-blue-300 mb-3">Assigned Technician</h4>
+                        <div className="space-y-1 text-sm">
+                          <p className="text-blue-200">
+                            <strong>Name:</strong> {selectedComplaint.assignedTechnician.name}
+                          </p>
+                          <p className="text-blue-200">
+                            <strong>Phone:</strong> {selectedComplaint.assignedTechnician.phoneNumber}
+                          </p>
+                          <p className="text-blue-200">
+                            <strong>Assigned:</strong> {new Date(selectedComplaint.assignedAt).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Photos */}
+                    {selectedComplaint.photos && selectedComplaint.photos.length > 0 && (
+                      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
+                        <h4 className="font-semibold text-white mb-4">
+                          Photos ({selectedComplaint.photos.length})
+                        </h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                          {selectedComplaint.photos.map((photo, index) => (
+                            <div key={index} className="relative group">
+                              <img
+                                src={photo.url}
+                                alt={`Complaint photo ${index + 1}`}
+                                className="w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => openPhotoModal(selectedComplaint.photos, index)}
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
+                                <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openPhotoModal(selectedComplaint.photos, index);
+                                    }}
+                                    className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all"
+                                  >
+                                    <Eye className="h-4 w-4 text-white" />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      downloadPhoto(photo.url, `complaint-${selectedComplaint.complaintId}-photo-${index + 1}.jpg`);
+                                    }}
+                                    className="p-2 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all"
+                                  >
+                                    <Download className="h-4 w-4 text-white" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Technician Notes */}
+                    {selectedComplaint.technicianNotes && (
+                      <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-4">
+                        <h4 className="font-semibold text-white mb-2">Technician Notes</h4>
+                        <p className="text-gray-300">
+                          {selectedComplaint.technicianNotes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             </motion.div>

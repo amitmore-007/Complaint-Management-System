@@ -18,7 +18,7 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import useAuthStore from '../../store/authStore';
-import axios from 'axios';
+import api from '../../lib/axios';
 
 const ClientDashboard = () => {
   const { isDarkMode } = useTheme();
@@ -41,17 +41,23 @@ const ClientDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('/api/complaints/my?limit=5');
-      const complaints = response.data.complaints;
       
-      setRecentComplaints(complaints);
+      // Fetch all complaints for stats calculation
+      const allComplaintsResponse = await api.get('/client/complaints');
+      const allComplaints = allComplaintsResponse.data.complaints;
       
-      // Calculate stats
+      // Fetch recent complaints (limited for display)
+      const recentComplaintsResponse = await api.get('/client/complaints?limit=5');
+      const recentComplaints = recentComplaintsResponse.data.complaints;
+      
+      setRecentComplaints(recentComplaints);
+      
+      // Calculate stats based on ALL complaints, not just recent ones
       const statsData = {
-        total: complaints.length,
-        pending: complaints.filter(c => c.status === 'pending').length,
-        inProgress: complaints.filter(c => c.status === 'in-progress').length,
-        resolved: complaints.filter(c => c.status === 'resolved').length
+        total: allComplaints.length,
+        pending: allComplaints.filter(c => c.status === 'pending').length,
+        inProgress: allComplaints.filter(c => c.status === 'in-progress').length,
+        resolved: allComplaints.filter(c => c.status === 'resolved').length
       };
       setStats(statsData);
     } catch (error) {

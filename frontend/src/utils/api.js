@@ -14,12 +14,17 @@ const api = axios.create({
   },
 });
 
-// Set axios defaults globally
+// Override axios defaults to ensure all requests go to backend
 axios.defaults.baseURL = API_BASE_URL;
 axios.defaults.timeout = 30000;
 
 // Request interceptor for both instances
 const requestInterceptor = (config) => {
+  // Ensure the URL is absolute to prevent frontend server conflicts
+  if (config.url && !config.url.startsWith('http')) {
+    config.url = `${API_BASE_URL}${config.url.startsWith('/') ? config.url : `/${config.url}`}`;
+  }
+  
   const token = localStorage.getItem('auth-storage');
   if (token) {
     try {

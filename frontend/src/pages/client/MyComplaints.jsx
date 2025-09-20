@@ -25,7 +25,7 @@ import {
 import toast from 'react-hot-toast';
 import { useTheme } from '../../context/ThemeContext';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import axios from 'axios';
+import api from '../../lib/axios';
 
 const MyComplaints = () => {
   const { isDarkMode } = useTheme();
@@ -51,7 +51,7 @@ const MyComplaints = () => {
   const fetchComplaints = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('/api/complaints/my');
+      const response = await api.get('/client/complaints');
       setComplaints(response.data.complaints);
     } catch (error) {
       console.error('Failed to fetch complaints:', error);
@@ -82,17 +82,6 @@ const MyComplaints = () => {
     setFilteredComplaints(filtered);
   };
 
-  const deleteComplaint = async (complaintId) => {
-    try {
-      await axios.delete(`/api/complaints/${complaintId}`);
-      toast.success('Complaint deleted successfully');
-      fetchComplaints();
-      setDeleteConfirmation(null);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to delete complaint');
-    }
-  };
-
   const updateComplaint = async (complaintId, updateData, newPhotos = [], removedPhotoIds = []) => {
     try {
       setIsUpdating(true);
@@ -116,14 +105,14 @@ const MyComplaints = () => {
           formData.append('removedPhotos', id);
         });
         
-        await axios.put(`/api/complaints/${complaintId}`, formData, {
+        await api.put(`/client/complaints/${complaintId}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
       } else {
         // No photo changes, use regular JSON request
-        await axios.put(`/api/complaints/${complaintId}`, updateData);
+        await api.put(`/client/complaints/${complaintId}`, updateData);
       }
       
       toast.success('Complaint updated successfully');
@@ -133,6 +122,17 @@ const MyComplaints = () => {
       toast.error(error.response?.data?.message || 'Failed to update complaint');
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const deleteComplaint = async (complaintId) => {
+    try {
+      await api.delete(`/client/complaints/${complaintId}`);
+      toast.success('Complaint deleted successfully');
+      fetchComplaints();
+      setDeleteConfirmation(null);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete complaint');
     }
   };
 

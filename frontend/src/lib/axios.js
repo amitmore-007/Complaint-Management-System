@@ -1,39 +1,65 @@
 import axios from 'axios';
-import useAuthStore from '../store/authStore';
 
-// Create axios instance
+// Get API URL from environment variables with fallback
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+console.log('🔗 API Base URL:', API_BASE_URL);
+
+// Create main axios instance
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
-  timeout: 10000,
+  baseURL: API_BASE_URL,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
-    const token = useAuthStore.getState().token;
+    const token = localStorage.getItem('auth-storage');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      try {
+        const authData = JSON.parse(token);
+        if (authData.state?.token) {
+          config.headers.Authorization = `Bearer ${authData.state.token}`;
+        }
+      } catch (error) {
+        console.error('Error parsing auth token:', error);
+      }
     }
+
+    console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
     return config;
   },
   (error) => {
+    console.error('❌ Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor to handle auth errors
+// Response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+    return response;
+  },
   (error) => {
-    if (error.response?.status === 401) {
-      // Token is invalid or expired
-      const { logout } = useAuthStore.getState();
-      logout();
-      window.location.href = '/login';
+    console.error('❌ API Error:', error);
+
+    if (error.code === 'ERR_NETWORK') {
+      console.error('🔴 Network Error: Cannot connect to server. Please check if the backend is running on', API_BASE_URL);
     }
+
+    if (error.code === 'ECONNABORTED') {
+      console.error('⏱️ Request timeout: Server is taking too long to respond.');
+    }
+
+    if (error.response?.status === 401) {
+      localStorage.removeItem('auth-storage');
+      window.location.href = '/role-selection';
+    }
+
     return Promise.reject(error);
   }
 );

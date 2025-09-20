@@ -327,6 +327,7 @@ export const updateComplaintStatus = async (req, res) => {
     const { status, notes } = req.body;
     const technicianId = req.user.id;
 
+    console.log('🔄 ===== COMPLAINT STATUS UPDATE DEBUG START =====');
     console.log('🔄 Updating complaint status:', { id, status, notes, technicianId });
 
     // Find complaint assigned to this technician with client info
@@ -336,11 +337,20 @@ export const updateComplaintStatus = async (req, res) => {
     }).populate('client', 'name phoneNumber');
 
     if (!complaint) {
+      console.log('❌ Complaint not found or not assigned to technician');
       return res.status(404).json({
         success: false,
         message: 'Complaint not found or not assigned to you'
       });
     }
+
+    console.log('✅ Found complaint:', {
+      id: complaint._id,
+      complaintId: complaint.complaintId,
+      currentStatus: complaint.status,
+      clientName: complaint.client?.name,
+      clientPhone: complaint.client?.phoneNumber
+    });
 
     // Validate status transition
     const validTransitions = {
@@ -349,11 +359,14 @@ export const updateComplaintStatus = async (req, res) => {
     };
 
     if (!validTransitions[complaint.status]?.includes(status)) {
+      console.log('❌ Invalid status transition:', `${complaint.status} -> ${status}`);
       return res.status(400).json({
         success: false,
         message: `Cannot change status from ${complaint.status} to ${status}`
       });
     }
+
+    console.log('✅ Valid status transition:', `${complaint.status} -> ${status}`);
 
     // Update complaint
     const oldStatus = complaint.status;
@@ -369,19 +382,31 @@ export const updateComplaintStatus = async (req, res) => {
     }
 
     await complaint.save();
+    console.log('✅ Complaint status updated in database');
 
     // Send WhatsApp notification to client
     if (complaint.client && complaint.client.phoneNumber) {
+      console.log('📱 ===== NOTIFICATION PROCESS START =====');
+      console.log('📱 Preparing to send status update notification...');
+      console.log('Client details:', {
+        name: complaint.client.name,
+        phone: complaint.client.phoneNumber,
+        complaintId: complaint.complaintId,
+        newStatus: status
+      });
+
       const notification = new Notification({
         complaint: complaint._id,
         recipient: complaint.client.phoneNumber,
         type: 'status_update',
-        message: `Complaint ${complaint.complaintId} status updated to ${status}`
+        message: `Complaint ${complaint.complaintId} status updated to ${status}`,
+        status: 'pending'
       });
 
+      console.log('💾 Created notification record in database');
+
       try {
-        console.log('📱 Sending status update notification to client:', complaint.client.phoneNumber);
-        
+        console.log('📡 Calling sendStatusUpdateNotification...');
         const result = await sendStatusUpdateNotification(
           complaint.client.phoneNumber,
           complaint.complaintId,
@@ -389,11 +414,13 @@ export const updateComplaintStatus = async (req, res) => {
           complaint.client.name
         );
         
+        console.log('📱 Notification service response:', result);
+        
         if (result.success) {
           notification.status = 'sent';
           notification.twilioMessageId = result.messageId;
           notification.sentAt = new Date();
-          console.log('✅ Status update notification sent successfully');
+          console.log('✅ Status update notification sent successfully:', result.messageId);
         } else {
           notification.status = 'failed';
           notification.error = result.error;
@@ -402,13 +429,27 @@ export const updateComplaintStatus = async (req, res) => {
       } catch (notificationError) {
         notification.status = 'failed';
         notification.error = notificationError.message;
-        console.error('❌ Notification error:', notificationError);
+        console.error('❌ Notification service threw error:', notificationError);
       }
 
-      await notification.save();
+      try {
+        await notification.save();
+        console.log('💾 Notification record saved to database');
+      } catch (saveError) {
+        console.error('❌ Failed to save notification record:', saveError);
+      }
+
+      console.log('📱 ===== NOTIFICATION PROCESS END =====');
     } else {
       console.log('⚠️ Skipping notification - client or phone number not found');
+      console.log('Client object:', complaint.client);
     }
+
+    // Populate the response
+    await complaint.populate('client', 'name phoneNumber');
+    await complaint.populate('assignedTechnician', 'name phoneNumber');
+
+    console.log('🔄 ===== COMPLAINT STATUS UPDATE DEBUG END =====');
 
     res.status(200).json({
       success: true,
@@ -416,10 +457,15 @@ export const updateComplaintStatus = async (req, res) => {
       complaint
     });
   } catch (error) {
+    console.error('❌ ===== COMPLAINT STATUS UPDATE ERROR =====');
     console.error('Update complaint status error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('❌ ===== ERROR END =====');
+    
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -462,6 +508,40 @@ export const getComplaintById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Internal server error'
+    });
+  }
+};
+
+// Get resolved complaints for technician
+export const getResolvedComplaints = async (req, res) => {
+  try {
+    const technicianId = req.user.id;
+    
+    console.log('🔍 Fetching resolved complaints for technician:', technicianId);
+
+    // Find resolved complaints assigned to this technician
+    const complaints = await Complaint.find({
+      assignedTechnician: technicianId,
+      status: 'resolved'
+    })
+    .populate('client', 'name phoneNumber')
+    .populate('assignedBy', 'name')
+    .sort({ completedAt: -1, updatedAt: -1 });
+
+    console.log('✅ Found resolved complaints:', complaints.length);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        complaints
+      }
+    });
+  } catch (error) {
+    console.error('Get resolved complaints error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
