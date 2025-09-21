@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Shield, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import ThemeToggle from '../common/ThemeToggle';
@@ -30,15 +30,15 @@ const AuthLayout = ({ children, title, subtitle, showBackButton = true }) => {
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8 }}
-        className={`sticky top-0 z-10 backdrop-blur-lg border-b transition-colors duration-300 ${
+        className={`sticky top-0 z-50 backdrop-blur-lg border-b transition-colors duration-300 ${
           isDarkMode 
             ? 'bg-gray-900/80 border-gray-800/50' 
             : 'bg-white/80 border-gray-200/50'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-4">
+          <div className="flex justify-between items-center py-4 sm:py-6">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {showBackButton && (
                 <motion.button
                   onClick={() => navigate(-1)}
@@ -50,19 +50,27 @@ const AuthLayout = ({ children, title, subtitle, showBackButton = true }) => {
                   whileHover={{ x: -4 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
-                  <ArrowLeft className="h-5 w-5" />
-                  <span className="font-medium">Back</span>
+                  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="font-medium text-sm sm:text-base">Back</span>
                 </motion.button>
               )}
               
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center">
-                  <Shield className="h-6 w-6 text-white" />
+              <motion.div 
+                className="flex items-center space-x-2 sm:space-x-3"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                <div className="w-20 h-12 sm:w-30 sm:h-16 flex items-center justify-center overflow-hidden rounded-lg">
+                  <img 
+                    src="/assets/Logo.png" 
+                    alt="CMS Logo" 
+                    className="w-full h-full object-contain"
+                  />
                 </div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">
-                  FixFlow
+                <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent">
+                  CMS
                 </span>
-              </div>
+              </motion.div>
             </div>
             
             <ThemeToggle />

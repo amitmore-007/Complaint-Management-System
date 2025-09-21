@@ -37,7 +37,7 @@ export const sendOTP = async (phoneNumber, otp) => {
     
     console.log('📱 Formatted phone number:', formattedPhone);
     
-    const message = `🔐 Your FixFlow verification code is: *${otp}*\n\nThis code will expire in 10 minutes.\n\nDo not share this code with anyone. 🔒`;
+    const message = `🔐 Your CMS verification code is: *${otp}*\n\nThis code will expire in 10 minutes.\n\nDo not share this code with anyone. 🔒`;
 
     const result = await client.messages.create({
       body: message,
@@ -94,7 +94,7 @@ export const sendAssignmentNotification = async (phoneNumber, technicianName, co
     const message = `🔧 *Complaint Assignment Update*\n\n` +
                    `Your complaint #${complaintId} has been assigned to our technician *${technicianName}*.\n\n` +
                    `The technician will contact you soon to resolve your issue.\n\n` +
-                   `Thank you for choosing FixFlow! 🚀`;
+                   `Thank you for choosing CMS! 🚀`;
 
     const result = await client.messages.create({
       body: message,
@@ -119,7 +119,7 @@ export const sendAssignmentNotification = async (phoneNumber, technicianName, co
 
 export const sendProgressUpdate = async (clientPhone, complaintId, status) => {
   const statusMessages = {
-    'in-progress': `⚡ *FixFlow Update*
+    'in-progress': `⚡ *CMS Update*
 
 Great news! Work has started on your complaint *${complaintId}*.
 
@@ -127,11 +127,11 @@ Our technician is now working to resolve your issue. We'll keep you updated on t
 
 Thank you for your patience!`,
     
-    'resolved': `✅ *FixFlow - Issue Resolved*
+    'resolved': `✅ *CMS - Issue Resolved*
 
 Excellent! Your complaint *${complaintId}* has been successfully resolved.
 
-Thank you for choosing FixFlow. We hope our service met your expectations.
+Thank you for choosing CMS. We hope our service met your expectations.
 
 Please rate your experience in the app when convenient.`
   };
@@ -146,13 +146,13 @@ Please rate your experience in the app when convenient.`
 
 // Additional function for custom notifications
 export const sendCustomNotification = async (clientPhone, complaintId, customMessage) => {
-  const message = `📱 *FixFlow Notification*
+  const message = `📱 *CMS Notification*
 
 Complaint ID: *${complaintId}*
 
 ${customMessage}
 
-Thank you for choosing FixFlow!`;
+Thank you for choosing CMS!`;
   
   return await sendStatusUpdate(clientPhone, message);
 };
@@ -236,7 +236,7 @@ export const sendStatusUpdateNotification = async (phoneNumber, complaintId, sta
                  `Hi ${clientName}!\n\n` +
                  `Excellent news! Your complaint #${complaintId} has been successfully resolved.\n\n` +
                  `Status: *Completed*\n\n` +
-                 `Thank you for using FixFlow! We hope you're satisfied with our service. 🎉`;
+                 `Thank you for using CMS! We hope you're satisfied with our service. 🎉`;
         break;
         
       default:
@@ -245,7 +245,7 @@ export const sendStatusUpdateNotification = async (phoneNumber, complaintId, sta
                  `Hi ${clientName}!\n\n` +
                  `Your complaint #${complaintId} status has been updated.\n\n` +
                  `Status: *${status.replace('-', ' ').toUpperCase()}*\n\n` +
-                 `Thank you for choosing FixFlow! 🚀`;
+                 `Thank you for choosing CMS! 🚀`;
     }
 
     console.log('📱 Message to send:');

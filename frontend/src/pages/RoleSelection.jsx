@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Wrench, Shield, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Users, Wrench, ArrowLeft, ArrowRight, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext.jsx';
 import ThemeToggle from '../components/common/ThemeToggle.jsx';
@@ -176,14 +176,14 @@ const RoleSelection = () => {
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className={`sticky top-0 z-10 backdrop-blur-lg border-b transition-colors duration-300 ${
+        className={`sticky top-0 z-50 backdrop-blur-lg border-b transition-colors duration-300 ${
           isDarkMode 
             ? 'bg-gray-900/80 border-gray-800/50' 
             : 'bg-white/80 border-gray-200/50'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="flex justify-between items-center py-4 sm:py-6">
             <motion.button
               onClick={handleGoBack}
               className={`flex items-center space-x-2 transition-colors duration-200 ${
@@ -194,19 +194,27 @@ const RoleSelection = () => {
               whileHover={{ x: -4 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-              <ArrowLeft className="h-5 w-5" />
-              <span className="font-medium">Back to Home</span>
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="font-medium text-sm sm:text-base">Back to Home</span>
             </motion.button>
             
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
-                  <Shield className="h-6 w-6 text-white" />
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <motion.div 
+                className="flex items-center space-x-2 sm:space-x-3"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                <div className="w-20 h-12 sm:w-28 sm:h-16 flex items-center justify-center overflow-hidden rounded-lg">
+                  <img 
+                    src="/assets/Logo.png" 
+                    alt="CMS Logo" 
+                    className="w-full h-full object-contain"
+                  />
                 </div>
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                  FixFlow
+                <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                  CMS
                 </span>
-              </div>
+              </motion.div>
               <ThemeToggle />
             </div>
           </div>
@@ -214,7 +222,7 @@ const RoleSelection = () => {
       </motion.header>
 
       {/* Main Content */}
-      <div className="relative z-10 py-20">
+      <div className="relative z-10 py-12 sm:py-16 lg:py-20">
         <motion.div 
           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
           variants={containerVariants}
@@ -354,26 +362,26 @@ const RoleSelection = () => {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="relative"
+              className="relative flex flex-col items-center justify-center min-h-screen px-4"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
               {/* Central Hub */}
               <motion.div
-                className="w-32 h-32 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full shadow-2xl flex items-center justify-center relative"
+                className="w-24 h-24 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full shadow-2xl flex items-center justify-center relative mb-12"
                 animate={{ rotate: 360 }}
                 transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
               >
-                <Shield className="h-12 w-12 text-white" />
+                <div className="w-6 h-6 bg-white rounded-full"></div>
                 
                 {/* Orbiting Elements */}
                 {[0, 120, 240].map((rotation, i) => (
                   <motion.div
                     key={i}
-                    className="absolute w-4 h-4 bg-white rounded-full"
+                    className="absolute w-3 h-3 bg-white rounded-full"
                     style={{
-                      transformOrigin: "80px 0px",
+                      transformOrigin: "60px 0px",
                       transform: `rotate(${rotation}deg)`,
                     }}
                     animate={{ rotate: -360 }}
@@ -389,17 +397,22 @@ const RoleSelection = () => {
 
               {/* Loading Text */}
               <motion.div
-                className="absolute bottom-20 text-center"
+                className="text-center max-w-md"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
+                transition={{ delay: 0.3 }}
               >
-                <h3 className={`text-3xl font-bold mb-4 ${
-                  isDarkMode ? 'text-white' : 'text-gray-900'
-                }`}>
+                <motion.h3 
+                  className={`text-2xl sm:text-3xl font-bold mb-6 ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}
+                  animate={{ opacity: [0.7, 1, 0.7] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                >
                   Connecting to {roles.find(r => r.id === selectedRole)?.title} Portal
-                </h3>
-                <div className="flex items-center justify-center space-x-2 mb-2">
+                </motion.h3>
+                
+                <div className="flex items-center justify-center space-x-2 mb-4">
                   {[...Array(3)].map((_, i) => (
                     <motion.div
                       key={i}
@@ -417,9 +430,29 @@ const RoleSelection = () => {
                     />
                   ))}
                 </div>
-                <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                
+                <motion.p 
+                  className={`text-base sm:text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}
+                  animate={{ opacity: [0.6, 1, 0.6] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                >
                   Preparing your personalized experience...
-                </p>
+                </motion.p>
+
+                {/* Progress Indicator */}
+                <motion.div 
+                  className="mt-8 w-48 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mx-auto"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                >
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 1.8, ease: "easeInOut", delay: 0.2 }}
+                  />
+                </motion.div>
               </motion.div>
             </motion.div>
           </motion.div>
@@ -430,3 +463,4 @@ const RoleSelection = () => {
 };
 
 export default RoleSelection;
+

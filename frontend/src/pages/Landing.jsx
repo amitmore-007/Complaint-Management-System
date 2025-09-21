@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Shield, Wrench, Users, CheckCircle, Clock, Star, Phone, Award, BarChart3, HeadphonesIcon, Zap, Globe, MapPin, Camera, MessageSquare, Bell, Smartphone } from 'lucide-react';
+import { ArrowRight, Wrench, Users, CheckCircle, Clock, Star, Phone, Award, BarChart3, HeadphonesIcon, Zap, Globe, MapPin, Camera, MessageSquare, Bell, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext.jsx';
 import ThemeToggle from '../components/common/ThemeToggle.jsx';
@@ -94,7 +94,7 @@ const Landing = () => {
       company: "TechCorp Inc.",
       image: "/api/placeholder/64/64",
       rating: 5,
-      text: "FixFlow has transformed how we handle maintenance requests. The WhatsApp integration makes it so easy for our staff to report issues, and the real-time tracking keeps everyone informed."
+      text: "CMS has transformed how we handle maintenance requests. The WhatsApp integration makes it so easy for our staff to report issues, and the real-time tracking keeps everyone informed."
     },
     {
       name: "Mike Chen",
@@ -110,7 +110,7 @@ const Landing = () => {
       company: "Global Facilities",
       image: "/api/placeholder/64/64",
       rating: 5,
-      text: "The analytics and reporting features give us incredible insights. We've reduced our average resolution time by 40% since implementing FixFlow."
+      text: "The analytics and reporting features give us incredible insights. We've reduced our average resolution time by 40% since implementing CMS."
     }
   ];
 
@@ -165,11 +165,15 @@ const Landing = () => {
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
-                <Shield className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
+              <div className="w-20 h-12 sm:w-28 sm:h-14 flex items-center justify-center overflow-hidden  rounded-lg">
+                <img 
+                  src="/assets/Logo.png" 
+                  alt="CMS Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
-                FixFlow
+                CMS
               </span>
             </motion.div>
             
@@ -479,7 +483,7 @@ const Landing = () => {
             variants={itemVariants}
             className="text-lg sm:text-xl text-blue-100 mb-8 lg:mb-12 leading-relaxed max-w-2xl mx-auto"
           >
-            Join thousands of satisfied users who have streamlined their complaint management process with FixFlow. Start your free trial today.
+            Join thousands of satisfied users who have streamlined their complaint management process with CMS. Start your free trial today.
           </motion.p>
           
           <motion.div
@@ -509,14 +513,18 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                <Shield className="h-5 w-5 text-white" />
+              <div className="w-16 h-10 flex items-center justify-center overflow-hidden bg-white/10 rounded-lg">
+                <img 
+                  src="/assets/Logo.png" 
+                  alt="CMS Logo" 
+                  className="w-full h-full object-contain"
+                />
               </div>
-              <span className="text-xl font-bold">FixFlow</span>
+              <span className="text-xl font-bold">CMS</span>
             </div>
             
             <div className="text-center md:text-right text-gray-400">
-              <p>&copy; 2025 FixFlow. All rights reserved.</p>
+              <p>&copy; 2025 CMS. All rights reserved.</p>
               <p className="text-sm mt-1">Professional Complaint Management System</p>
             </div>
           </div>

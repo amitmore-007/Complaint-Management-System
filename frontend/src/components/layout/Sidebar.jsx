@@ -101,7 +101,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                   ? 'bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent'
                   : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent'
               }`}>
-                FixFlow
+                 CMS
               </h1>
               <p className={`text-sm capitalize font-medium ${
                 isDarkMode ? 'text-gray-400' : 'text-gray-600'

@@ -34,6 +34,8 @@ const corsOptions = {
       'http://localhost:5173',
       'http://localhost:4173',
       process.env.FRONTEND_URL,
+      'https://cemaintenance.in',
+      'https://www.cemaintenance.in',
       // Add your Render frontend URL here when deployed
     ].filter(Boolean);
 

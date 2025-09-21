@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔧 FixFlow
+# 🔧 CMS
 ### Professional Complaint Management System
 
 [![Built with React](https://img.shields.io/badge/Built%20with-React-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
@@ -19,9 +19,9 @@
 
 ## 🌟 Overview
 
-**FixFlow** is a comprehensive, modern complaint management system designed for organizations that need efficient service request handling. Built with cutting-edge technologies, it provides a seamless experience for clients, technicians, and administrators while ensuring security and scalability.
+**CMS** is a comprehensive, modern complaint management system designed for organizations that need efficient service request handling. Built with cutting-edge technologies, it provides a seamless experience for clients, technicians, and administrators while ensuring security and scalability.
 
-### ✨ What Makes FixFlow Special?
+### ✨ What Makes CMS Special?
 
 - 🔐 **WhatsApp OTP Authentication** - No passwords, just secure phone-based login
 - 📱 **Real-time Notifications** - Keep everyone informed via WhatsApp
@@ -134,8 +134,8 @@ Before you begin, ensure you have:
 
 #### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/yourusername/fixflow.git
-cd fixflow
+git clone https://github.com/yourusername/CMS.git
+cd CMS
 ```
 
 #### 2️⃣ Backend Setup
@@ -298,7 +298,7 @@ graph TB
 ### 📁 Project Structure
 
 ```
-FixFlow/
+CMS/
 ├── 📁 backend/
 │   ├── 📁 config/
 │   │   ├── 🗄️ database.js      # MongoDB connection
@@ -413,7 +413,7 @@ FixFlow/
 We welcome contributions from the community! Here's how you can help:
 
 ### 🐛 Bug Reports
-- Use the [GitHub Issues](https://github.com/yourusername/fixflow/issues) page
+- Use the [GitHub Issues](https://github.com/yourusername/CMS/issues) page
 - Include detailed steps to reproduce
 - Provide environment information
 
@@ -462,6 +462,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **Built with ❤️ by [Your Name](https://github.com/yourusername)**
 
-[⬆ Back to Top](#-fixflow)
+[⬆ Back to Top](#-CMS)
 
 </div>
