@@ -1,0 +1,459 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+    height: 100%;
+}
+
+.App {
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Ensure smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Fix for mobile webkit scrolling */
+body {
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+}
+
+/* Prevent layout shifts */
+.dashboard-layout {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+}
+
+/* Custom utility classes for overflow handling */
+.overflow-y-auto {
+  overflow-y: auto !important;
+}
+
+.overflow-hidden {
+  overflow: hidden !important;
+}
+
+/* Ensure proper scrolling in flex containers */
+.flex-1 {
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+.min-h-0 {
+  min-height: 0px;
+}
+
+/* Prevent content jumping */
+.main-content-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Additional custom styles can be added here */
+
+/* Fix for sidebar-content spacing issue */
+.fixed.inset-y-0 {
+  top: 0;
+  bottom: 0;
+}
+
+/* Remove any gap between sidebar and content */
+.min-h-screen.flex {
+  gap: 0 !important;
+}
+
+/* Make sure content starts right after sidebar */
+.lg\:ml-72 {
+  margin-left: 18rem; /* 288px - same as w-72 */
+}
+
+/* Ensure content doesn't have any top spacing */
+.-lg\:mt-0 {
+  margin-top: 0;
+}
+
+/* Fix for mobile view */
+@media (max-width: 1023px) {
+  .lg\:ml-0 {
+    margin-left: 0;
+  }
+}
+
+/* Additional fix for dashboard layout */
+.dashboard-layout .main-content-wrapper {
+  margin-left: 0;
+  padding-left: 0;
+}
+
+/* Ensure sidebar and main content are flush */
+.hidden.lg\:block {
+  margin-right: 0;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  /* Default light theme */
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+  
+  /* Dark theme */
+  body.dark {
+    @apply bg-black text-white antialiased;
+  }
+  
+  #root {
+    min-height: 100vh;
+    width: 100%;
+  }
+  
+  /* Custom scrollbar - Light theme */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+  
+  /* Dark theme scrollbar */
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-gray-900;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-gray-700 rounded-full;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-600;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-primary {
+    @apply btn bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-lg hover:shadow-xl;
+  }
+  
+  .btn-secondary {
+    @apply btn border shadow-sm hover:shadow-md;
+  }
+  
+  /* Light theme secondary button */
+  .btn-secondary {
+    @apply bg-white text-gray-700 border-gray-300 hover:bg-gray-50 focus:ring-blue-500;
+  }
+  
+  /* Dark theme secondary button */
+  .dark .btn-secondary {
+    @apply bg-gray-800 text-gray-300 border-gray-700 hover:bg-gray-700 focus:ring-blue-500;
+  }
+  
+  .btn-lg {
+    @apply px-6 py-3 text-base;
+  }
+  
+  .input {
+    @apply block w-full rounded-lg border px-3 py-2 transition-colors duration-200;
+  }
+  
+  /* Light theme input */
+  .input {
+    @apply border-gray-300 bg-white text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500;
+  }
+  
+  /* Dark theme input */
+  .dark .input {
+    @apply border-gray-700 bg-gray-800 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-blue-500;
+  }
+  
+  .card {
+    @apply rounded-xl shadow-lg border p-6;
+  }
+  
+  /* Light theme card */
+  .card {
+    @apply bg-white border-gray-200;
+  }
+  
+  /* Dark theme card */
+  .dark .card {
+    @apply bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700;
+  }
+  
+  .badge-primary {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  /* Light theme badge */
+  .badge-primary {
+    @apply bg-blue-100 text-blue-800;
+  }
+  
+  /* Dark theme badge */
+  .dark .badge-primary {
+    @apply bg-blue-900/50 text-blue-300 border border-blue-700/50;
+  }
+  
+  /* Layout utilities */
+  .layout-container {
+    @apply flex h-screen;
+  }
+  
+  .sidebar {
+    @apply w-64 flex-shrink-0 flex flex-col;
+  }
+  
+  .main-content {
+    @apply flex-1 flex flex-col min-h-0;
+  }
+  
+  .content-area {
+    @apply flex-1 overflow-y-auto min-h-0;
+  }
+  
+  /* Text truncation utilities */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+}
+
+@layer utilities {
+  /* Custom focus styles */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+  
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Glass effect */
+  .glass {
+    @apply backdrop-blur-sm bg-white/5 border border-white/10;
+  }
+  
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent;
+  }
+}
+
+/* Toast styling - Enhanced for both themes */
+.Toastify__toast {
+  border-radius: 12px !important;
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  padding: 16px 20px !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  min-height: auto !important;
+}
+
+/* Remove default backgrounds to use our custom ones */
+.Toastify__toast--default {
+  background: none !important;
+  color: inherit !important;
+}
+
+.Toastify__toast--success {
+  background: none !important;
+  color: inherit !important;
+}
+
+.Toastify__toast--error {
+  background: none !important;
+  color: inherit !important;
+}
+
+.Toastify__toast--info {
+  background: none !important;
+  color: inherit !important;
+}
+
+.Toastify__toast--warning {
+  background: none !important;
+  color: inherit !important;
+}
+
+/* Close button styling */
+.Toastify__close-button {
+  opacity: 0.7 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.Toastify__close-button:hover {
+  opacity: 1 !important;
+}
+
+/* Progress bar styling */
+.Toastify__progress-bar {
+  height: 3px !important;
+  border-radius: 0 0 12px 12px !important;
+}
+
+.Toastify__progress-bar--success {
+  background: #10b981 !important;
+}
+
+.Toastify__progress-bar--error {
+  background: #ef4444 !important;
+}
+
+.Toastify__progress-bar--info {
+  background: #3b82f6 !important;
+}
+
+.Toastify__progress-bar--warning {
+  background: #f59e0b !important;
+}
+
+.Toastify__progress-bar--default {
+  background: #6b7280 !important;
+}
+
+/* Container positioning */
+.Toastify__toast-container {
+  width: auto !important;
+  padding: 0 !important;
+}
+
+/* Icon styling */
+.Toastify__toast-icon {
+  width: 20px !important;
+  height: 20px !important;
+  margin-right: 12px !important;
+  margin-inline-end: 12px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Body text styling */
+.Toastify__toast-body {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  line-height: 1.4 !important;
+}
+
+/* Animation improvements */
+@keyframes Toastify__slideInRight {
+  from {
+    transform: translate3d(110%, 0, 0);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes Toastify__slideOutRight {
+  from {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate3d(110%, 0, 0);
+    opacity: 0;
+  }
+}
+
+.Toastify__slide-enter--top-right,
+.Toastify__slide-enter--bottom-right {
+  animation: Toastify__slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.Toastify__slide-exit--top-right,
+.Toastify__slide-exit--bottom-right {
+  animation: Toastify__slideOutRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark mode specific adjustments */
+.dark .Toastify__close-button > svg {
+  fill: currentColor !important;
+}
+
+/* Light mode specific adjustments */
+body:not(.dark) .Toastify__close-button > svg {
+  fill: currentColor !important;
+}
