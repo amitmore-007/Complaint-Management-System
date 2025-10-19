@@ -53,21 +53,9 @@ export const assignComplaint = async (req, res) => {
       });
     }
 
-    // Verify technician exists and is active
-    const technician = await Technician.findOne({ 
-      _id: technicianId, 
-      isActive: true 
-    });
-
-    if (!technician) {
-      return res.status(404).json({
-        success: false,
-        message: 'Technician not found or inactive'
-      });
-    }
-
-    // Find complaint with client information
-    const complaint = await Complaint.findById(complaintId).populate('client', 'name phoneNumber');
+    // Find the complaint with client info
+    const complaint = await Complaint.findById(complaintId)
+      .populate('client', 'name phoneNumber');
 
     if (!complaint) {
       return res.status(404).json({
@@ -83,7 +71,23 @@ export const assignComplaint = async (req, res) => {
       });
     }
 
-    // Assign complaint
+    // Find the technician
+    const technician = await Technician.findById(technicianId);
+    if (!technician) {
+      return res.status(404).json({
+        success: false,
+        message: 'Technician not found'
+      });
+    }
+
+    if (!technician.isActive) {
+      return res.status(400).json({
+        success: false,
+        message: 'Technician is not active'
+      });
+    }
+
+    // Update complaint
     complaint.assignedTechnician = technicianId;
     complaint.assignedBy = adminId;
     complaint.assignedAt = new Date();
@@ -91,44 +95,65 @@ export const assignComplaint = async (req, res) => {
 
     await complaint.save();
 
-    // Send WhatsApp notification to client with improved error handling
+    // Update technician stats
+    await Technician.findByIdAndUpdate(technicianId, {
+      $inc: { activeAssignments: 1 }
+    });
+
+    // Send WhatsApp notification to client with correct parameter order
     if (complaint.client && complaint.client.phoneNumber) {
-      const notification = new Notification({
-        complaint: complaint._id,
-        recipient: complaint.client.phoneNumber,
-        type: 'assignment',
-        message: `Complaint ${complaint.complaintId} assigned to ${technician.name}`
+      console.log('📱 Sending assignment notification:', {
+        phone: complaint.client.phoneNumber,
+        technicianName: technician.name,
+        complaintId: complaint.complaintId,
+        clientName: complaint.client.name
       });
 
       try {
-        const result = await sendAssignmentNotification(
+        const notificationResult = await sendAssignmentNotification(
           complaint.client.phoneNumber,
-          technician.name,
-          complaint.complaintId, // Use complaintId instead of _id
-          complaint.client.name   // Add client name parameter
+          technician.name, // technician name as second parameter
+          complaint.complaintId, // complaint ID as third parameter
+          complaint.client.name // client name as fourth parameter
         );
-        
-        if (result.success) {
-          notification.status = 'sent';
-          notification.twilioMessageId = result.messageId;
-          notification.sentAt = new Date();
-        } else {
-          notification.status = 'failed';
-          notification.error = result.error;
-          console.error('❌ Failed to send assignment notification:', result.error);
+
+        console.log('📱 Assignment notification result:', notificationResult);
+
+        // Save notification record
+        const notification = new Notification({
+          complaint: complaint._id,
+          recipient: complaint.client.phoneNumber,
+          type: 'assignment',
+          message: `Complaint ${complaint.complaintId} assigned to ${technician.name}`,
+          status: notificationResult.success ? 'sent' : 'failed',
+          messageId: notificationResult.messageId,
+          error: notificationResult.success ? null : notificationResult.error,
+          sentAt: notificationResult.success ? new Date() : null
+        });
+
+        await notification.save();
+
+        if (!notificationResult.success) {
+          console.error('❌ Failed to send assignment notification:', notificationResult.error);
         }
       } catch (notificationError) {
-        notification.status = 'failed';
-        notification.error = notificationError.message;
         console.error('❌ Assignment notification error:', notificationError);
-      }
+        
+        // Save failed notification record
+        const notification = new Notification({
+          complaint: complaint._id,
+          recipient: complaint.client.phoneNumber,
+          type: 'assignment',
+          message: `Complaint ${complaint.complaintId} assigned to ${technician.name}`,
+          status: 'failed',
+          error: notificationError.message
+        });
 
-      await notification.save();
-    } else {
-      console.log('⚠️ Skipping assignment notification - client or phone number not found');
+        await notification.save();
+      }
     }
 
-    // Populate the complaint for response
+    // Populate response
     await complaint.populate([
       { path: 'client', select: 'name phoneNumber' },
       { path: 'assignedTechnician', select: 'name phoneNumber' },

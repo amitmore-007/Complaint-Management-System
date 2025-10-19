@@ -98,7 +98,8 @@ export const sendStatusUpdate = async (
   phoneNumber,
   clientName,
   complaintId,
-  status
+  status,
+  technicianName
 ) => {
   try {
    
@@ -119,11 +120,11 @@ export const sendStatusUpdate = async (
         components = {
           body_1: {
             type: "text",
-            value: clientName,
+            value: complaintId,
           },
           body_2: {
             type: "text",
-            value: complaintId,
+            value: technicianName,
           },
         };
         break;
@@ -255,11 +256,11 @@ export const sendAssignmentNotification = async (
               components: {
                 body_1: {
                   type: "text",
-                  value: clientName || "Customer",
+                  value: complaintId, // This should be complaint ID
                 },
                 body_2: {
                   type: "text",
-                  value: complaintId,
+                  value: technicianName, // This should be technician name
                 },
               },
             },
@@ -302,18 +303,20 @@ export const sendProgressUpdate = async (
   clientPhone,
   complaintId,
   status,
-  clientName
+  clientName,
+  technicianName
 ) => {
-  return await sendStatusUpdate(clientPhone, clientName, complaintId, status);
+  return await sendStatusUpdate(clientPhone, clientName, complaintId, status, technicianName);
 };
 
 export const sendStatusUpdateNotification = async (
   phoneNumber,
   complaintId,
   status,
-  clientName
+  clientName,
+  technicianName,
 ) => {
-  return await sendStatusUpdate(phoneNumber, clientName, complaintId, status);
+  return await sendStatusUpdate(phoneNumber, clientName, complaintId, status, technicianName);
 };
 
 export default {

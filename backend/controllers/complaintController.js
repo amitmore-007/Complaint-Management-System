@@ -430,7 +430,8 @@ export const updateComplaintStatus = async (req, res) => {
         phone: complaint.client.phoneNumber,
         complaintId: complaint.complaintId,
         status: status,
-        clientName: complaint.client.name
+        clientName: complaint.client.name,
+        technicianName: complaint.assignedTechnician.name
       });
 
       try {
@@ -438,7 +439,8 @@ export const updateComplaintStatus = async (req, res) => {
           complaint.client.phoneNumber,
           complaint.complaintId,
           status,
-          complaint.client.name
+          complaint.client.name,
+          complaint.assignedTechnician.name
         );
 
         // Save notification record
