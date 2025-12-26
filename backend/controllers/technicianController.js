@@ -8,6 +8,7 @@ import {
   uploadToCloudinary,
   deleteFromCloudinary,
 } from "../config/cloudinary.js";
+import { generateNextComplaintId } from "../utils/complaintId.js";
 
 // ============================================
 // HELPER FUNCTIONS
@@ -246,13 +247,6 @@ export const createTechnicianComplaint = async (req, res) => {
       });
     }
 
-    // Generate unique complaint ID
-    const generateComplaintId = () => {
-      const timestamp = Date.now().toString(36);
-      const random = Math.random().toString(36).substr(2, 5);
-      return `CMP-${timestamp}-${random}`.toUpperCase();
-    };
-
     // Handle photo uploads - parallel for speed
     let photos = [];
     if (req.files && req.files.length > 0) {
@@ -277,6 +271,7 @@ export const createTechnicianComplaint = async (req, res) => {
 
     let resolvedLocation = location;
     let resolvedStoreId = null;
+    let resolvedStoreName = null;
     if (storeId) {
       const store = await Store.findById(storeId).select("name");
       if (!store) {
@@ -286,11 +281,16 @@ export const createTechnicianComplaint = async (req, res) => {
         });
       }
       resolvedStoreId = store._id;
+      resolvedStoreName = store.name;
       resolvedLocation = store.name;
     }
 
+    const complaintId = await generateNextComplaintId({
+      storeName: resolvedStoreName || resolvedLocation,
+    });
+
     const complaint = new Complaint({
-      complaintId: generateComplaintId(),
+      complaintId,
       title,
       description,
       location: resolvedLocation,

@@ -10,6 +10,7 @@ import {
   sendStatusUpdateNotification,
   sendAssignmentNotification,
 } from "../config/msg91.js";
+import { generateNextComplaintId } from "../utils/complaintId.js";
 
 export const createComplaint = async (req, res) => {
   try {
@@ -25,6 +26,7 @@ export const createComplaint = async (req, res) => {
 
     let resolvedLocation = location;
     let resolvedStoreId = null;
+    let resolvedStoreName = null;
     if (storeId) {
       const store = await Store.findById(storeId).select("name");
       if (!store) {
@@ -34,6 +36,7 @@ export const createComplaint = async (req, res) => {
         });
       }
       resolvedStoreId = store._id;
+      resolvedStoreName = store.name;
       resolvedLocation = store.name;
     }
 
@@ -46,12 +49,9 @@ export const createComplaint = async (req, res) => {
       });
     }
 
-    // Generate unique complaint ID
-    const generateComplaintId = () => {
-      const timestamp = Date.now().toString(36);
-      const random = Math.random().toString(36).substr(2, 5);
-      return `CMP-${timestamp}-${random}`.toUpperCase();
-    };
+    const complaintId = await generateNextComplaintId({
+      storeName: resolvedStoreName || resolvedLocation,
+    });
 
     // Handle photo uploads - parallel for speed
     let photos = [];
@@ -76,7 +76,7 @@ export const createComplaint = async (req, res) => {
     }
 
     const complaint = new Complaint({
-      complaintId: generateComplaintId(),
+      complaintId,
       title,
       description,
       location: resolvedLocation,
