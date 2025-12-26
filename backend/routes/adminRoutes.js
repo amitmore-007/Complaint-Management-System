@@ -1,5 +1,9 @@
-import express from 'express';
+import express from "express";
+import multer from "multer";
 import {
+  sendAdminOTP,
+  verifyAdminOTP,
+  getCurrentAdmin,
   getAllComplaints,
   assignComplaint,
   getAllClients,
@@ -11,36 +15,61 @@ import {
   createClient,
   createTechnician,
   updateClient,
-  updateTechnician
-} from '../controllers/adminController.js';
-import { sendAdminOTP, verifyAdminOTP, getCurrentAdmin } from '../controllers/adminAuthController.js';
-import { authenticateAdmin } from '../middleware/roleAuth.js';
+  updateTechnician,
+  createAdminComplaint,
+} from "../controllers/adminController.js";
+import { authenticateAdmin } from "../middleware/roleAuth.js";
 
 const router = express.Router();
 
-// Authentication routes - matching the pattern
-router.post('/auth/send-otp', sendAdminOTP);
-router.post('/auth/verify-otp', verifyAdminOTP);
-router.get('/auth/me', authenticateAdmin, getCurrentAdmin);
+// Configure multer for file uploads - using memory storage for direct Cloudinary upload
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed!"), false);
+    }
+  },
+});
 
-// Dashboard
-router.get('/dashboard/stats', authenticateAdmin, getDashboardStats);
+// authentication routes
+router.post("/auth/send-otp", sendAdminOTP);
+router.post("/auth/verify-otp", verifyAdminOTP);
+router.get("/auth/me", authenticateAdmin, getCurrentAdmin);
 
-// Complaint management
-router.get('/complaints', authenticateAdmin, getAllComplaints);
-router.get('/complaints/:id', authenticateAdmin, getComplaintById);
-router.post('/complaints/assign', authenticateAdmin, assignComplaint);
+// dashboard
+router.get("/dashboard/stats", authenticateAdmin, getDashboardStats);
 
-// User management
-router.get('/clients', authenticateAdmin, getAllClients);
-router.post('/clients', authenticateAdmin, createClient);
-router.put('/clients/:id', authenticateAdmin, updateClient);
+// complaint management
+router.get("/complaints", authenticateAdmin, getAllComplaints);
+router.get("/complaints/:id", authenticateAdmin, getComplaintById);
+router.post(
+  "/complaints",
+  authenticateAdmin,
+  upload.array("photos", 5),
+  createAdminComplaint
+);
+router.post("/complaints/assign", authenticateAdmin, assignComplaint);
 
-router.get('/technicians', authenticateAdmin, getAllTechnicians);
-router.post('/technicians', authenticateAdmin, createTechnician);
-router.put('/technicians/:id', authenticateAdmin, updateTechnician);
+// user management - clients
+router.get("/clients", authenticateAdmin, getAllClients);
+router.post("/clients", authenticateAdmin, createClient);
+router.put("/clients/:id", authenticateAdmin, updateClient);
 
-router.patch('/users/:userId/toggle-status', authenticateAdmin, toggleUserStatus);
-router.delete('/users/:userId', authenticateAdmin, deleteUser);
+// user management - technicians
+router.get("/technicians", authenticateAdmin, getAllTechnicians);
+router.post("/technicians", authenticateAdmin, createTechnician);
+router.put("/technicians/:id", authenticateAdmin, updateTechnician);
+
+// user management - general
+router.patch(
+  "/users/:userId/toggle-status",
+  authenticateAdmin,
+  toggleUserStatus
+);
+router.delete("/users/:userId", authenticateAdmin, deleteUser);
 
 export default router;

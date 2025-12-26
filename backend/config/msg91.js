@@ -23,7 +23,6 @@ const MSG91_API_URL =
 
 export const sendOTP = async (phoneNumber, otp) => {
   try {
-
     // Ensure phone number is in correct format (with country code)
     let formattedPhone = phoneNumber;
     if (!formattedPhone.startsWith("+")) {
@@ -102,10 +101,8 @@ export const sendStatusUpdate = async (
   technicianName
 ) => {
   try {
-   
-
     // Ensure phone number is in correct format
-     let formattedPhone = phoneNumber;
+    let formattedPhone = phoneNumber;
     if (!formattedPhone.startsWith("+")) {
       formattedPhone = "+91" + formattedPhone.replace(/^0+/, "");
     }
@@ -121,10 +118,6 @@ export const sendStatusUpdate = async (
           body_1: {
             type: "text",
             value: complaintId,
-          },
-          body_2: {
-            type: "text",
-            value: technicianName,
           },
         };
         break;
@@ -216,16 +209,12 @@ export const sendStatusUpdate = async (
   }
 };
 
-export const sendAssignmentNotification = async (
-  phoneNumber,
-  technicianName,
-  complaintId,
-  clientName
-) => {
+export const sendAssignmentNotification = async (phoneNumber, complaintId) => {
   try {
-
-    if (!phoneNumber || !complaintId || !technicianName) {
-      console.error("❌ Missing required parameters for assignment notification");
+    if (!phoneNumber || !complaintId) {
+      console.error(
+        "❌ Missing required parameters for assignment notification"
+      );
       return { success: false, error: "Missing required parameters" };
     }
 
@@ -256,11 +245,7 @@ export const sendAssignmentNotification = async (
               components: {
                 body_1: {
                   type: "text",
-                  value: complaintId, // This should be complaint ID
-                },
-                body_2: {
-                  type: "text",
-                  value: technicianName, // This should be technician name
+                  value: complaintId,
                 },
               },
             },
@@ -290,7 +275,10 @@ export const sendAssignmentNotification = async (
       };
     }
   } catch (error) {
-    console.error("❌ Assignment notification error:", error.response?.data || error.message);
+    console.error(
+      "❌ Assignment notification error:",
+      error.response?.data || error.message
+    );
     return {
       success: false,
       error: error.response?.data?.message || error.message,
@@ -306,7 +294,13 @@ export const sendProgressUpdate = async (
   clientName,
   technicianName
 ) => {
-  return await sendStatusUpdate(clientPhone, clientName, complaintId, status, technicianName);
+  return await sendStatusUpdate(
+    clientPhone,
+    clientName,
+    complaintId,
+    status,
+    technicianName
+  );
 };
 
 export const sendStatusUpdateNotification = async (
@@ -314,9 +308,15 @@ export const sendStatusUpdateNotification = async (
   complaintId,
   status,
   clientName,
-  technicianName,
+  technicianName
 ) => {
-  return await sendStatusUpdate(phoneNumber, clientName, complaintId, status, technicianName);
+  return await sendStatusUpdate(
+    phoneNumber,
+    clientName,
+    complaintId,
+    status,
+    technicianName
+  );
 };
 
 export default {

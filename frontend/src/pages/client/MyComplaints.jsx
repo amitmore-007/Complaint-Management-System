@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { useDropzone } from 'react-dropzone';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Calendar, 
-  MapPin, 
-  Eye, 
-  Edit, 
+import React, { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
+import { useDropzone } from "react-dropzone";
+import {
+  Plus,
+  Search,
+  Filter,
+  Calendar,
+  MapPin,
+  Eye,
+  Edit,
   Trash2,
   Download,
   X,
@@ -20,20 +20,20 @@ import {
   PlayCircle,
   Pause,
   Upload,
-  Image as ImageIcon
-} from 'lucide-react';
-import toast from 'react-hot-toast';
-import { useTheme } from '../../context/ThemeContext';
-import DashboardLayout from '../../components/layout/DashboardLayout';
-import api from '../../lib/axios';
+  Image as ImageIcon,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { useTheme } from "../../context/ThemeContext";
+import DashboardLayout from "../../components/layout/DashboardLayout";
+import api from "../../lib/axios";
 
 const MyComplaints = () => {
   const { isDarkMode } = useTheme();
   const [complaints, setComplaints] = useState([]);
   const [filteredComplaints, setFilteredComplaints] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState(null);
@@ -51,11 +51,11 @@ const MyComplaints = () => {
   const fetchComplaints = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('/client/complaints');
+      const response = await api.get("/client/complaints");
       setComplaints(response.data.complaints);
     } catch (error) {
-      console.error('Failed to fetch complaints:', error);
-      toast.error('Failed to load complaints');
+      console.error("Failed to fetch complaints:", error);
+      toast.error("Failed to load complaints");
     } finally {
       setIsLoading(false);
     }
@@ -65,61 +65,73 @@ const MyComplaints = () => {
     let filtered = complaints;
 
     // Filter by status
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(complaint => complaint.status === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(
+        (complaint) => complaint.status === statusFilter
+      );
     }
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(complaint =>
-        complaint.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        complaint.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        complaint.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        complaint.complaintId.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (complaint) =>
+          complaint.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          complaint.description
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          complaint.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          complaint.complaintId.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     setFilteredComplaints(filtered);
   };
 
-  const updateComplaint = async (complaintId, updateData, newPhotos = [], removedPhotoIds = []) => {
+  const updateComplaint = async (
+    complaintId,
+    updateData,
+    newPhotos = [],
+    removedPhotoIds = []
+  ) => {
     try {
       setIsUpdating(true);
-      
+
       // If there are new photos to upload or photos to remove, use FormData
       if (newPhotos.length > 0 || removedPhotoIds.length > 0) {
         const formData = new FormData();
-        
+
         // Append text data
-        Object.keys(updateData).forEach(key => {
+        Object.keys(updateData).forEach((key) => {
           formData.append(key, updateData[key]);
         });
-        
+
         // Append new photos
-        newPhotos.forEach(photo => {
-          formData.append('photos', photo.file);
+        newPhotos.forEach((photo) => {
+          formData.append("photos", photo.file);
         });
-        
+
         // Append removed photo IDs
-        removedPhotoIds.forEach(id => {
-          formData.append('removedPhotos', id);
+        removedPhotoIds.forEach((id) => {
+          formData.append("removedPhotos", id);
         });
-        
+
         await api.put(`/client/complaints/${complaintId}`, formData, {
           headers: {
-            'Content-Type': 'multipart/form-data'
-          }
+            "Content-Type": "multipart/form-data",
+          },
         });
       } else {
         // No photo changes, use regular JSON request
         await api.put(`/client/complaints/${complaintId}`, updateData);
       }
-      
-      toast.success('Complaint updated successfully');
+
+      toast.success("Complaint updated successfully");
       fetchComplaints();
       setEditComplaint(null);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update complaint');
+      toast.error(
+        error.response?.data?.message || "Failed to update complaint"
+      );
     } finally {
       setIsUpdating(false);
     }
@@ -128,19 +140,21 @@ const MyComplaints = () => {
   const deleteComplaint = async (complaintId) => {
     try {
       await api.delete(`/client/complaints/${complaintId}`);
-      toast.success('Complaint deleted successfully');
+      toast.success("Complaint deleted successfully");
       fetchComplaints();
       setDeleteConfirmation(null);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to delete complaint');
+      toast.error(
+        error.response?.data?.message || "Failed to delete complaint"
+      );
     }
   };
 
   const downloadImage = (imageUrl, fileName) => {
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = imageUrl;
-    link.download = fileName || 'complaint-image.jpg';
-    link.target = '_blank';
+    link.download = fileName || "complaint-image.jpg";
+    link.target = "_blank";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -148,21 +162,31 @@ const MyComplaints = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30';
-      case 'assigned': return 'text-blue-600 bg-blue-100 dark:bg-blue-900/30';
-      case 'in-progress': return 'text-orange-600 bg-orange-100 dark:bg-orange-900/30';
-      case 'resolved': return 'text-green-600 bg-green-100 dark:bg-green-900/30';
-      default: return 'text-gray-600 bg-gray-100 dark:bg-gray-900/30';
+      case "pending":
+        return "text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30";
+      case "assigned":
+        return "text-blue-600 bg-blue-100 dark:bg-blue-900/30";
+      case "in-progress":
+        return "text-orange-600 bg-orange-100 dark:bg-orange-900/30";
+      case "resolved":
+        return "text-green-600 bg-green-100 dark:bg-green-900/30";
+      default:
+        return "text-gray-600 bg-gray-100 dark:bg-gray-900/30";
     }
   };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'low': return 'text-green-600';
-      case 'medium': return 'text-yellow-600';
-      case 'high': return 'text-orange-600';
-      case 'urgent': return 'text-red-600';
-      default: return 'text-gray-600';
+      case "low":
+        return "text-green-600";
+      case "medium":
+        return "text-yellow-600";
+      case "high":
+        return "text-orange-600";
+      case "urgent":
+        return "text-red-600";
+      default:
+        return "text-gray-600";
     }
   };
 
@@ -171,38 +195,55 @@ const MyComplaints = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+      style={{ margin: 0, padding: 0, top: 0, left: 0, right: 0, bottom: 0 }}
       onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className={`w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl ${
-          isDarkMode ? 'bg-gray-800' : 'bg-white'
+        className={`w-full max-w-4xl max-h-[95vh] overflow-y-auto mx-4 my-4 rounded-2xl shadow-2xl ${
+          isDarkMode ? "bg-gray-800" : "bg-white"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className={`sticky top-0 p-6 border-b ${
-          isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'
-        }`}>
+        <div
+          className={`sticky top-0 p-6 border-b ${
+            isDarkMode
+              ? "border-gray-700 bg-gray-800"
+              : "border-gray-200 bg-white"
+          }`}
+        >
           <div className="flex justify-between items-start">
             <div>
-              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              <h2
+                className={`text-2xl font-bold ${
+                  isDarkMode ? "text-white" : "text-gray-900"
+                }`}
+              >
                 {complaint.title}
               </h2>
-              <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p
+                className={`text-sm mt-1 ${
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
                 ID: {complaint.complaintId}
               </p>
             </div>
             <button
               onClick={onClose}
               className={`p-2 rounded-lg transition-colors ${
-                isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
               }`}
             >
-              <X className={`h-6 w-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+              <X
+                className={`h-6 w-6 ${
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              />
             </button>
           </div>
         </div>
@@ -211,46 +252,86 @@ const MyComplaints = () => {
         <div className="p-6 space-y-6">
           {/* Status and Priority */}
           <div className="flex items-center space-x-4">
-            <span className={`px-4 py-2 text-sm font-medium rounded-full ${getStatusColor(complaint.status)}`}>
-              {complaint.status.replace('-', ' ').toUpperCase()}
+            <span
+              className={`px-4 py-2 text-sm font-medium rounded-full ${getStatusColor(
+                complaint.status
+              )}`}
+            >
+              {complaint.status.replace("-", " ").toUpperCase()}
             </span>
-            <span className={`text-sm font-medium capitalize ${getPriorityColor(complaint.priority)}`}>
+            <span
+              className={`text-sm font-medium capitalize ${getPriorityColor(
+                complaint.priority
+              )}`}
+            >
               {complaint.priority} Priority
             </span>
           </div>
 
           {/* Description */}
           <div>
-            <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h3
+              className={`text-lg font-semibold mb-2 ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
               Description
             </h3>
-            <p className={`leading-relaxed ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <p
+              className={`leading-relaxed ${
+                isDarkMode ? "text-gray-300" : "text-gray-700"
+              }`}
+            >
               {complaint.description}
             </p>
           </div>
 
           {/* Details Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+            <div
+              className={`p-4 rounded-lg ${
+                isDarkMode ? "bg-gray-700" : "bg-gray-50"
+              }`}
+            >
               <div className="flex items-center space-x-2 mb-2">
-                <MapPin className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
-                <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <MapPin
+                  className={`h-5 w-5 ${
+                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
+                />
+                <span
+                  className={`font-medium ${
+                    isDarkMode ? "text-gray-300" : "text-gray-700"
+                  }`}
+                >
                   Location
                 </span>
               </div>
-              <p className={isDarkMode ? 'text-white' : 'text-gray-900'}>
+              <p className={isDarkMode ? "text-white" : "text-gray-900"}>
                 {complaint.location}
               </p>
             </div>
 
-            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+            <div
+              className={`p-4 rounded-lg ${
+                isDarkMode ? "bg-gray-700" : "bg-gray-50"
+              }`}
+            >
               <div className="flex items-center space-x-2 mb-2">
-                <Calendar className={`h-5 w-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
-                <span className={`font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <Calendar
+                  className={`h-5 w-5 ${
+                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
+                />
+                <span
+                  className={`font-medium ${
+                    isDarkMode ? "text-gray-300" : "text-gray-700"
+                  }`}
+                >
                   Created Date
                 </span>
               </div>
-              <p className={isDarkMode ? 'text-white' : 'text-gray-900'}>
+              <p className={isDarkMode ? "text-white" : "text-gray-900"}>
                 {new Date(complaint.createdAt).toLocaleString()}
               </p>
             </div>
@@ -258,20 +339,36 @@ const MyComplaints = () => {
 
           {/* Technician Info */}
           {complaint.assignedTechnician && (
-            <div className={`p-4 rounded-lg border ${
-              isDarkMode ? 'bg-blue-900/20 border-blue-700' : 'bg-blue-50 border-blue-200'
-            }`}>
+            <div
+              className={`p-4 rounded-lg border ${
+                isDarkMode
+                  ? "bg-blue-900/20 border-blue-700"
+                  : "bg-blue-50 border-blue-200"
+              }`}
+            >
               <div className="flex items-center space-x-2 mb-2">
-                <User className={`h-5 w-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                <span className={`font-medium ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>
+                <User
+                  className={`h-5 w-5 ${
+                    isDarkMode ? "text-blue-400" : "text-blue-600"
+                  }`}
+                />
+                <span
+                  className={`font-medium ${
+                    isDarkMode ? "text-blue-300" : "text-blue-700"
+                  }`}
+                >
                   Assigned Technician
                 </span>
               </div>
-              <p className={isDarkMode ? 'text-white' : 'text-gray-900'}>
+              <p className={isDarkMode ? "text-white" : "text-gray-900"}>
                 {complaint.assignedTechnician.name}
               </p>
               {complaint.assignedAt && (
-                <p className={`text-sm mt-1 ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`}>
+                <p
+                  className={`text-sm mt-1 ${
+                    isDarkMode ? "text-blue-300" : "text-blue-600"
+                  }`}
+                >
                   Assigned on: {new Date(complaint.assignedAt).toLocaleString()}
                 </p>
               )}
@@ -280,7 +377,11 @@ const MyComplaints = () => {
 
           {/* Timeline */}
           <div>
-            <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h3
+              className={`text-lg font-semibold mb-4 ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
               Timeline
             </h3>
             <div className="space-y-3">
@@ -289,10 +390,18 @@ const MyComplaints = () => {
                   <Plus className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  <p
+                    className={`font-medium ${
+                      isDarkMode ? "text-white" : "text-gray-900"
+                    }`}
+                  >
                     Complaint Created
                   </p>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  <p
+                    className={`text-sm ${
+                      isDarkMode ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
                     {new Date(complaint.createdAt).toLocaleString()}
                   </p>
                 </div>
@@ -304,10 +413,18 @@ const MyComplaints = () => {
                     <User className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <p
+                      className={`font-medium ${
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      }`}
+                    >
                       Assigned to Technician
                     </p>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <p
+                      className={`text-sm ${
+                        isDarkMode ? "text-gray-400" : "text-gray-600"
+                      }`}
+                    >
                       {new Date(complaint.assignedAt).toLocaleString()}
                     </p>
                   </div>
@@ -320,10 +437,18 @@ const MyComplaints = () => {
                     <PlayCircle className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <p
+                      className={`font-medium ${
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      }`}
+                    >
                       Work Started
                     </p>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <p
+                      className={`text-sm ${
+                        isDarkMode ? "text-gray-400" : "text-gray-600"
+                      }`}
+                    >
                       {new Date(complaint.startedAt).toLocaleString()}
                     </p>
                   </div>
@@ -336,10 +461,18 @@ const MyComplaints = () => {
                     <CheckCircle className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <p className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    <p
+                      className={`font-medium ${
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      }`}
+                    >
                       Completed
                     </p>
-                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    <p
+                      className={`text-sm ${
+                        isDarkMode ? "text-gray-400" : "text-gray-600"
+                      }`}
+                    >
                       {new Date(complaint.completedAt).toLocaleString()}
                     </p>
                   </div>
@@ -351,7 +484,11 @@ const MyComplaints = () => {
           {/* Photos */}
           {complaint.photos && complaint.photos.length > 0 && (
             <div>
-              <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              <h3
+                className={`text-lg font-semibold mb-4 ${
+                  isDarkMode ? "text-white" : "text-gray-900"
+                }`}
+              >
                 Photos ({complaint.photos.length})
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -380,109 +517,128 @@ const MyComplaints = () => {
 
           {/* Technician Notes */}
           {complaint.technicianNotes && (
-            <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-              <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <div
+              className={`p-4 rounded-lg ${
+                isDarkMode ? "bg-gray-700" : "bg-gray-50"
+              }`}
+            >
+              <h3
+                className={`text-lg font-semibold mb-2 ${
+                  isDarkMode ? "text-white" : "text-gray-900"
+                }`}
+              >
                 Technician Notes
               </h3>
-              <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
+              <p className={isDarkMode ? "text-gray-300" : "text-gray-700"}>
                 {complaint.technicianNotes}
               </p>
             </div>
           )}
 
           {/* Resolution Data - Only show for resolved complaints */}
-          {complaint.status === 'resolved' && (complaint.resolutionNotes || (complaint.resolutionPhotos && complaint.resolutionPhotos.length > 0)) && (
-            <div className={`p-4 rounded-lg border ${
-              isDarkMode ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200'
-            }`}>
-              <h3 className={`text-lg font-semibold mb-4 flex items-center space-x-2 ${
-                isDarkMode ? 'text-green-300' : 'text-green-700'
-              }`}>
-                <CheckCircle className="h-5 w-5" />
-                <span>Resolution Details</span>
-              </h3>
-              
-              {complaint.resolutionNotes && (
-                <div className="mb-4">
-                  <h4 className={`font-medium mb-2 ${
-                    isDarkMode ? 'text-green-200' : 'text-green-800'
-                  }`}>
-                    Resolution Notes
-                  </h4>
-                  <p className={`leading-relaxed ${
-                    isDarkMode ? 'text-green-100' : 'text-green-700'
-                  }`}>
-                    {complaint.resolutionNotes}
-                  </p>
-                </div>
-              )}
+          {complaint.status === "resolved" &&
+            (complaint.resolutionNotes ||
+              (complaint.resolutionPhotos &&
+                complaint.resolutionPhotos.length > 0)) && (
+              <div
+                className={`p-4 rounded-lg border ${
+                  isDarkMode
+                    ? "bg-green-900/20 border-green-700"
+                    : "bg-green-50 border-green-200"
+                }`}
+              >
+                <h3
+                  className={`text-lg font-semibold mb-4 flex items-center space-x-2 ${
+                    isDarkMode ? "text-green-300" : "text-green-700"
+                  }`}
+                >
+                  <CheckCircle className="h-5 w-5" />
+                  <span>Resolution Details</span>
+                </h3>
 
-              {complaint.resolvedAt && (
-                <div className="mb-4">
-                  <p className={`text-sm ${
-                    isDarkMode ? 'text-green-300' : 'text-green-600'
-                  }`}>
-                    <strong>Completed on:</strong> {new Date(complaint.resolvedAt).toLocaleString()}
-                  </p>
-                </div>
-              )}
-
-              {complaint.resolutionPhotos && complaint.resolutionPhotos.length > 0 && (
-                <div>
-                  <h4 className={`font-medium mb-3 ${
-                    isDarkMode ? 'text-green-200' : 'text-green-800'
-                  }`}>
-                    Resolution Proof Photos ({complaint.resolutionPhotos.length})
-                  </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {complaint.resolutionPhotos.map((photo, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={photo.url}
-                          alt={`Resolution photo ${index + 1}`}
-                          className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border-2 border-green-200 dark:border-green-600"
-                          onClick={() => setSelectedImage(photo)}
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            downloadImage(photo.url, photo.originalName || `resolution-photo-${index + 1}.jpg`);
-                          }}
-                          className="absolute top-2 right-2 w-8 h-8 bg-black/70 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Download className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
+                {complaint.resolutionNotes && (
+                  <div className="mb-4">
+                    <h4
+                      className={`font-medium mb-2 ${
+                        isDarkMode ? "text-green-200" : "text-green-800"
+                      }`}
+                    >
+                      Resolution Notes
+                    </h4>
+                    <p
+                      className={`leading-relaxed ${
+                        isDarkMode ? "text-green-100" : "text-green-700"
+                      }`}
+                    >
+                      {complaint.resolutionNotes}
+                    </p>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+
+                {complaint.resolvedAt && (
+                  <div className="mb-4">
+                    <p
+                      className={`text-sm ${
+                        isDarkMode ? "text-green-300" : "text-green-600"
+                      }`}
+                    >
+                      <strong>Completed on:</strong>{" "}
+                      {new Date(complaint.resolvedAt).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+
+                {complaint.resolutionPhotos &&
+                  complaint.resolutionPhotos.length > 0 && (
+                    <div>
+                      <h4
+                        className={`font-medium mb-3 ${
+                          isDarkMode ? "text-green-200" : "text-green-800"
+                        }`}
+                      >
+                        Resolution Proof Photos (
+                        {complaint.resolutionPhotos.length})
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {complaint.resolutionPhotos.map((photo, index) => (
+                          <div key={index} className="relative group">
+                            <img
+                              src={photo.url}
+                              alt={`Resolution photo ${index + 1}`}
+                              className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border-2 border-green-200 dark:border-green-600"
+                              onClick={() => setSelectedImage(photo)}
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                downloadImage(
+                                  photo.url,
+                                  photo.originalName ||
+                                    `resolution-photo-${index + 1}.jpg`
+                                );
+                              }}
+                              className="absolute top-2 right-2 w-8 h-8 bg-black/70 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+              </div>
+            )}
         </div>
 
         {/* Footer Actions */}
-        {complaint.status === 'pending' && (
-          <div className={`sticky bottom-0 p-6 border-t ${
-            isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'
-          }`}>
-            <div className="flex space-x-3">
-              <Link
-                to={`/client/complaints/${complaint._id}/edit`}
-                className="flex-1 bg-yellow-500 text-white py-3 px-4 rounded-xl font-semibold text-center hover:bg-yellow-600 transition-colors"
-              >
-                Edit Complaint
-              </Link>
-              <button
-                onClick={() => {
-                  setDeleteConfirmation(complaint);
-                  onClose();
-                }}
-                className="flex-1 bg-red-500 text-white py-3 px-4 rounded-xl font-semibold hover:bg-red-600 transition-colors"
-              >
-                Delete Complaint
-              </button>
-            </div>
+        {complaint.status === "pending" && (
+          <div
+            className={`sticky bottom-0 p-6 border-t ${
+              isDarkMode
+                ? "border-gray-700 bg-gray-800"
+                : "border-gray-200 bg-white"
+            }`}
+          >
           </div>
         )}
       </motion.div>
@@ -494,15 +650,16 @@ const MyComplaints = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+      style={{ margin: 0, padding: 0, top: 0, left: 0, right: 0, bottom: 0 }}
       onClick={onCancel}
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className={`w-full max-w-md rounded-2xl shadow-2xl ${
-          isDarkMode ? 'bg-gray-800' : 'bg-white'
+        className={`w-full max-w-md max-h-[95vh] overflow-y-auto mx-4 my-4 rounded-2xl shadow-2xl ${
+          isDarkMode ? "bg-gray-800" : "bg-white"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -510,26 +667,31 @@ const MyComplaints = () => {
           <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/30 rounded-full">
             <AlertCircle className="h-8 w-8 text-red-600" />
           </div>
-          
-          <h3 className={`text-xl font-bold text-center mb-2 ${
-            isDarkMode ? 'text-white' : 'text-gray-900'
-          }`}>
+
+          <h3
+            className={`text-xl font-bold text-center mb-2 ${
+              isDarkMode ? "text-white" : "text-gray-900"
+            }`}
+          >
             Delete Complaint
           </h3>
-          
-          <p className={`text-center mb-6 ${
-            isDarkMode ? 'text-gray-300' : 'text-gray-600'
-          }`}>
-            Are you sure you want to delete "{complaint.title}"? This action cannot be undone.
+
+          <p
+            className={`text-center mb-6 ${
+              isDarkMode ? "text-gray-300" : "text-gray-600"
+            }`}
+          >
+            Are you sure you want to delete "{complaint.title}"? This action
+            cannot be undone.
           </p>
 
           <div className="flex space-x-3">
             <button
               onClick={onCancel}
               className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-colors ${
-                isDarkMode 
-                  ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                isDarkMode
+                  ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
               Cancel
@@ -551,53 +713,62 @@ const MyComplaints = () => {
       title: complaint.title,
       description: complaint.description,
       location: complaint.location,
-      priority: complaint.priority
+      priority: complaint.priority,
     });
-    
-    const [existingPhotos, setExistingPhotos] = useState(complaint.photos || []);
+
+    const [existingPhotos, setExistingPhotos] = useState(
+      complaint.photos || []
+    );
     const [newPhotos, setNewPhotos] = useState([]);
     const [removedPhotoIds, setRemovedPhotoIds] = useState([]);
 
-    const onDrop = useCallback((acceptedFiles) => {
-      const totalPhotos = existingPhotos.length + newPhotos.length + acceptedFiles.length - removedPhotoIds.length;
-      
-      if (totalPhotos > 5) {
-        toast.error('Maximum 5 photos allowed');
-        return;
-      }
+    const onDrop = useCallback(
+      (acceptedFiles) => {
+        const totalPhotos =
+          existingPhotos.length +
+          newPhotos.length +
+          acceptedFiles.length -
+          removedPhotoIds.length;
 
-      const newPhotoObjects = acceptedFiles.map(file => ({
-        file,
-        preview: URL.createObjectURL(file),
-        id: Math.random().toString(36).substr(2, 9),
-        isNew: true
-      }));
+        if (totalPhotos > 5) {
+          toast.error("Maximum 5 photos allowed");
+          return;
+        }
 
-      setNewPhotos(prev => [...prev, ...newPhotoObjects]);
-    }, [existingPhotos.length, newPhotos.length, removedPhotoIds.length]);
+        const newPhotoObjects = acceptedFiles.map((file) => ({
+          file,
+          preview: URL.createObjectURL(file),
+          id: Math.random().toString(36).substr(2, 9),
+          isNew: true,
+        }));
+
+        setNewPhotos((prev) => [...prev, ...newPhotoObjects]);
+      },
+      [existingPhotos.length, newPhotos.length, removedPhotoIds.length]
+    );
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
       onDrop,
       accept: {
-        'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp']
+        "image/*": [".jpeg", ".jpg", ".png", ".gif", ".webp"],
       },
       maxSize: 5 * 1024 * 1024, // 5MB
-      multiple: true
+      multiple: true,
     });
 
     const removeExistingPhoto = (photoId) => {
-      setRemovedPhotoIds(prev => [...prev, photoId]);
+      setRemovedPhotoIds((prev) => [...prev, photoId]);
     };
 
     const restoreExistingPhoto = (photoId) => {
-      setRemovedPhotoIds(prev => prev.filter(id => id !== photoId));
+      setRemovedPhotoIds((prev) => prev.filter((id) => id !== photoId));
     };
 
     const removeNewPhoto = (photoId) => {
-      setNewPhotos(prev => {
-        const updated = prev.filter(photo => photo.id !== photoId);
+      setNewPhotos((prev) => {
+        const updated = prev.filter((photo) => photo.id !== photoId);
         // Revoke object URL to prevent memory leaks
-        const photoToRemove = prev.find(photo => photo.id === photoId);
+        const photoToRemove = prev.find((photo) => photo.id === photoId);
         if (photoToRemove) {
           URL.revokeObjectURL(photoToRemove.preview);
         }
@@ -613,14 +784,14 @@ const MyComplaints = () => {
     const handleChange = (e) => {
       setFormData({
         ...formData,
-        [e.target.name]: e.target.value
+        [e.target.name]: e.target.value,
       });
     };
 
     // Clean up object URLs when component unmounts
     useEffect(() => {
       return () => {
-        newPhotos.forEach(photo => {
+        newPhotos.forEach((photo) => {
           if (photo.preview) {
             URL.revokeObjectURL(photo.preview);
           }
@@ -633,32 +804,45 @@ const MyComplaints = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+        className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+        style={{ margin: 0, padding: 0, top: 0, left: 0, right: 0, bottom: 0 }}
         onClick={onClose}
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className={`w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl ${
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          className={`w-full max-w-2xl max-h-[95vh] overflow-y-auto mx-4 my-4 rounded-2xl shadow-2xl ${
+            isDarkMode ? "bg-gray-800" : "bg-white"
           }`}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className={`sticky top-0 p-6 border-b ${
-            isDarkMode ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'
-          }`}>
+          <div
+            className={`sticky top-0 p-6 border-b ${
+              isDarkMode
+                ? "border-gray-700 bg-gray-800"
+                : "border-gray-200 bg-white"
+            }`}
+          >
             <div className="flex justify-between items-center">
-              <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              <h2
+                className={`text-2xl font-bold ${
+                  isDarkMode ? "text-white" : "text-gray-900"
+                }`}
+              >
                 Edit Complaint
               </h2>
               <button
                 onClick={onClose}
                 className={`p-2 rounded-lg transition-colors ${
-                  isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                  isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
                 }`}
               >
-                <X className={`h-6 w-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`} />
+                <X
+                  className={`h-6 w-6 ${
+                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
+                />
               </button>
             </div>
           </div>
@@ -666,9 +850,11 @@ const MyComplaints = () => {
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {/* Title */}
             <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  isDarkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
                 Title *
               </label>
               <input
@@ -678,18 +864,20 @@ const MyComplaints = () => {
                 onChange={handleChange}
                 required
                 className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 ${
-                  isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
+                  isDarkMode
+                    ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 }`}
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  isDarkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
                 Description *
               </label>
               <textarea
@@ -699,18 +887,20 @@ const MyComplaints = () => {
                 required
                 rows={4}
                 className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 resize-none ${
-                  isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
+                  isDarkMode
+                    ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 }`}
               />
             </div>
 
             {/* Location */}
             <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  isDarkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
                 Location *
               </label>
               <input
@@ -720,18 +910,20 @@ const MyComplaints = () => {
                 onChange={handleChange}
                 required
                 className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 ${
-                  isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
+                  isDarkMode
+                    ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 }`}
               />
             </div>
 
             {/* Priority */}
             <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  isDarkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
                 Priority
               </label>
               <select
@@ -739,9 +931,9 @@ const MyComplaints = () => {
                 value={formData.priority}
                 onChange={handleChange}
                 className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 ${
-                  isDarkMode 
-                    ? 'bg-gray-700 border-gray-600 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent' 
-                    : 'bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
+                  isDarkMode
+                    ? "bg-gray-700 border-gray-600 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 }`}
               >
                 <option value="low">Low</option>
@@ -753,26 +945,34 @@ const MyComplaints = () => {
 
             {/* Photos Section */}
             <div>
-              <label className={`block text-sm font-medium mb-2 ${
-                isDarkMode ? 'text-gray-300' : 'text-gray-700'
-              }`}>
+              <label
+                className={`block text-sm font-medium mb-2 ${
+                  isDarkMode ? "text-gray-300" : "text-gray-700"
+                }`}
+              >
                 Photos (Max 5)
               </label>
 
               {/* Existing Photos */}
               {existingPhotos.length > 0 && (
                 <div className="mb-4">
-                  <h4 className={`text-sm font-medium mb-2 ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
+                  <h4
+                    className={`text-sm font-medium mb-2 ${
+                      isDarkMode ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
                     Current Photos
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {existingPhotos.map((photo) => (
                       <div key={photo.publicId} className="relative group">
-                        <div className={`relative ${
-                          removedPhotoIds.includes(photo.publicId) ? 'opacity-50' : ''
-                        }`}>
+                        <div
+                          className={`relative ${
+                            removedPhotoIds.includes(photo.publicId)
+                              ? "opacity-50"
+                              : ""
+                          }`}
+                        >
                           <img
                             src={photo.url}
                             alt="Existing photo"
@@ -780,11 +980,13 @@ const MyComplaints = () => {
                           />
                           {removedPhotoIds.includes(photo.publicId) && (
                             <div className="absolute inset-0 bg-red-500/20 rounded-lg flex items-center justify-center">
-                              <span className="text-red-600 font-medium text-xs">REMOVED</span>
+                              <span className="text-red-600 font-medium text-xs">
+                                REMOVED
+                              </span>
                             </div>
                           )}
                         </div>
-                        
+
                         {removedPhotoIds.includes(photo.publicId) ? (
                           <button
                             type="button"
@@ -811,9 +1013,11 @@ const MyComplaints = () => {
               {/* New Photos */}
               {newPhotos.length > 0 && (
                 <div className="mb-4">
-                  <h4 className={`text-sm font-medium mb-2 ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                  }`}>
+                  <h4
+                    className={`text-sm font-medium mb-2 ${
+                      isDarkMode ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
                     New Photos
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -838,35 +1042,59 @@ const MyComplaints = () => {
               )}
 
               {/* Upload Area */}
-              {(existingPhotos.length + newPhotos.length - removedPhotoIds.length) < 5 && (
+              {existingPhotos.length +
+                newPhotos.length -
+                removedPhotoIds.length <
+                5 && (
                 <div
                   {...getRootProps()}
                   className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all duration-200 ${
                     isDragActive
-                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                      ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
                       : isDarkMode
-                      ? 'border-gray-600 hover:border-gray-500 bg-gray-700/50'
-                      : 'border-gray-300 hover:border-gray-400 bg-gray-50'
+                      ? "border-gray-600 hover:border-gray-500 bg-gray-700/50"
+                      : "border-gray-300 hover:border-gray-400 bg-gray-50"
                   }`}
                 >
                   <input {...getInputProps()} />
-                  <Upload className={`h-6 w-6 mx-auto mb-2 ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`} />
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    {isDragActive ? 'Drop the files here...' : 'Add more photos'}
+                  <Upload
+                    className={`h-6 w-6 mx-auto mb-2 ${
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  />
+                  <p
+                    className={`text-sm ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    {isDragActive
+                      ? "Drop the files here..."
+                      : "Add more photos"}
                   </p>
-                  <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                  <p
+                    className={`text-xs mt-1 ${
+                      isDarkMode ? "text-gray-500" : "text-gray-500"
+                    }`}
+                  >
                     PNG, JPG, GIF up to 5MB each
                   </p>
                 </div>
               )}
 
-              {(existingPhotos.length + newPhotos.length - removedPhotoIds.length) >= 5 && (
-                <div className={`text-center p-4 rounded-lg ${
-                  isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
-                }`}>
-                  <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              {existingPhotos.length +
+                newPhotos.length -
+                removedPhotoIds.length >=
+                5 && (
+                <div
+                  className={`text-center p-4 rounded-lg ${
+                    isDarkMode ? "bg-gray-700" : "bg-gray-100"
+                  }`}
+                >
+                  <p
+                    className={`text-sm ${
+                      isDarkMode ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
                     Maximum photo limit reached (5/5)
                   </p>
                 </div>
@@ -879,9 +1107,9 @@ const MyComplaints = () => {
                 type="button"
                 onClick={onClose}
                 className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-colors ${
-                  isDarkMode 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  isDarkMode
+                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
               >
                 Cancel
@@ -922,14 +1150,22 @@ const MyComplaints = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
-            <h1 className={`text-2xl sm:text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h1
+              className={`text-2xl sm:text-3xl font-bold ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
               My Complaints
             </h1>
-            <p className={`mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <p
+              className={`mt-2 ${
+                isDarkMode ? "text-gray-400" : "text-gray-600"
+              }`}
+            >
               Manage and track your submitted complaints
             </p>
           </div>
-          
+
           <Link to="/client/create-complaint">
             <motion.button
               className="bg-gradient-to-r from-primary-600 to-primary-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold flex items-center space-x-2 hover:from-primary-700 hover:to-primary-800 shadow-lg w-full sm:w-auto justify-center"
@@ -943,11 +1179,13 @@ const MyComplaints = () => {
         </div>
 
         {/* Filters */}
-        <div className={`p-4 sm:p-6 rounded-2xl shadow-lg border ${
-          isDarkMode 
-            ? 'bg-gray-800 border-gray-700' 
-            : 'bg-white border-gray-200'
-        }`}>
+        <div
+          className={`p-4 sm:p-6 rounded-2xl shadow-lg border ${
+            isDarkMode
+              ? "bg-gray-800 border-gray-700"
+              : "bg-white border-gray-200"
+          }`}
+        >
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search */}
             <div className="flex-1">
@@ -959,9 +1197,9 @@ const MyComplaints = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-all duration-200 ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent' 
-                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
+                    isDarkMode
+                      ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   }`}
                 />
               </div>
@@ -975,9 +1213,9 @@ const MyComplaints = () => {
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-all duration-200 ${
-                    isDarkMode 
-                      ? 'bg-gray-700 border-gray-600 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent' 
-                      : 'bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent'
+                    isDarkMode
+                      ? "bg-gray-700 border-gray-600 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   }`}
                 >
                   <option value="all">All Status</option>
@@ -994,18 +1232,28 @@ const MyComplaints = () => {
         {/* Complaints List */}
         <div className="space-y-4">
           {filteredComplaints.length === 0 ? (
-            <div className={`text-center py-8 sm:py-12 rounded-2xl ${
-              isDarkMode ? 'bg-gray-800' : 'bg-white'
-            } shadow-lg`}>
-              <p className={`text-base sm:text-lg font-medium ${
-                isDarkMode ? 'text-gray-400' : 'text-gray-600'
-              }`}>
-                {searchTerm || statusFilter !== 'all' ? 'No complaints match your filters' : 'No complaints yet'}
+            <div
+              className={`text-center py-8 sm:py-12 rounded-2xl ${
+                isDarkMode ? "bg-gray-800" : "bg-white"
+              } shadow-lg`}
+            >
+              <p
+                className={`text-base sm:text-lg font-medium ${
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                {searchTerm || statusFilter !== "all"
+                  ? "No complaints match your filters"
+                  : "No complaints yet"}
               </p>
-              <p className={`mt-2 text-sm sm:text-base ${
-                isDarkMode ? 'text-gray-500' : 'text-gray-500'
-              }`}>
-                {searchTerm || statusFilter !== 'all' ? 'Try adjusting your search or filters' : 'Create your first complaint to get started'}
+              <p
+                className={`mt-2 text-sm sm:text-base ${
+                  isDarkMode ? "text-gray-500" : "text-gray-500"
+                }`}
+              >
+                {searchTerm || statusFilter !== "all"
+                  ? "Try adjusting your search or filters"
+                  : "Create your first complaint to get started"}
               </p>
             </div>
           ) : (
@@ -1015,47 +1263,71 @@ const MyComplaints = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={`p-4 sm:p-6 rounded-2xl shadow-lg border ${
-                  isDarkMode 
-                    ? 'bg-gray-800 border-gray-700' 
-                    : 'bg-white border-gray-200'
+                  isDarkMode
+                    ? "bg-gray-800 border-gray-700"
+                    : "bg-white border-gray-200"
                 } hover:shadow-xl transition-all duration-200`}
               >
                 <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                      <h3 className={`text-lg sm:text-xl font-semibold truncate ${
-                        isDarkMode ? 'text-white' : 'text-gray-900'
-                      }`}>
+                      <h3
+                        className={`text-lg sm:text-xl font-semibold truncate ${
+                          isDarkMode ? "text-white" : "text-gray-900"
+                        }`}
+                      >
                         {complaint.title}
                       </h3>
                       <div className="flex flex-wrap gap-2">
-                        <span className={`px-3 py-1 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap ${getStatusColor(complaint.status)}`}>
-                          {complaint.status.replace('-', ' ').toUpperCase()}
+                        <span
+                          className={`px-3 py-1 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap ${getStatusColor(
+                            complaint.status
+                          )}`}
+                        >
+                          {complaint.status.replace("-", " ").toUpperCase()}
                         </span>
-                        <span className={`text-xs sm:text-sm font-medium capitalize whitespace-nowrap ${getPriorityColor(complaint.priority)}`}>
+                        <span
+                          className={`text-xs sm:text-sm font-medium capitalize whitespace-nowrap ${getPriorityColor(
+                            complaint.priority
+                          )}`}
+                        >
                           {complaint.priority} Priority
                         </span>
                       </div>
                     </div>
-                    
-                    <p className={`mb-3 text-sm sm:text-base line-clamp-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+
+                    <p
+                      className={`mb-3 text-sm sm:text-base line-clamp-2 ${
+                        isDarkMode ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
                       {complaint.description}
                     </p>
-                    
+
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-xs sm:text-sm">
-                      <span className={`flex items-center space-x-1 ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
+                      <span
+                        className={`flex items-center space-x-1 ${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
                         <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                         <span className="truncate">{complaint.location}</span>
                       </span>
-                      <span className={`flex items-center space-x-1 ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>
+                      <span
+                        className={`flex items-center space-x-1 ${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
                         <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                        <span className="whitespace-nowrap">{new Date(complaint.createdAt).toLocaleDateString()}</span>
+                        <span className="whitespace-nowrap">
+                          {new Date(complaint.createdAt).toLocaleDateString()}
+                        </span>
                       </span>
-                      <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} whitespace-nowrap`}>
+                      <span
+                        className={`${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        } whitespace-nowrap`}
+                      >
                         ID: {complaint.complaintId}
                       </span>
                     </div>
@@ -1063,9 +1335,11 @@ const MyComplaints = () => {
                     {/* Photos */}
                     {complaint.photos && complaint.photos.length > 0 && (
                       <div className="mt-4">
-                        <p className={`text-xs sm:text-sm font-medium mb-2 ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
+                        <p
+                          className={`text-xs sm:text-sm font-medium mb-2 ${
+                            isDarkMode ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
                           Photos ({complaint.photos.length})
                         </p>
                         <div className="flex flex-wrap gap-2">
@@ -1100,8 +1374,13 @@ const MyComplaints = () => {
                     {/* Technician Info */}
                     {complaint.assignedTechnician && (
                       <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                        <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>
-                          <span className="font-medium">Assigned to:</span> {complaint.assignedTechnician.name}
+                        <p
+                          className={`text-xs sm:text-sm ${
+                            isDarkMode ? "text-blue-300" : "text-blue-700"
+                          }`}
+                        >
+                          <span className="font-medium">Assigned to:</span>{" "}
+                          {complaint.assignedTechnician.name}
                         </p>
                       </div>
                     )}
@@ -1116,8 +1395,8 @@ const MyComplaints = () => {
                     >
                       <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                     </button>
-                    
-                    {complaint.status === 'pending' && (
+
+                    {complaint.status === "pending" && (
                       <>
                         <button
                           onClick={() => setEditComplaint(complaint)}
@@ -1172,7 +1451,15 @@ const MyComplaints = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
+              className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
+              style={{
+                margin: 0,
+                padding: 0,
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
               onClick={() => setSelectedImage(null)}
             >
               <motion.div
@@ -1194,7 +1481,9 @@ const MyComplaints = () => {
                   <X className="h-6 w-6" />
                 </button>
                 <button
-                  onClick={() => downloadImage(selectedImage.url, selectedImage.originalName)}
+                  onClick={() =>
+                    downloadImage(selectedImage.url, selectedImage.originalName)
+                  }
                   className="absolute top-4 right-20 w-12 h-12 bg-black/70 text-white rounded-full flex items-center justify-center hover:bg-black/90 transition-colors"
                 >
                   <Download className="h-6 w-6" />

@@ -1,20 +1,40 @@
-import Complaint from '../models/Complaint.js';
-import Client from '../models/Client.js';
-import Notification from '../models/Notification.js';
-import { uploadToCloudinary, deleteFromCloudinary } from '../config/cloudinary.js';
-import { sendStatusUpdateNotification, sendAssignmentNotification } from '../config/msg91.js';
-import fs from 'fs';
+import Complaint from "../models/Complaint.js";
+import Client from "../models/Client.js";
+import Notification from "../models/Notification.js";
+import Store from "../models/Store.js";
+import {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} from "../config/cloudinary.js";
+import {
+  sendStatusUpdateNotification,
+  sendAssignmentNotification,
+} from "../config/msg91.js";
 
 export const createComplaint = async (req, res) => {
   try {
-    const { title, description, location, priority } = req.body;
+    const { title, description, location, priority, storeId } = req.body;
     const clientId = req.user.id;
 
-    if (!title || !description || !location) {
+    if (!title || !description || (!location && !storeId)) {
       return res.status(400).json({
         success: false,
-        message: 'Title, description, and location are required'
+        message: "Title, description, and location are required",
       });
+    }
+
+    let resolvedLocation = location;
+    let resolvedStoreId = null;
+    if (storeId) {
+      const store = await Store.findById(storeId).select("name");
+      if (!store) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid store selected",
+        });
+      }
+      resolvedStoreId = store._id;
+      resolvedLocation = store.name;
     }
 
     // Verify client exists
@@ -22,7 +42,7 @@ export const createComplaint = async (req, res) => {
     if (!client) {
       return res.status(404).json({
         success: false,
-        message: 'Client not found'
+        message: "Client not found",
       });
     }
 
@@ -33,27 +53,25 @@ export const createComplaint = async (req, res) => {
       return `CMP-${timestamp}-${random}`.toUpperCase();
     };
 
-    // Handle photo uploads
+    // Handle photo uploads - parallel for speed
     let photos = [];
     if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        try {
-          const uploadResult = await uploadToCloudinary(file);
-          photos.push(uploadResult);
-          
-          // Delete local file after upload
-          fs.unlinkSync(file.path);
-        } catch (error) {
-          console.error('Photo upload error:', error);
-          // Clean up any uploaded photos if one fails
-          for (const photo of photos) {
+      try {
+        photos = await Promise.all(
+          req.files.map((file) => uploadToCloudinary(file))
+        );
+      } catch (error) {
+        console.error("Photo upload error:", error);
+        // Clean up any uploaded photos if one fails
+        for (const photo of photos) {
+          if (photo?.publicId) {
             await deleteFromCloudinary(photo.publicId);
           }
-          return res.status(500).json({
-            success: false,
-            message: 'Failed to upload photos'
-          });
         }
+        return res.status(400).json({
+          success: false,
+          message: "Failed to upload photos",
+        });
       }
     }
 
@@ -61,28 +79,31 @@ export const createComplaint = async (req, res) => {
       complaintId: generateComplaintId(),
       title,
       description,
-      location,
-      priority: priority || 'medium',
+      location: resolvedLocation,
+      store: resolvedStoreId,
+      priority: priority || "medium",
       photos,
-      client: clientId
+      client: clientId,
+      creatorType: "client",
     });
 
     await complaint.save();
 
     // Populate client info for response
-    await complaint.populate('client', 'name phoneNumber');
+    await complaint.populate("client", "name phoneNumber");
+    await complaint.populate("store", "name managers");
 
     res.status(201).json({
       success: true,
-      message: 'Complaint created successfully',
-      complaint
+      message: "Complaint created successfully",
+      complaint,
     });
   } catch (error) {
-    console.error('Create complaint error:', error);
+    console.error("Create complaint error:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -98,7 +119,10 @@ export const getMyComplaints = async (req, res) => {
     }
 
     const complaints = await Complaint.find(filter)
-      .populate('assignedTechnician', 'name phoneNumber')
+      .populate("assignedTechnician", "name phoneNumber")
+      .populate("createdByTechnician", "name phoneNumber")
+      .populate("createdByAdmin", "name")
+      .populate("store", "name managers")
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -111,14 +135,14 @@ export const getMyComplaints = async (req, res) => {
       pagination: {
         total,
         page: parseInt(page),
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
-    console.error('Get my complaints error:', error);
+    console.error("Get my complaints error:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Internal server error",
     });
   }
 };
@@ -134,15 +158,15 @@ export const updateComplaint = async (req, res) => {
     if (!complaint) {
       return res.status(404).json({
         success: false,
-        message: 'Complaint not found or unauthorized'
+        message: "Complaint not found or unauthorized",
       });
     }
 
     // Only allow updates if complaint is still pending
-    if (complaint.status !== 'pending') {
+    if (complaint.status !== "pending") {
       return res.status(400).json({
         success: false,
-        message: 'Cannot update complaint after it has been assigned'
+        message: "Cannot update complaint after it has been assigned",
       });
     }
 
@@ -154,65 +178,64 @@ export const updateComplaint = async (req, res) => {
 
     // Handle photo removals
     if (removedPhotos && removedPhotos.length > 0) {
-      const removedPhotoIds = Array.isArray(removedPhotos) ? removedPhotos : [removedPhotos];
-      
+      const removedPhotoIds = Array.isArray(removedPhotos)
+        ? removedPhotos
+        : [removedPhotos];
+
       // Remove photos from Cloudinary
       for (const publicId of removedPhotoIds) {
         try {
           await deleteFromCloudinary(publicId);
         } catch (error) {
-          console.error('Error deleting photo from Cloudinary:', error);
+          console.error("Error deleting photo from Cloudinary:", error);
         }
       }
-      
+
       // Remove photos from complaint
       complaint.photos = complaint.photos.filter(
-        photo => !removedPhotoIds.includes(photo.publicId)
+        (photo) => !removedPhotoIds.includes(photo.publicId)
       );
     }
 
-    // Handle new photo uploads
+    // Handle new photo uploads - parallel for speed
     if (req.files && req.files.length > 0) {
       // Check if adding new photos would exceed the limit
       if (complaint.photos.length + req.files.length > 5) {
         return res.status(400).json({
           success: false,
-          message: 'Maximum 5 photos allowed per complaint'
+          message: "Maximum 5 photos allowed per complaint",
         });
       }
 
-      for (const file of req.files) {
-        try {
-          const uploadResult = await uploadToCloudinary(file);
-          complaint.photos.push(uploadResult);
-          
-          // Delete local file after upload
-          fs.unlinkSync(file.path);
-        } catch (error) {
-          console.error('Photo upload error:', error);
-          return res.status(500).json({
-            success: false,
-            message: 'Failed to upload new photos'
-          });
-        }
+      try {
+        const newPhotos = await Promise.all(
+          req.files.map((file) => uploadToCloudinary(file))
+        );
+        complaint.photos.push(...newPhotos);
+      } catch (error) {
+        console.error("Photo upload error:", error);
+        return res.status(400).json({
+          success: false,
+          message: "Failed to upload new photos",
+        });
       }
     }
 
     await complaint.save();
 
     // Populate the complaint before sending response
-    await complaint.populate('client', 'name phoneNumber');
+    await complaint.populate("client", "name phoneNumber");
 
     res.status(200).json({
       success: true,
-      message: 'Complaint updated successfully',
-      complaint
+      message: "Complaint updated successfully",
+      complaint,
     });
   } catch (error) {
-    console.error('Update complaint error:', error);
+    console.error("Update complaint error:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Internal server error",
     });
   }
 };
@@ -227,15 +250,15 @@ export const deleteComplaint = async (req, res) => {
     if (!complaint) {
       return res.status(404).json({
         success: false,
-        message: 'Complaint not found or unauthorized'
+        message: "Complaint not found or unauthorized",
       });
     }
 
     // Only allow deletion if complaint is still pending
-    if (complaint.status !== 'pending') {
+    if (complaint.status !== "pending") {
       return res.status(400).json({
         success: false,
-        message: 'Cannot delete complaint after it has been assigned'
+        message: "Cannot delete complaint after it has been assigned",
       });
     }
 
@@ -248,13 +271,13 @@ export const deleteComplaint = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Complaint deleted successfully'
+      message: "Complaint deleted successfully",
     });
   } catch (error) {
-    console.error('Delete complaint error:', error);
+    console.error("Delete complaint error:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Internal server error",
     });
   }
 };
@@ -267,24 +290,57 @@ export const getAssignedComplaints = async (req, res) => {
     // Find complaints assigned to this technician
     const complaints = await Complaint.find({
       assignedTechnician: technicianId,
-      status: { $in: ['assigned', 'in-progress'] } // Only active assignments
+      status: { $in: ["assigned", "in-progress"] }, // Only active assignments
     })
-    .populate('client', 'name phoneNumber')
-    .populate('assignedBy', 'name')
-    .sort({ assignedAt: -1 });
+      .populate("client", "name phoneNumber")
+      .populate("assignedBy", "name")
+      .populate("createdByTechnician", "name phoneNumber")
+      .populate("createdByAdmin", "name")
+      .populate("store", "name managers")
+      .sort({ assignedAt: -1 });
+
+    // Backfill store contacts for older complaints (store missing, location contains store name)
+    const missingStoreNames = [
+      ...new Set(
+        complaints
+          .filter((c) => !c.store && c.location)
+          .map((c) => String(c.location).trim())
+          .filter(Boolean)
+      ),
+    ];
+
+    const stores = missingStoreNames.length
+      ? await Store.find({
+          name: { $in: missingStoreNames },
+          isActive: true,
+        }).select("name managers")
+      : [];
+
+    const storeByLowerName = new Map(
+      stores.map((s) => [String(s.name).toLowerCase(), s])
+    );
+
+    const complaintsWithStore = complaints.map((c) => {
+      const obj = c.toObject();
+      if (!obj.store && obj.location) {
+        obj.store =
+          storeByLowerName.get(String(obj.location).toLowerCase()) || null;
+      }
+      return obj;
+    });
 
     // Calculate stats
     const stats = {
       total: complaints.length,
-      assigned: complaints.filter(c => c.status === 'assigned').length,
-      inProgress: complaints.filter(c => c.status === 'in-progress').length,
-      completed: 0 // Will be calculated separately if needed
+      assigned: complaints.filter((c) => c.status === "assigned").length,
+      inProgress: complaints.filter((c) => c.status === "in-progress").length,
+      completed: 0, // Will be calculated separately if needed
     };
 
     // Get completed count for stats
     const completedCount = await Complaint.countDocuments({
       assignedTechnician: technicianId,
-      status: 'resolved'
+      status: "resolved",
     });
     stats.completed = completedCount;
     stats.total = complaints.length + completedCount;
@@ -292,16 +348,16 @@ export const getAssignedComplaints = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
-        complaints,
-        stats
-      }
+        complaints: complaintsWithStore,
+        stats,
+      },
     });
   } catch (error) {
-    console.error('Get assigned complaints error:', error);
+    console.error("Get assigned complaints error:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -313,91 +369,106 @@ export const updateComplaintStatus = async (req, res) => {
 
     // Extract status from body (FormData sends it as string)
     const { status, notes, resolutionNotes } = req.body;
-    
+
     if (!status) {
-      console.log('❌ Status is missing from request body');
+      console.log("❌ Status is missing from request body");
       return res.status(400).json({
         success: false,
-        message: 'Status is required'
+        message: "Status is required",
       });
     }
 
     // Validate status value
-    const validStatuses = ['assigned', 'in-progress', 'resolved'];
+    const validStatuses = ["assigned", "in-progress", "resolved"];
     if (!validStatuses.includes(status)) {
-      console.log('❌ Invalid status value:', status);
+      console.log("❌ Invalid status value:", status);
       return res.status(400).json({
         success: false,
-        message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+        message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
       });
     }
 
     // Find complaint assigned to this technician with client info
     const complaint = await Complaint.findOne({
       _id: id,
-      assignedTechnician: technicianId
-    }).populate('client', 'name phoneNumber');
+      assignedTechnician: technicianId,
+    })
+      .populate("client", "name phoneNumber")
+      .populate("createdByTechnician", "name phoneNumber")
+      .populate("createdByAdmin", "name")
+      .populate("store", "name managers");
 
     if (!complaint) {
-      console.log('❌ Complaint not found or not assigned to technician');
+      console.log("❌ Complaint not found or not assigned to technician");
       return res.status(404).json({
         success: false,
-        message: 'Complaint not found or not assigned to you'
+        message: "Complaint not found or not assigned to you",
       });
     }
 
     // Validate status transition
     const validTransitions = {
-      'assigned': ['in-progress'],
-      'in-progress': ['resolved']
+      assigned: ["in-progress"],
+      "in-progress": ["resolved"],
     };
 
     if (!validTransitions[complaint.status]?.includes(status)) {
-      console.log('❌ Invalid status transition:', `${complaint.status} -> ${status}`);
+      console.log(
+        "❌ Invalid status transition:",
+        `${complaint.status} -> ${status}`
+      );
       return res.status(400).json({
         success: false,
-        message: `Cannot change status from ${complaint.status} to ${status}`
+        message: `Cannot change status from ${complaint.status} to ${status}`,
       });
     }
 
-
     // Handle resolution photos if complaint is being resolved
     let resolutionPhotos = [];
-    if (status === 'resolved') {
+    if (status === "resolved") {
       // Validate resolution notes are required for resolved status
-      if (!resolutionNotes || resolutionNotes.trim() === '') {
-        console.log('❌ Resolution notes are required for resolved status');
+      if (!resolutionNotes || resolutionNotes.trim() === "") {
+        console.log("❌ Resolution notes are required for resolved status");
         return res.status(400).json({
           success: false,
-          message: 'Resolution notes are required when marking complaint as resolved'
+          message:
+            "Resolution notes are required when marking complaint as resolved",
+        });
+      }
+
+      // Validate materials used is required for resolved status
+      const materialsUsed = req.body.materialsUsed;
+      if (!materialsUsed || materialsUsed.trim() === "") {
+        console.log("❌ Materials used is required for resolved status");
+        return res.status(400).json({
+          success: false,
+          message:
+            "Materials used is required when marking complaint as resolved",
         });
       }
 
       if (req.files && req.files.length > 0) {
-        console.log('📸 Processing resolution photos:', req.files.length);
-        for (const file of req.files) {
-          try {
-            const uploadResult = await uploadToCloudinary(file);
-            resolutionPhotos.push({
-              url: uploadResult.url,
-              publicId: uploadResult.publicId,
-              originalName: uploadResult.originalName,
-              uploadedAt: new Date()
-            });
-            
-            // Delete local file after upload
-            fs.unlinkSync(file.path);
-          } catch (error) {
-            console.error('Resolution photo upload error:', error);
-            // Clean up any uploaded photos if one fails
-            for (const photo of resolutionPhotos) {
-              await deleteFromCloudinary(photo.publicId);
-            }
-            return res.status(500).json({
-              success: false,
-              message: 'Failed to upload resolution photos'
-            });
+        console.log("📸 Processing resolution photos:", req.files.length);
+        try {
+          const uploadResults = await Promise.all(
+            req.files.map((file) => uploadToCloudinary(file))
+          );
+          resolutionPhotos = uploadResults.map((result) => ({
+            url: result.url,
+            publicId: result.publicId,
+            originalName: result.originalName,
+            uploadedAt: new Date(),
+          }));
+        } catch (error) {
+          console.error("Resolution photo upload error:", error);
+          // Clean up any uploaded photos if one fails
+          for (const photo of resolutionPhotos) {
+            await deleteFromCloudinary(photo.publicId);
           }
+          return res.status(400).json({
+            success: false,
+            message: "Failed to upload resolution photos",
+          });
         }
       }
     }
@@ -408,14 +479,17 @@ export const updateComplaintStatus = async (req, res) => {
     if (notes) {
       complaint.technicianNotes = notes;
     }
-    
-    if (status === 'in-progress') {
+
+    if (status === "in-progress") {
       complaint.startedAt = new Date();
-    } else if (status === 'resolved') {
+    } else if (status === "resolved") {
       complaint.completedAt = new Date();
       complaint.resolvedAt = new Date();
       if (resolutionNotes) {
         complaint.resolutionNotes = resolutionNotes;
+      }
+      if (req.body.materialsUsed) {
+        complaint.materialsUsed = req.body.materialsUsed;
       }
       if (resolutionPhotos.length > 0) {
         complaint.resolutionPhotos = resolutionPhotos;
@@ -425,74 +499,74 @@ export const updateComplaintStatus = async (req, res) => {
     await complaint.save();
 
     // Send notification using MSG91 - Fixed client data access
-    if (complaint.client && complaint.client.phoneNumber) {
-      console.log('📱 Sending status update notification:', {
-        phone: complaint.client.phoneNumber,
-        complaintId: complaint.complaintId,
-        status: status,
-        clientName: complaint.client.name,
-        technicianName: complaint.assignedTechnician.name
-      });
+    const recipientPhone =
+      complaint.client?.phoneNumber ||
+      complaint.createdByTechnician?.phoneNumber;
+    const recipientName =
+      complaint.client?.name || complaint.createdByTechnician?.name;
 
+    if (recipientPhone) {
       try {
         const notificationResult = await sendStatusUpdateNotification(
-          complaint.client.phoneNumber,
+          recipientPhone,
           complaint.complaintId,
           status,
-          complaint.client.name,
+          recipientName,
           complaint.assignedTechnician.name
         );
 
         // Save notification record
         const notification = new Notification({
           complaint: complaint._id,
-          recipient: complaint.client.phoneNumber,
-          type: 'status_update',
+          recipient: recipientPhone,
+          type: "status_update",
           message: `Complaint ${complaint.complaintId} status changed to ${status}`,
-          status: notificationResult.success ? 'sent' : 'failed',
+          status: notificationResult.success ? "sent" : "failed",
           twilioMessageId: notificationResult.messageId,
           error: notificationResult.success ? null : notificationResult.error,
-          sentAt: notificationResult.success ? new Date() : null
+          sentAt: notificationResult.success ? new Date() : null,
         });
 
         await notification.save();
       } catch (notificationError) {
-        console.error('❌ Notification sending error:', notificationError);
-        
+        console.error("❌ Notification sending error:", notificationError);
+
         // Save failed notification record
         const notification = new Notification({
           complaint: complaint._id,
-          recipient: complaint.client.phoneNumber,
-          type: 'status_update',
+          recipient: recipientPhone,
+          type: "status_update",
           message: `Complaint ${complaint.complaintId} status changed to ${status}`,
-          status: 'failed',
-          error: notificationError.message
+          status: "failed",
+          error: notificationError.message,
         });
 
         await notification.save();
       }
     } else {
-      console.log('⚠️ Skipping notification - client or phone number not found');
+      console.log(
+        "⚠️ Skipping notification - recipient phone number not found"
+      );
     }
-    
+
     // Populate the response
-    await complaint.populate('assignedTechnician', 'name phoneNumber');
+    await complaint.populate("assignedTechnician", "name phoneNumber");
 
     res.status(200).json({
       success: true,
-      message: 'Complaint status updated successfully',
-      complaint
+      message: "Complaint status updated successfully",
+      complaint,
     });
   } catch (error) {
-    console.error('❌ ===== COMPLAINT STATUS UPDATE ERROR =====');
-    console.error('Update complaint status error:', error);
-    console.error('Error stack:', error.stack);
-    console.error('❌ ===== ERROR END =====');
-    
+    console.error("❌ ===== COMPLAINT STATUS UPDATE ERROR =====");
+    console.error("Update complaint status error:", error);
+    console.error("Error stack:", error.stack);
+    console.error("❌ ===== ERROR END =====");
+
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -504,37 +578,40 @@ export const getComplaintById = async (req, res) => {
     const userRole = req.user.role;
 
     let filter = { _id: id };
-    
+
     // Clients can only see their own complaints
-    if (userRole === 'client') {
+    if (userRole === "client") {
       filter.client = userId;
     }
     // Technicians can only see assigned complaints
-    else if (userRole === 'technician') {
+    else if (userRole === "technician") {
       filter.assignedTechnician = userId;
     }
 
     const complaint = await Complaint.findOne(filter)
-      .populate('client', 'name phoneNumber')
-      .populate('assignedTechnician', 'name phoneNumber')
-      .populate('assignedBy', 'name');
+      .populate("client", "name phoneNumber")
+      .populate("assignedTechnician", "name phoneNumber")
+      .populate("assignedBy", "name")
+      .populate("createdByTechnician", "name phoneNumber")
+      .populate("createdByAdmin", "name")
+      .populate("store", "name managers");
 
     if (!complaint) {
       return res.status(404).json({
         success: false,
-        message: 'Complaint not found'
+        message: "Complaint not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      complaint
+      complaint,
     });
   } catch (error) {
-    console.error('Get complaint by ID error:', error);
+    console.error("Get complaint by ID error:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: "Internal server error",
     });
   }
 };
@@ -547,24 +624,57 @@ export const getResolvedComplaints = async (req, res) => {
     // Find resolved complaints assigned to this technician
     const complaints = await Complaint.find({
       assignedTechnician: technicianId,
-      status: 'resolved'
+      status: "resolved",
     })
-    .populate('client', 'name phoneNumber')
-    .populate('assignedBy', 'name')
-    .sort({ completedAt: -1, updatedAt: -1 });
+      .populate("client", "name phoneNumber")
+      .populate("assignedBy", "name")
+      .populate("createdByTechnician", "name phoneNumber")
+      .populate("createdByAdmin", "name")
+      .populate("store", "name managers")
+      .sort({ completedAt: -1, updatedAt: -1 });
+
+    // Backfill store contacts for older complaints
+    const missingStoreNames = [
+      ...new Set(
+        complaints
+          .filter((c) => !c.store && c.location)
+          .map((c) => String(c.location).trim())
+          .filter(Boolean)
+      ),
+    ];
+
+    const stores = missingStoreNames.length
+      ? await Store.find({
+          name: { $in: missingStoreNames },
+          isActive: true,
+        }).select("name managers")
+      : [];
+
+    const storeByLowerName = new Map(
+      stores.map((s) => [String(s.name).toLowerCase(), s])
+    );
+
+    const complaintsWithStore = complaints.map((c) => {
+      const obj = c.toObject();
+      if (!obj.store && obj.location) {
+        obj.store =
+          storeByLowerName.get(String(obj.location).toLowerCase()) || null;
+      }
+      return obj;
+    });
 
     res.status(200).json({
       success: true,
       data: {
-        complaints
-      }
+        complaints: complaintsWithStore,
+      },
     });
   } catch (error) {
-    console.error('Get resolved complaints error:', error);
+    console.error("Get resolved complaints error:", error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };

@@ -66,7 +66,6 @@ const CreateComplaint = () => {
   const removePhoto = (id) => {
     setPhotos((prev) => {
       const updated = prev.filter((photo) => photo.id !== id);
-      // Revoke object URL to prevent memory leaks
       const photoToRemove = prev.find((photo) => photo.id === id);
       if (photoToRemove) {
         URL.revokeObjectURL(photoToRemove.preview);
@@ -90,7 +89,7 @@ const CreateComplaint = () => {
         formData.append("photos", photo.file);
       });
 
-      await api.post("/client/complaints", formData, {
+      await api.post("/admin/complaints", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -101,7 +100,7 @@ const CreateComplaint = () => {
       // Clean up object URLs
       photos.forEach((photo) => URL.revokeObjectURL(photo.preview));
 
-      navigate("/client/complaints");
+      navigate("/admin/complaints");
     } catch (error) {
       console.error("Error creating complaint:", error);
       toast.error(
@@ -139,7 +138,7 @@ const CreateComplaint = () => {
           <p
             className={`mt-2 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}
           >
-            Fill out the form below to submit your complaint
+            Fill out the form below to submit a complaint
           </p>
         </div>
 
@@ -343,7 +342,7 @@ const CreateComplaint = () => {
             <div className="flex space-x-4 pt-4">
               <button
                 type="button"
-                onClick={() => navigate("/client/dashboard")}
+                onClick={() => navigate("/admin/dashboard")}
                 className={`flex-1 py-3 px-4 border rounded-xl font-semibold transition-all duration-200 ${
                   isDarkMode
                     ? "border-gray-600 text-gray-300 hover:bg-gray-700"

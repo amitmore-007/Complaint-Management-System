@@ -19,7 +19,7 @@ import api from "../../lib/axios";
 import { STORE_OPTIONS } from "../../utils/storeOptions";
 import StoreDropdown from "../../components/common/StoreDropdown";
 
-const CreateComplaint = () => {
+const TechnicianCreateComplaint = () => {
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
   const [photos, setPhotos] = useState([]);
@@ -90,7 +90,7 @@ const CreateComplaint = () => {
         formData.append("photos", photo.file);
       });
 
-      await api.post("/client/complaints", formData, {
+      await api.post("/technician/complaints", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -101,7 +101,7 @@ const CreateComplaint = () => {
       // Clean up object URLs
       photos.forEach((photo) => URL.revokeObjectURL(photo.preview));
 
-      navigate("/client/complaints");
+      navigate("/technician/my-complaints");
     } catch (error) {
       console.error("Error creating complaint:", error);
       toast.error(
@@ -343,7 +343,7 @@ const CreateComplaint = () => {
             <div className="flex space-x-4 pt-4">
               <button
                 type="button"
-                onClick={() => navigate("/client/dashboard")}
+                onClick={() => navigate("/technician/dashboard")}
                 className={`flex-1 py-3 px-4 border rounded-xl font-semibold transition-all duration-200 ${
                   isDarkMode
                     ? "border-gray-600 text-gray-300 hover:bg-gray-700"
@@ -377,4 +377,4 @@ const CreateComplaint = () => {
   );
 };
 
-export default CreateComplaint;
+export default TechnicianCreateComplaint;
