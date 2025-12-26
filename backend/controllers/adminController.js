@@ -15,6 +15,7 @@ import {
   uploadToCloudinary,
   deleteFromCloudinary,
 } from "../config/cloudinary.js";
+import { generateNextComplaintId } from "../utils/complaintId.js";
 
 // ============================================
 // HELPER FUNCTIONS
@@ -243,6 +244,7 @@ export const createAdminComplaint = async (req, res) => {
     // Resolve store -> location
     let resolvedLocation = location;
     let resolvedStoreId = null;
+    let resolvedStoreName = null;
 
     if (storeId) {
       const store = await Store.findById(storeId).select("name");
@@ -253,17 +255,13 @@ export const createAdminComplaint = async (req, res) => {
         });
       }
       resolvedStoreId = store._id;
+      resolvedStoreName = store.name;
       resolvedLocation = store.name;
     }
 
-    // Generate unique complaint ID
-    const generateComplaintId = () => {
-      const timestamp = Date.now().toString().slice(-6);
-      const random = Math.floor(Math.random() * 1000)
-        .toString()
-        .padStart(3, "0");
-      return `CMP-${timestamp}${random}`;
-    };
+    const complaintId = await generateNextComplaintId({
+      storeName: resolvedStoreName || resolvedLocation,
+    });
 
     // Handle photo uploads - parallel for speed
     let photos = [];
@@ -292,7 +290,7 @@ export const createAdminComplaint = async (req, res) => {
     }
 
     const complaint = new Complaint({
-      complaintId: generateComplaintId(),
+      complaintId,
       title,
       description,
       location: resolvedLocation,
