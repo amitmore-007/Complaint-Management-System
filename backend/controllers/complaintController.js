@@ -498,12 +498,25 @@ export const updateComplaintStatus = async (req, res) => {
 
     await complaint.save();
 
+    // Re-populate after save to ensure we have all data
+    await complaint.populate("client", "name phoneNumber");
+    await complaint.populate("createdByTechnician", "name phoneNumber");
+    await complaint.populate("assignedTechnician", "name phoneNumber");
+
     // Send notification using MSG91 - Fixed client data access
     const recipientPhone =
       complaint.client?.phoneNumber ||
       complaint.createdByTechnician?.phoneNumber;
     const recipientName =
       complaint.client?.name || complaint.createdByTechnician?.name;
+
+    console.log("📱 Notification Debug Info:");
+    console.log("  - Complaint ID:", complaint.complaintId);
+    console.log("  - Status:", status);
+    console.log("  - Recipient Phone:", recipientPhone);
+    console.log("  - Recipient Name:", recipientName);
+    console.log("  - Client Data:", complaint.client);
+    console.log("  - Technician Data:", complaint.createdByTechnician);
 
     if (recipientPhone) {
       try {
