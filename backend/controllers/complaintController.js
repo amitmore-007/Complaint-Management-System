@@ -12,6 +12,19 @@ import {
 } from "../config/msg91.js";
 import { generateNextComplaintId } from "../utils/complaintId.js";
 
+const normalizeIndianPhone10Digits = (phoneNumber) => {
+  if (!phoneNumber) return "";
+
+  let digits = String(phoneNumber).replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("91")) {
+    digits = digits.substring(2);
+  }
+  if (digits.length > 10) {
+    digits = digits.slice(-10);
+  }
+  return digits;
+};
+
 export const createComplaint = async (req, res) => {
   try {
     const { title, description, location, priority, storeId } = req.body;
@@ -448,7 +461,6 @@ export const updateComplaintStatus = async (req, res) => {
       }
 
       if (req.files && req.files.length > 0) {
-        console.log("📸 Processing resolution photos:", req.files.length);
         try {
           const uploadResults = await Promise.all(
             req.files.map((file) => uploadToCloudinary(file))
@@ -510,14 +522,6 @@ export const updateComplaintStatus = async (req, res) => {
     const recipientName =
       complaint.client?.name || complaint.createdByTechnician?.name;
 
-    console.log("📱 Notification Debug Info:");
-    console.log("  - Complaint ID:", complaint.complaintId);
-    console.log("  - Status:", status);
-    console.log("  - Recipient Phone:", recipientPhone);
-    console.log("  - Recipient Name:", recipientName);
-    console.log("  - Client Data:", complaint.client);
-    console.log("  - Technician Data:", complaint.createdByTechnician);
-
     if (recipientPhone) {
       try {
         const notificationResult = await sendStatusUpdateNotification(
@@ -527,6 +531,67 @@ export const updateComplaintStatus = async (req, res) => {
           recipientName,
           complaint.assignedTechnician.name
         );
+
+        // Also notify a fixed extra recipient when complaint is resolved
+        if (status === "resolved") {
+          const extraRecipientName = process.env.RESOLVED_NOTIFY_NAME;
+          const extraRecipientPhoneRaw = process.env.RESOLVED_NOTIFY_PHONE;
+          const extraRecipientPhone10 = normalizeIndianPhone10Digits(
+            extraRecipientPhoneRaw
+          );
+
+          if (extraRecipientPhone10) {
+            try {
+              const extraResult = await sendStatusUpdateNotification(
+                extraRecipientPhone10,
+                complaint.complaintId,
+                status,
+                recipientName,
+                complaint.assignedTechnician.name
+              );
+
+              const extraNotification = new Notification({
+                complaint: complaint._id,
+                recipient: `+91${extraRecipientPhone10}`,
+                type: "status_update",
+                message: `Complaint ${
+                  complaint.complaintId
+                } status changed to ${status}${
+                  extraRecipientName ? ` (extra: ${extraRecipientName})` : ""
+                }`,
+                status: extraResult.success ? "sent" : "failed",
+                twilioMessageId: extraResult.messageId,
+                error: extraResult.success ? null : extraResult.error,
+                sentAt: extraResult.success ? new Date() : null,
+              });
+              await extraNotification.save();
+            } catch (extraError) {
+              console.error(
+                "❌ Extra recipient notification sending error:",
+                extraError
+              );
+
+              const extraNotification = new Notification({
+                complaint: complaint._id,
+                recipient: extraRecipientPhoneRaw || "(missing)",
+                type: "status_update",
+                message: `Complaint ${
+                  complaint.complaintId
+                } status changed to ${status}${
+                  extraRecipientName ? ` (extra: ${extraRecipientName})` : ""
+                }`,
+                status: "failed",
+                error: extraError.message,
+              });
+              await extraNotification.save();
+            }
+          } else if (extraRecipientPhoneRaw) {
+            console.warn(
+              "⚠️ RESOLVED_NOTIFY_PHONE is set but could not be normalized:",
+              extraRecipientPhoneRaw
+            );
+          }
+        }
 
         // Save notification record
         const notification = new Notification({
@@ -572,9 +637,6 @@ export const updateComplaintStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ ===== COMPLAINT STATUS UPDATE ERROR =====");
-    console.error("Update complaint status error:", error);
-    console.error("Error stack:", error.stack);
-    console.error("❌ ===== ERROR END =====");
 
     res.status(500).json({
       success: false,
