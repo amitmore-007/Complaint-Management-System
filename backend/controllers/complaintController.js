@@ -8,7 +8,6 @@ import {
 } from "../config/cloudinary.js";
 import {
   sendStatusUpdateNotification,
-  sendAssignmentNotification,
 } from "../config/msg91.js";
 import { generateNextComplaintId } from "../utils/complaintId.js";
 
@@ -408,7 +407,7 @@ export const updateComplaintStatus = async (req, res) => {
     })
       .populate("client", "name phoneNumber")
       .populate("createdByTechnician", "name phoneNumber")
-      .populate("createdByAdmin", "name")
+      .populate("createdByAdmin", "name phoneNumber")
       .populate("store", "name managers");
 
     if (!complaint) {
@@ -513,14 +512,19 @@ export const updateComplaintStatus = async (req, res) => {
     // Re-populate after save to ensure we have all data
     await complaint.populate("client", "name phoneNumber");
     await complaint.populate("createdByTechnician", "name phoneNumber");
+    await complaint.populate("createdByAdmin", "name phoneNumber");
     await complaint.populate("assignedTechnician", "name phoneNumber");
 
-    // Send notification using MSG91 - Fixed client data access
-    const recipientPhone =
-      complaint.client?.phoneNumber ||
-      complaint.createdByTechnician?.phoneNumber;
-    const recipientName =
-      complaint.client?.name || complaint.createdByTechnician?.name;
+    let recipientPhone;
+    let recipientName;
+
+    if (complaint.creatorType === "client") {
+      recipientPhone = complaint.client?.phoneNumber;
+      recipientName = complaint.client?.name;
+    } else if (complaint.creatorType === "admin") {
+      recipientPhone = complaint.createdByAdmin?.phoneNumber;
+      recipientName = complaint.createdByAdmin?.name;
+    }
 
     if (recipientPhone) {
       try {
@@ -623,7 +627,7 @@ export const updateComplaintStatus = async (req, res) => {
       }
     } else {
       console.log(
-        "⚠️ Skipping notification - recipient phone number not found"
+        "⚠️ Skipping notification - recipient not eligible or phone missing"
       );
     }
 
