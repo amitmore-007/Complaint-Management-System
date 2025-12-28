@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import {
   ClipboardList,
-  Clock,
-  AlertCircle,
   Calendar,
   MapPin,
   User,
@@ -39,6 +38,9 @@ const TechnicianAssignments = () => {
     photos: [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showStartWorkConfirm, setShowStartWorkConfirm] = useState(false);
+  const [pendingStartComplaint, setPendingStartComplaint] = useState(null);
+  const [isStartingWork, setIsStartingWork] = useState(false);
 
   useEffect(() => {
     fetchAssignments();
@@ -134,28 +136,83 @@ const TechnicianAssignments = () => {
   };
 
   const openPhotoModal = (photos, initialIndex) => {
+    if (!photos || !Array.isArray(photos) || photos.length === 0) {
+      toast.error("No photos available");
+      return;
+    }
+
     setCurrentComplaintPhotos(photos);
     setCurrentPhotoIndex(initialIndex);
+    setSelectedPhoto(photos[initialIndex]);
     setPhotoModalOpen(true);
   };
 
   const closePhotoModal = () => {
     setPhotoModalOpen(false);
+    setSelectedPhoto(null);
     setCurrentPhotoIndex(0);
     setCurrentComplaintPhotos([]);
   };
 
   const handlePhotoNavigation = (direction) => {
-    setCurrentPhotoIndex((prevIndex) => {
-      const newIndex = direction === "next" ? prevIndex + 1 : prevIndex - 1;
-      return Math.min(Math.max(newIndex, 0), currentComplaintPhotos.length - 1);
-    });
+    if (!currentComplaintPhotos || currentComplaintPhotos.length === 0) return;
+
+    const newIndex =
+      direction === "next"
+        ? (currentPhotoIndex + 1) % currentComplaintPhotos.length
+        : (currentPhotoIndex - 1 + currentComplaintPhotos.length) %
+          currentComplaintPhotos.length;
+
+    setCurrentPhotoIndex(newIndex);
+    setSelectedPhoto(currentComplaintPhotos[newIndex]);
+  };
+
+  const downloadPhoto = async (photoUrl, fileName) => {
+    try {
+      const response = await fetch(photoUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName || "complaint-photo.jpg";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      toast.success("Photo downloaded successfully!");
+    } catch (error) {
+      console.error("Failed to download photo:", error);
+      toast.error("Failed to download photo");
+    }
   };
 
   const openResolutionModal = (complaint) => {
     setSelectedComplaint(complaint);
     setShowResolutionModal(true);
     setResolutionData({ notes: "", materialsUsed: "", photos: [] });
+  };
+
+  const openStartWorkConfirm = (complaint) => {
+    setPendingStartComplaint(complaint);
+    setShowStartWorkConfirm(true);
+  };
+
+  const closeStartWorkConfirm = () => {
+    if (isStartingWork) return;
+    setShowStartWorkConfirm(false);
+    setPendingStartComplaint(null);
+  };
+
+  const confirmStartWork = async () => {
+    if (!pendingStartComplaint?._id) return;
+
+    setIsStartingWork(true);
+    try {
+      await updateComplaintStatus(pendingStartComplaint._id, "in-progress");
+      closeStartWorkConfirm();
+    } finally {
+      setIsStartingWork(false);
+    }
   };
 
   const closeResolutionModal = () => {
@@ -241,6 +298,85 @@ const TechnicianAssignments = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Photo Modal */}
+        {photoModalOpen &&
+          selectedPhoto &&
+          createPortal(
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/90 z-[100]"
+              style={{
+                margin: 0,
+                padding: 0,
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+              onClick={closePhotoModal}
+            >
+              <div
+                className="relative w-full h-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={closePhotoModal}
+                  className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 transition-colors bg-black/40 rounded-full p-2"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+
+                <div className="w-full h-full flex items-center justify-center">
+                  <img
+                    src={selectedPhoto.url}
+                    alt="Complaint photo"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+
+                {currentComplaintPhotos &&
+                  currentComplaintPhotos.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => handlePhotoNavigation("prev")}
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black/50 rounded-full p-2"
+                      >
+                        <ChevronLeft className="h-8 w-8" />
+                      </button>
+                      <button
+                        onClick={() => handlePhotoNavigation("next")}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 transition-colors bg-black/50 rounded-full p-2"
+                      >
+                        <ChevronRight className="h-8 w-8" />
+                      </button>
+                    </>
+                  )}
+
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-4 bg-black/70 rounded-lg px-4 py-2">
+                  <span className="text-white text-sm">
+                    {currentPhotoIndex + 1} of{" "}
+                    {currentComplaintPhotos?.length || 0}
+                  </span>
+                  <button
+                    onClick={() =>
+                      downloadPhoto(
+                        selectedPhoto.url,
+                        `complaint-photo-${currentPhotoIndex + 1}.jpg`
+                      )
+                    }
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>,
+            document.body
+          )}
+
         {/* Header */}
         <div>
           <h1
@@ -440,11 +576,37 @@ const TechnicianAssignments = () => {
                                       openPhotoModal(complaint.photos, index)
                                     }
                                   />
-                                  <div className="absolute inset-0 rounded-lg transition-opacity bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center space-x-2">
-                                    <span className="text-white text-xs sm:text-sm font-medium">
-                                      View Photo
-                                    </span>
-                                    <Eye className="h-4 w-4 text-white" />
+                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center">
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openPhotoModal(
+                                            complaint.photos,
+                                            index
+                                          );
+                                        }}
+                                        className="p-1 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all"
+                                        aria-label="View photo"
+                                      >
+                                        <Eye className="h-2 w-2 sm:h-3 sm:w-3 text-white" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          downloadPhoto(
+                                            photo.url,
+                                            `complaint-${
+                                              complaint.complaintId
+                                            }-photo-${index + 1}.jpg`
+                                          );
+                                        }}
+                                        className="p-1 bg-white/20 backdrop-blur-sm rounded-full hover:bg-white/30 transition-all"
+                                        aria-label="Download photo"
+                                      >
+                                        <Download className="h-2 w-2 sm:h-3 sm:w-3 text-white" />
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
                               ))}
@@ -468,9 +630,7 @@ const TechnicianAssignments = () => {
                   <div className="flex lg:flex-col gap-2 lg:ml-4 justify-end lg:justify-start">
                     {complaint.status === "assigned" && (
                       <motion.button
-                        onClick={() =>
-                          updateComplaintStatus(complaint._id, "in-progress")
-                        }
+                        onClick={() => openStartWorkConfirm(complaint)}
                         className="px-3 sm:px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
@@ -713,6 +873,97 @@ const TechnicianAssignments = () => {
                       )}
                     </button>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Start Work Confirmation Modal */}
+        {showStartWorkConfirm && pendingStartComplaint && (
+          <div
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100]"
+            style={{
+              margin: 0,
+              padding: 0,
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+            onClick={closeStartWorkConfirm}
+          >
+            <div
+              className={`w-full max-w-md mx-4 rounded-2xl shadow-2xl ${
+                isDarkMode ? "bg-gray-800" : "bg-white"
+              }`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3
+                    className={`text-lg font-semibold ${
+                      isDarkMode ? "text-white" : "text-gray-900"
+                    }`}
+                  >
+                    Start work?
+                  </h3>
+                  <button
+                    onClick={closeStartWorkConfirm}
+                    disabled={isStartingWork}
+                    className={`p-2 rounded-lg transition-colors ${
+                      isDarkMode
+                        ? "text-gray-400 hover:bg-gray-700"
+                        : "text-gray-600 hover:bg-gray-100"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <p
+                  className={`${
+                    isDarkMode ? "text-gray-300" : "text-gray-700"
+                  }`}
+                >
+                  This will mark the complaint as <strong>In Progress</strong>.
+                </p>
+                <p
+                  className={`mt-2 text-sm ${
+                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
+                  {pendingStartComplaint.title} (ID:{" "}
+                  {pendingStartComplaint.complaintId})
+                </p>
+
+                <div className="mt-6 flex space-x-4">
+                  <button
+                    onClick={closeStartWorkConfirm}
+                    disabled={isStartingWork}
+                    className={`flex-1 py-3 px-4 border rounded-xl font-semibold transition-all duration-200 ${
+                      isDarkMode
+                        ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    onClick={confirmStartWork}
+                    disabled={isStartingWork}
+                    className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-orange-700 hover:to-orange-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  >
+                    {isStartingWork ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    ) : (
+                      <>
+                        <Play className="h-5 w-5" />
+                        <span>Start</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>
