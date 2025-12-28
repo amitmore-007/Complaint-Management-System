@@ -8,7 +8,6 @@ import {
 } from "../config/cloudinary.js";
 import {
   sendStatusUpdateNotification,
-  sendAssignmentNotification,
 } from "../config/msg91.js";
 import { generateNextComplaintId } from "../utils/complaintId.js";
 
