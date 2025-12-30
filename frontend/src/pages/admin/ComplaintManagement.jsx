@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -14,61 +14,45 @@ import {
   Phone,
   CheckCircle,
   FileText,
+  Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import api from "../../lib/axios";
+import {
+  useComplaints,
+  useComplaint,
+  useAssignComplaint,
+} from "../../hooks/useComplaints";
+import { useAdminTechnicians } from "../../hooks/useAdmin";
 
 const ComplaintManagement = () => {
   const { isDarkMode } = useTheme();
-  const [complaints, setComplaints] = useState([]);
-  const [filteredComplaints, setFilteredComplaints] = useState([]);
-  const [technicians, setTechnicians] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
-  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [selectedComplaintId, setSelectedComplaintId] = useState(null);
+  const [selectedAssignComplaint, setSelectedAssignComplaint] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTechnician, setSelectedTechnician] = useState("");
-  const [isAssigning, setIsAssigning] = useState(false);
 
-  useEffect(() => {
-    fetchComplaints();
-    fetchTechnicians();
-  }, []);
+  // React Query hooks
+  const { data: complaints = [], isLoading } = useComplaints();
+  const { data: complaintDetails, isLoading: isLoadingDetails } = useComplaint(
+    selectedComplaintId,
+    { enabled: showDetailsModal && !!selectedComplaintId, role: "admin" }
+  );
+  const assignComplaintMutation = useAssignComplaint();
+  const isAssigning = assignComplaintMutation.isPending;
 
-  useEffect(() => {
-    filterComplaints();
-  }, [complaints, searchTerm, statusFilter, priorityFilter]);
+  const { data: techniciansData } = useAdminTechnicians({
+    page: 1,
+    limit: 100,
+  });
+  const technicians = techniciansData?.technicians ?? [];
 
-  const fetchComplaints = async () => {
-    try {
-      setIsLoading(true);
-      const response = await api.get("/admin/complaints");
-      setComplaints(response.data.complaints);
-    } catch (error) {
-      console.error("Failed to fetch complaints:", error);
-      toast.error("Failed to load complaints");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchTechnicians = async () => {
-    try {
-      const response = await api.get("/admin/technicians?limit=100");
-
-      setTechnicians(response.data.technicians);
-    } catch (error) {
-      console.error("Failed to fetch technicians:", error);
-      toast.error("Failed to load technicians");
-    }
-  };
-
-  const filterComplaints = () => {
+  const filteredComplaints = React.useMemo(() => {
     let filtered = complaints;
 
     // Filter by status
@@ -109,61 +93,53 @@ const ComplaintManagement = () => {
       );
     }
 
-    setFilteredComplaints(filtered);
-  };
+    return filtered;
+  }, [complaints, statusFilter, priorityFilter, searchTerm]);
 
   const handleAssignComplaint = async () => {
-    if (!selectedComplaint || !selectedTechnician) {
+    if (!selectedTechnician) {
       toast.error("Please select a technician");
       return;
     }
 
+    if (assignComplaintMutation.isPending) return;
+
     try {
-      setIsAssigning(true);
-      await api.post("/admin/complaints/assign", {
-        complaintId: selectedComplaint._id,
+      await assignComplaintMutation.mutateAsync({
+        complaintId: selectedAssignComplaint._id,
         technicianId: selectedTechnician,
       });
 
       toast.success("Complaint assigned successfully!");
       setShowAssignModal(false);
-      setSelectedComplaint(null);
       setSelectedTechnician("");
-      fetchComplaints();
     } catch (error) {
+      console.error("Failed to assign complaint:", error);
       toast.error(
         error.response?.data?.message || "Failed to assign complaint"
       );
-    } finally {
-      setIsAssigning(false);
     }
   };
 
   const openAssignModal = (complaint) => {
-    setSelectedComplaint(complaint);
+    setSelectedAssignComplaint(complaint);
     setShowAssignModal(true);
   };
 
   const openDetailsModal = async (complaint) => {
-    try {
-      const response = await api.get(`/admin/complaints/${complaint._id}`);
-      setSelectedComplaint(response.data.complaint);
-      setShowDetailsModal(true);
-    } catch (error) {
-      console.error("Failed to fetch complaint details:", error);
-      toast.error("Failed to load complaint details");
-    }
+    setSelectedComplaintId(complaint._id);
+    setShowDetailsModal(true);
   };
 
   const closeAssignModal = () => {
     setShowAssignModal(false);
-    setSelectedComplaint(null);
+    setSelectedAssignComplaint(null);
     setSelectedTechnician("");
   };
 
   const closeDetailsModal = () => {
     setShowDetailsModal(false);
-    setSelectedComplaint(null);
+    setSelectedComplaintId(null);
   };
 
   const getStatusColor = (status) => {
@@ -510,14 +486,14 @@ const ComplaintManagement = () => {
                     </button>
                   </div>
 
-                  {selectedComplaint && (
+                  {selectedAssignComplaint && (
                     <div className="mb-6">
                       <h4
                         className={`font-medium mb-2 ${
                           isDarkMode ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        {selectedComplaint.title}
+                        {selectedAssignComplaint.title}
                       </h4>
                       <p
                         className={`text-sm ${
@@ -525,12 +501,12 @@ const ComplaintManagement = () => {
                         }`}
                       >
                         Creator:{" "}
-                        {selectedComplaint.client?.name ||
-                          selectedComplaint.createdByAdmin?.name ||
-                          selectedComplaint.createdByTechnician?.name ||
+                        {selectedAssignComplaint.client?.name ||
+                          selectedAssignComplaint.createdByAdmin?.name ||
+                          selectedAssignComplaint.createdByTechnician?.name ||
                           "N/A"}{" "}
-                        ({selectedComplaint.creatorType || "client"}) |
-                        Location: {selectedComplaint.location}
+                        ({selectedAssignComplaint.creatorType || "client"}) |
+                        Location: {selectedAssignComplaint.location}
                       </p>
                     </div>
                   )}
@@ -612,7 +588,7 @@ const ComplaintManagement = () => {
 
         {/* Details Modal */}
         <AnimatePresence>
-          {showDetailsModal && selectedComplaint && (
+          {showDetailsModal && complaintDetails && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -673,23 +649,23 @@ const ComplaintManagement = () => {
                             isDarkMode ? "text-white" : "text-gray-900"
                           }`}
                         >
-                          {selectedComplaint.title}
+                          {complaintDetails.title}
                         </h4>
                         <span
                           className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
-                            selectedComplaint.status
+                            complaintDetails.status
                           )}`}
                         >
-                          {selectedComplaint.status
+                          {complaintDetails.status
                             .replace("-", " ")
                             .toUpperCase()}
                         </span>
                         <span
                           className={`text-sm font-medium capitalize ${getPriorityColor(
-                            selectedComplaint.priority
+                            complaintDetails.priority
                           )}`}
                         >
-                          {selectedComplaint.priority} Priority
+                          {complaintDetails.priority} Priority
                         </span>
                       </div>
                       <p
@@ -697,7 +673,7 @@ const ComplaintManagement = () => {
                           isDarkMode ? "text-gray-300" : "text-gray-700"
                         }`}
                       >
-                        {selectedComplaint.description}
+                        {complaintDetails.description}
                       </p>
                     </div>
 
@@ -719,9 +695,9 @@ const ComplaintManagement = () => {
                           >
                             <Users className="h-4 w-4" />
                             <span>
-                              {selectedComplaint.client?.name ||
-                                selectedComplaint.createdByAdmin?.name ||
-                                selectedComplaint.createdByTechnician?.name ||
+                              {complaintDetails.client?.name ||
+                                complaintDetails.createdByAdmin?.name ||
+                                complaintDetails.createdByTechnician?.name ||
                                 "N/A"}
                               <span
                                 className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
@@ -730,7 +706,7 @@ const ComplaintManagement = () => {
                                     : "bg-gray-200 text-gray-600"
                                 }`}
                               >
-                                {selectedComplaint.creatorType || "client"}
+                                {complaintDetails.creatorType || "client"}
                               </span>
                             </span>
                           </div>
@@ -741,9 +717,9 @@ const ComplaintManagement = () => {
                           >
                             <Phone className="h-4 w-4" />
                             <span>
-                              {selectedComplaint.client?.phoneNumber ||
-                                selectedComplaint.createdByAdmin?.phoneNumber ||
-                                selectedComplaint.createdByTechnician
+                              {complaintDetails.client?.phoneNumber ||
+                                complaintDetails.createdByAdmin?.phoneNumber ||
+                                complaintDetails.createdByTechnician
                                   ?.phoneNumber ||
                                 "N/A"}
                             </span>
@@ -766,7 +742,7 @@ const ComplaintManagement = () => {
                             }`}
                           >
                             <MapPin className="h-4 w-4" />
-                            <span>{selectedComplaint.location}</span>
+                            <span>{complaintDetails.location}</span>
                           </div>
                           <div
                             className={`flex items-center space-x-2 ${
@@ -776,7 +752,7 @@ const ComplaintManagement = () => {
                             <Calendar className="h-4 w-4" />
                             <span>
                               {new Date(
-                                selectedComplaint.createdAt
+                                complaintDetails.createdAt
                               ).toLocaleString()}
                             </span>
                           </div>
@@ -786,14 +762,14 @@ const ComplaintManagement = () => {
                             }`}
                           >
                             <FileText className="h-4 w-4" />
-                            <span>ID: {selectedComplaint.complaintId}</span>
+                            <span>ID: {complaintDetails.complaintId}</span>
                           </div>
                         </div>
                       </div>
                     </div>
 
                     {/* Technician Info */}
-                    {selectedComplaint.assignedTechnician && (
+                    {complaintDetails.assignedTechnician && (
                       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                         <h5
                           className={`font-medium mb-2 ${
@@ -809,7 +785,7 @@ const ComplaintManagement = () => {
                             }
                           >
                             <strong>Name:</strong>{" "}
-                            {selectedComplaint.assignedTechnician.name}
+                            {complaintDetails.assignedTechnician.name}
                           </p>
                           <p
                             className={
@@ -817,9 +793,9 @@ const ComplaintManagement = () => {
                             }
                           >
                             <strong>Phone:</strong>{" "}
-                            {selectedComplaint.assignedTechnician.phoneNumber}
+                            {complaintDetails.assignedTechnician.phoneNumber}
                           </p>
-                          {selectedComplaint.assignedAt && (
+                          {complaintDetails.assignedAt && (
                             <p
                               className={
                                 isDarkMode ? "text-blue-300" : "text-blue-700"
@@ -827,7 +803,7 @@ const ComplaintManagement = () => {
                             >
                               <strong>Assigned:</strong>{" "}
                               {new Date(
-                                selectedComplaint.assignedAt
+                                complaintDetails.assignedAt
                               ).toLocaleString()}
                             </p>
                           )}
@@ -862,14 +838,16 @@ const ComplaintManagement = () => {
                                 isDarkMode ? "text-gray-400" : "text-gray-600"
                               }`}
                             >
-                              {new Date(
-                                selectedComplaint.createdAt
-                              ).toLocaleString()}
+                              {complaintDetails.createdAt
+                                ? new Date(
+                                    complaintDetails.createdAt
+                                  ).toLocaleString()
+                                : "N/A"}
                             </p>
                           </div>
                         </div>
 
-                        {selectedComplaint.assignedAt && (
+                        {complaintDetails.assignedAt && (
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
                               <UserPlus className="h-4 w-4 text-white" />
@@ -888,14 +866,14 @@ const ComplaintManagement = () => {
                                 }`}
                               >
                                 {new Date(
-                                  selectedComplaint.assignedAt
+                                  complaintDetails.assignedAt
                                 ).toLocaleString()}
                               </p>
                             </div>
                           </div>
                         )}
 
-                        {selectedComplaint.startedAt && (
+                        {complaintDetails.startedAt && (
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
                               <Clock className="h-4 w-4 text-white" />
@@ -914,15 +892,15 @@ const ComplaintManagement = () => {
                                 }`}
                               >
                                 {new Date(
-                                  selectedComplaint.startedAt
+                                  complaintDetails.startedAt
                                 ).toLocaleString()}
                               </p>
                             </div>
                           </div>
                         )}
 
-                        {(selectedComplaint.completedAt ||
-                          selectedComplaint.resolvedAt) && (
+                        {(complaintDetails.completedAt ||
+                          complaintDetails.resolvedAt) && (
                           <div className="flex items-center space-x-3">
                             <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
                               <CheckCircle className="h-4 w-4 text-white" />
@@ -941,8 +919,8 @@ const ComplaintManagement = () => {
                                 }`}
                               >
                                 {new Date(
-                                  selectedComplaint.completedAt ||
-                                    selectedComplaint.resolvedAt
+                                  complaintDetails.completedAt ||
+                                    complaintDetails.resolvedAt
                                 ).toLocaleString()}
                               </p>
                             </div>
@@ -952,18 +930,18 @@ const ComplaintManagement = () => {
                     </div>
 
                     {/* Photos */}
-                    {selectedComplaint.photos &&
-                      selectedComplaint.photos.length > 0 && (
+                    {complaintDetails.photos &&
+                      complaintDetails.photos.length > 0 && (
                         <div>
                           <h5
                             className={`font-medium mb-2 ${
                               isDarkMode ? "text-white" : "text-gray-900"
                             }`}
                           >
-                            Photos ({selectedComplaint.photos.length})
+                            Photos ({complaintDetails.photos.length})
                           </h5>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                            {selectedComplaint.photos.map((photo, index) => (
+                            {complaintDetails.photos.map((photo, index) => (
                               <img
                                 key={index}
                                 src={photo.url}
@@ -976,7 +954,7 @@ const ComplaintManagement = () => {
                       )}
 
                     {/* Technician Notes */}
-                    {selectedComplaint.technicianNotes && (
+                    {complaintDetails.technicianNotes && (
                       <div>
                         <h5
                           className={`font-medium mb-2 ${
@@ -992,16 +970,16 @@ const ComplaintManagement = () => {
                               : "bg-gray-100 text-gray-700"
                           }`}
                         >
-                          {selectedComplaint.technicianNotes}
+                          {complaintDetails.technicianNotes}
                         </p>
                       </div>
                     )}
 
                     {/* Resolution Data - Only show for resolved complaints */}
-                    {selectedComplaint.status === "resolved" &&
-                      (selectedComplaint.resolutionNotes ||
-                        (selectedComplaint.resolutionPhotos &&
-                          selectedComplaint.resolutionPhotos.length > 0)) && (
+                    {complaintDetails.status === "resolved" &&
+                      (complaintDetails.resolutionNotes ||
+                        (complaintDetails.resolutionPhotos &&
+                          complaintDetails.resolutionPhotos.length > 0)) && (
                         <div
                           className={`p-4 rounded-lg border ${
                             isDarkMode
@@ -1018,7 +996,7 @@ const ComplaintManagement = () => {
                             <span>Resolution Details</span>
                           </h5>
 
-                          {selectedComplaint.resolutionNotes && (
+                          {complaintDetails.resolutionNotes && (
                             <div className="mb-4">
                               <h6
                                 className={`font-medium mb-2 ${
@@ -1036,12 +1014,12 @@ const ComplaintManagement = () => {
                                     : "text-green-700"
                                 }`}
                               >
-                                {selectedComplaint.resolutionNotes}
+                                {complaintDetails.resolutionNotes}
                               </p>
                             </div>
                           )}
 
-                          {selectedComplaint.resolvedAt && (
+                          {complaintDetails.resolvedAt && (
                             <div className="mb-4">
                               <p
                                 className={`text-sm ${
@@ -1052,14 +1030,14 @@ const ComplaintManagement = () => {
                               >
                                 <strong>Completed on:</strong>{" "}
                                 {new Date(
-                                  selectedComplaint.resolvedAt
+                                  complaintDetails.resolvedAt
                                 ).toLocaleString()}
                               </p>
                             </div>
                           )}
 
-                          {selectedComplaint.resolutionPhotos &&
-                            selectedComplaint.resolutionPhotos.length > 0 && (
+                          {complaintDetails.resolutionPhotos &&
+                            complaintDetails.resolutionPhotos.length > 0 && (
                               <div>
                                 <h6
                                   className={`font-medium mb-3 ${
@@ -1069,10 +1047,10 @@ const ComplaintManagement = () => {
                                   }`}
                                 >
                                   Resolution Proof Photos (
-                                  {selectedComplaint.resolutionPhotos.length})
+                                  {complaintDetails.resolutionPhotos.length})
                                 </h6>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                  {selectedComplaint.resolutionPhotos.map(
+                                  {complaintDetails.resolutionPhotos.map(
                                     (photo, index) => (
                                       <img
                                         key={index}

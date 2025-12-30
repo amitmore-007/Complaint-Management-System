@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ClipboardList,
@@ -15,13 +15,16 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import api from "../../lib/axios";
+import { useMyComplaints } from "../../hooks/useComplaints";
 
 const TechnicianMyComplaints = () => {
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
-  const [complaints, setComplaints] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const myComplaintsQuery = useMyComplaints();
+  const complaints = Array.isArray(myComplaintsQuery.data)
+    ? myComplaintsQuery.data
+    : [];
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
@@ -29,24 +32,14 @@ const TechnicianMyComplaints = () => {
   const [currentComplaintPhotos, setCurrentComplaintPhotos] = useState([]);
 
   useEffect(() => {
-    fetchComplaints();
-  }, []);
+    if (!myComplaintsQuery.isError) return;
 
-  const fetchComplaints = async () => {
-    try {
-      setIsLoading(true);
-      const response = await api.get("/technician/complaints/my");
-
-      if (response.data.success) {
-        setComplaints(response.data.complaints || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch complaints:", error);
-      toast.error(error.response?.data?.message || "Failed to load complaints");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const message =
+      myComplaintsQuery.error?.response?.data?.message ||
+      myComplaintsQuery.error?.message ||
+      "Failed to load complaints";
+    toast.error(message);
+  }, [myComplaintsQuery.isError, myComplaintsQuery.error]);
 
   const openDetailModal = (complaint) => {
     setSelectedComplaint(complaint);
@@ -107,7 +100,7 @@ const TechnicianMyComplaints = () => {
     }
   };
 
-  if (isLoading) {
+  if (myComplaintsQuery.isLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">

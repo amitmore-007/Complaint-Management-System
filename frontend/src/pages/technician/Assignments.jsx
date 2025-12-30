@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import {
@@ -19,13 +19,29 @@ import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import useAuthStore from "../../store/authStore";
-import api from "../../lib/axios";
+import {
+  useAssignedComplaints,
+  useUpdateComplaintStatus,
+} from "../../hooks/useComplaints";
 
 const TechnicianAssignments = () => {
   const { isDarkMode } = useTheme();
   const { user } = useAuthStore();
-  const [assignments, setAssignments] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const assignmentsQuery = useAssignedComplaints();
+  const updateStatusMutation = useUpdateComplaintStatus();
+
+  const isLoading = assignmentsQuery.isLoading;
+
+  const assignments = useMemo(() => {
+    const all = Array.isArray(assignmentsQuery.data)
+      ? assignmentsQuery.data
+      : [];
+    return all.filter(
+      (complaint) =>
+        complaint.status === "assigned" || complaint.status === "in-progress"
+    );
+  }, [assignmentsQuery.data]);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
@@ -43,40 +59,15 @@ const TechnicianAssignments = () => {
   const [isStartingWork, setIsStartingWork] = useState(false);
 
   useEffect(() => {
-    fetchAssignments();
-  }, []);
+    if (!assignmentsQuery.isError) return;
 
-  const fetchAssignments = async () => {
-    try {
-      setIsLoading(true);
+    const message =
+      assignmentsQuery.error?.response?.data?.message ||
+      assignmentsQuery.error?.message ||
+      "Failed to load assignments";
 
-      const response = await api.get("/technician/assignments");
-
-      if (response.data.success) {
-        const data = response.data.data || {};
-        const complaints = data.complaints || [];
-
-        // Filter only active assignments (assigned and in-progress)
-        const activeAssignments = complaints.filter(
-          (complaint) =>
-            complaint.status === "assigned" ||
-            complaint.status === "in-progress"
-        );
-
-        setAssignments(activeAssignments);
-      } else {
-        throw new Error(response.data.message || "Failed to fetch assignments");
-      }
-    } catch (error) {
-      console.error("❌ Failed to fetch assignments:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to load assignments"
-      );
-      setAssignments([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    toast.error(message);
+  }, [assignmentsQuery.isError, assignmentsQuery.error]);
 
   const updateComplaintStatus = async (
     complaintId,
@@ -113,22 +104,16 @@ const TechnicianAssignments = () => {
         console.log(`  ${key}:`, value);
       }
 
-      const response = await api.patch(
-        `/technician/assignments/${complaintId}/status`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      await updateStatusMutation.mutateAsync({
+        id: complaintId,
+        payload: formData,
+      });
 
       toast.success(
         `Complaint ${
           newStatus === "in-progress" ? "started" : "completed"
         } successfully!`
       );
-      fetchAssignments();
     } catch (error) {
       console.error("❌ Update status error:", error);
       toast.error(error.response?.data?.message || "Failed to update status");
