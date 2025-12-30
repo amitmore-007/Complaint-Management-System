@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -14,12 +14,16 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import api from "../../lib/axios";
+import {
+  useAdminClients,
+  useCreateClient,
+  useDeleteUser,
+  useToggleUserStatus,
+  useUpdateClient,
+} from "../../hooks/useAdmin";
 
 const ClientManagement = () => {
   const { isDarkMode } = useTheme();
-  const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [actionLoading, setActionLoading] = useState(null);
@@ -30,41 +34,27 @@ const ClientManagement = () => {
   const [formData, setFormData] = useState({ name: "", phoneNumber: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchClients();
-  }, [pagination.page, searchTerm]);
+  const clientsQuery = useAdminClients({
+    page: pagination.page,
+    limit: 10,
+    search: searchTerm || undefined,
+  });
 
-  const fetchClients = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get("/admin/clients", {
-        params: {
-          page: pagination.page,
-          limit: 10,
-          search: searchTerm || undefined,
-        },
-      });
-      setClients(response.data.clients);
-      setPagination(response.data.pagination);
-    } catch (error) {
-      console.error("Failed to fetch clients:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const clients = clientsQuery.data?.clients ?? [];
+  const paginationInfo = clientsQuery.data?.pagination ?? pagination;
+
+  const toggleUserStatusMutation = useToggleUserStatus();
+  const deleteUserMutation = useDeleteUser();
+  const createClientMutation = useCreateClient();
+  const updateClientMutation = useUpdateClient();
 
   const toggleUserStatus = async (userId, newStatus) => {
     try {
       setActionLoading(userId);
-      await api.patch(`/admin/users/${userId}/toggle-status`, {
+      await toggleUserStatusMutation.mutateAsync({
+        userId,
         isActive: newStatus,
       });
-
-      setClients(
-        clients.map((client) =>
-          client._id === userId ? { ...client, isActive: newStatus } : client
-        )
-      );
     } catch (error) {
       console.error("Failed to toggle user status:", error);
     } finally {
@@ -75,9 +65,7 @@ const ClientManagement = () => {
   const deleteUser = async (userId) => {
     try {
       setActionLoading(userId);
-      await api.delete(`/admin/users/${userId}`);
-
-      setClients(clients.filter((client) => client._id !== userId));
+      await deleteUserMutation.mutateAsync(userId);
       setShowDeleteModal(null);
     } catch (error) {
       console.error("Failed to delete user:", error);
@@ -104,14 +92,13 @@ const ClientManagement = () => {
         return;
       }
 
-      await api.post("/admin/clients", {
+      await createClientMutation.mutateAsync({
         name: formData.name,
         phoneNumber: normalizedPhone,
       });
 
       setShowCreateModal(false);
       setFormData({ name: "", phoneNumber: "" });
-      fetchClients();
     } catch (error) {
       console.error("Create client error:", error);
       alert(error.response?.data?.message || "Failed to create client");
@@ -137,15 +124,17 @@ const ClientManagement = () => {
         return;
       }
 
-      await api.put(`/admin/clients/${selectedClient._id}`, {
-        name: formData.name,
-        phoneNumber: normalizedPhone,
+      await updateClientMutation.mutateAsync({
+        clientId: selectedClient._id,
+        payload: {
+          name: formData.name,
+          phoneNumber: normalizedPhone,
+        },
       });
 
       setShowEditModal(false);
       setSelectedClient(null);
       setFormData({ name: "", phoneNumber: "" });
-      fetchClients();
     } catch (error) {
       console.error("Update client error:", error);
       alert(error.response?.data?.message || "Failed to update client");
@@ -165,7 +154,7 @@ const ClientManagement = () => {
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  if (loading) {
+  if (clientsQuery.isLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
@@ -256,7 +245,7 @@ const ClientManagement = () => {
                   isDarkMode ? "text-white" : "text-gray-900"
                 }`}
               >
-                All Clients ({pagination.total})
+                All Clients ({paginationInfo.total})
               </h2>
             </div>
 
@@ -363,7 +352,7 @@ const ClientManagement = () => {
                           disabled={actionLoading === client._id}
                           className={`px-2 sm:px-3 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
                             client.isActive
-                              ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/50"
+                              ? "bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                               : "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50"
                           }`}
                         >
@@ -412,9 +401,9 @@ const ClientManagement = () => {
             )}
 
             {/* Pagination */}
-            {pagination.pages > 1 && (
+            {paginationInfo.pages > 1 && (
               <div className="flex justify-center mt-8 space-x-2">
-                {[...Array(pagination.pages)].map((_, i) => (
+                {[...Array(paginationInfo.pages)].map((_, i) => (
                   <button
                     key={i + 1}
                     onClick={() =>

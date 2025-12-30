@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   CheckCircle,
@@ -16,52 +16,30 @@ import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import useAuthStore from "../../store/authStore";
-import api from "../../lib/axios";
+import { useResolvedComplaints } from "../../hooks/useComplaints";
 
 const ResolvedAssignments = () => {
   const { isDarkMode } = useTheme();
   const { user } = useAuthStore();
-  const [resolvedComplaints, setResolvedComplaints] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const resolvedQuery = useResolvedComplaints();
+  const resolvedComplaints = Array.isArray(resolvedQuery.data)
+    ? resolvedQuery.data
+    : [];
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [currentComplaintPhotos, setCurrentComplaintPhotos] = useState([]);
 
   useEffect(() => {
-    fetchResolvedAssignments();
-  }, []);
+    if (!resolvedQuery.isError) return;
 
-  const fetchResolvedAssignments = async () => {
-    try {
-      setIsLoading(true);
-      console.log("🔄 Fetching resolved assignments...");
-
-      const response = await api.get("/technician/resolved-assignments");
-
-      console.log("📊 Resolved assignments response:", response.data);
-
-      if (response.data.success) {
-        const data = response.data.data || {};
-        const complaints = data.complaints || [];
-
-        console.log("✅ Resolved complaints:", complaints);
-        setResolvedComplaints(complaints);
-      } else {
-        throw new Error(
-          response.data.message || "Failed to fetch resolved assignments"
-        );
-      }
-    } catch (error) {
-      console.error("❌ Failed to fetch resolved assignments:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to load resolved assignments"
-      );
-      setResolvedComplaints([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const message =
+      resolvedQuery.error?.response?.data?.message ||
+      resolvedQuery.error?.message ||
+      "Failed to load resolved assignments";
+    toast.error(message);
+  }, [resolvedQuery.isError, resolvedQuery.error]);
 
   const openPhotoModal = (photos, index) => {
     if (!photos || !Array.isArray(photos) || photos.length === 0) {
@@ -114,7 +92,7 @@ const ResolvedAssignments = () => {
     }
   };
 
-  if (isLoading) {
+  if (resolvedQuery.isLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">

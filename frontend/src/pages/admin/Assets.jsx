@@ -14,19 +14,47 @@ import {
   X,
   Check,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import {
+  useEquipmentList,
+  useCreateEquipment,
+  useUpdateEquipment,
+  useDeleteEquipment,
+  useAssetRecords,
+  useUpdateAssetRecord,
+  useDeleteAssetRecord,
+  useExportAssetRecords,
+} from "../../hooks/useEquipment";
 import api from "../../lib/axios";
 
 const AdminAssets = () => {
   const { isDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState("manage");
-  const [equipment, setEquipment] = useState([]);
-  const [assetRecords, setAssetRecords] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
+
+  // React Query hooks
+  const {
+    data: equipment = [],
+    isLoading: isLoadingEquipment,
+    refetch: refetchEquipment,
+  } = useEquipmentList();
+  const {
+    data: assetRecords = [],
+    isLoading: isLoadingRecords,
+    refetch: refetchRecords,
+  } = useAssetRecords();
+  const createEquipmentMutation = useCreateEquipment();
+  const updateEquipmentMutation = useUpdateEquipment();
+  const deleteEquipmentMutation = useDeleteEquipment();
+  const updateRecordMutation = useUpdateAssetRecord();
+  const deleteRecordMutation = useDeleteAssetRecord();
+  const exportRecordsMutation = useExportAssetRecords();
+
+  const isLoading =
+    activeTab === "manage" ? isLoadingEquipment : isLoadingRecords;
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
@@ -46,69 +74,14 @@ const AdminAssets = () => {
   const [isStoreLoading, setIsStoreLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    if (activeTab === "manage") {
-      fetchEquipment();
-    } else {
-      fetchAssetRecords();
-    }
-  }, [activeTab]);
-
-  const fetchEquipment = async () => {
-    try {
-      setIsLoading(true);
-      const response = await api.get("/equipment/list");
-      setEquipment(response.data.equipment || []);
-    } catch (error) {
-      console.error("Equipment fetch error:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to fetch equipment list"
-      );
-      setEquipment([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchAssetRecords = async () => {
-    try {
-      setIsLoading(true);
-
-      const response = await api.get("/equipment/records");
-      setAssetRecords(response.data.records || []);
-    } catch (error) {
-      console.error("Asset records fetch error:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to fetch asset records"
-      );
-      setAssetRecords([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const downloadAssetRecordsExcel = async () => {
     try {
-      setIsExporting(true);
+      const blob = await exportRecordsMutation.mutateAsync();
 
-      const response = await api.get("/equipment/records/export", {
-        responseType: "blob",
-      });
+      const fileName = `asset-records-${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
 
-      const contentDisposition = response.headers?.["content-disposition"];
-      let fileName = "asset-records.xlsx";
-
-      if (contentDisposition) {
-        const match = contentDisposition.match(
-          /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i
-        );
-        const raw = match?.[1] || match?.[2];
-        if (raw) fileName = decodeURIComponent(raw);
-      }
-
-      const blob = new Blob([response.data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
       const url = window.URL.createObjectURL(blob);
 
       const link = document.createElement("a");
@@ -125,25 +98,25 @@ const AdminAssets = () => {
       toast.error(
         error.response?.data?.message || "Failed to export asset records"
       );
-    } finally {
-      setIsExporting(false);
     }
   };
 
   const handleAddEquipment = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (!formData.name || !formData.name.trim()) {
       toast.error("Please enter equipment name");
       return;
     }
 
+    if (createEquipmentMutation.isPending) return;
+
     try {
-      await api.post("/equipment/create", { name: formData.name.trim() });
+      await createEquipmentMutation.mutateAsync({ name: formData.name.trim() });
       toast.success("Equipment added successfully");
       setShowAddModal(false);
       setFormData({ name: "" });
-      fetchEquipment();
     } catch (error) {
       console.error("Add equipment error:", error);
       const errorMessage =
@@ -154,21 +127,24 @@ const AdminAssets = () => {
 
   const handleEditEquipment = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (!formData.name || !formData.name.trim()) {
       toast.error("Please enter equipment name");
       return;
     }
 
+    if (updateEquipmentMutation.isPending) return;
+
     try {
-      await api.put(`/equipment/${selectedEquipment._id}`, {
+      await updateEquipmentMutation.mutateAsync({
+        id: selectedEquipment._id,
         name: formData.name.trim(),
       });
       toast.success("Equipment updated successfully");
       setShowEditModal(false);
       setSelectedEquipment(null);
       setFormData({ name: "" });
-      fetchEquipment();
     } catch (error) {
       console.error("Edit equipment error:", error);
       const errorMessage =
@@ -180,11 +156,12 @@ const AdminAssets = () => {
   const handleDeleteEquipment = async (id) => {
     if (window.confirm("Are you sure you want to delete this equipment?")) {
       try {
-        await api.delete(`/equipment/${id}`);
+        await deleteEquipmentMutation.mutateAsync(id);
         toast.success("Equipment deleted successfully");
-        fetchEquipment();
       } catch (error) {
-        toast.error("Failed to delete equipment");
+        toast.error(
+          error.response?.data?.message || "Failed to delete equipment"
+        );
       }
     }
   };
@@ -253,14 +230,20 @@ const AdminAssets = () => {
 
   const handleEditRecord = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (!recordFormData.storeName || !recordFormData.storeName.trim()) {
       toast.error("Please enter store name");
       return;
     }
 
+    if (updateRecordMutation.isPending) return;
+
     try {
-      await api.put(`/equipment/records/${selectedRecord._id}`, recordFormData);
+      await updateRecordMutation.mutateAsync({
+        id: selectedRecord._id,
+        ...recordFormData,
+      });
 
       // Persist store managers for this store (best-effort).
       try {
@@ -308,7 +291,6 @@ const AdminAssets = () => {
       setRecordFormData({ storeName: "", equipment: [], notes: "" });
       setSelectedStore(null);
       setStoreManagers([]);
-      fetchAssetRecords();
     } catch (error) {
       console.error("Edit record error:", error);
       const errorMessage =
@@ -324,9 +306,8 @@ const AdminAssets = () => {
       )
     ) {
       try {
-        await api.delete(`/equipment/records/${id}`);
+        await deleteRecordMutation.mutateAsync(id);
         toast.success("Asset record deleted successfully");
-        fetchAssetRecords();
       } catch (error) {
         console.error("Delete record error:", error);
         toast.error(error.response?.data?.message || "Failed to delete record");
@@ -546,9 +527,9 @@ const AdminAssets = () => {
 
                 <button
                   onClick={downloadAssetRecordsExcel}
-                  disabled={isExporting}
+                  disabled={exportRecordsMutation.isPending}
                   className={`px-6 py-3 rounded-xl font-medium flex items-center space-x-2 transition-colors ${
-                    isExporting
+                    exportRecordsMutation.isPending
                       ? isDarkMode
                         ? "bg-gray-700 text-gray-300 cursor-not-allowed"
                         : "bg-gray-200 text-gray-500 cursor-not-allowed"
@@ -558,7 +539,9 @@ const AdminAssets = () => {
                 >
                   <Download className="h-5 w-5" />
                   <span>
-                    {isExporting ? "Downloading..." : "Download Excel"}
+                    {exportRecordsMutation.isPending
+                      ? "Downloading..."
+                      : "Download Excel"}
                   </span>
                 </button>
               </div>
@@ -887,6 +870,40 @@ const AdminAssets = () => {
                         {new Date(
                           selectedRecord.submissionDate
                         ).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div
+                      className={`mt-3 text-sm ${
+                        isDarkMode ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
+                      <span className="font-semibold">Outlet Managers:</span>{" "}
+                      <span>
+                        {(() => {
+                          const managers = selectedRecord?.store?.managers;
+
+                          if (
+                            !Array.isArray(managers) ||
+                            managers.length === 0
+                          ) {
+                            return "-";
+                          }
+
+                          const namedManagers = managers.filter(
+                            (m) => m?.name && String(m.name).trim()
+                          );
+
+                          if (namedManagers.length === 0) return "-";
+
+                          return namedManagers
+                            .map((m) =>
+                              m.phoneNumber
+                                ? `${m.name} (${m.phoneNumber})`
+                                : m.name
+                            )
+                            .join(", ");
+                        })()}
                       </span>
                     </div>
                   </div>

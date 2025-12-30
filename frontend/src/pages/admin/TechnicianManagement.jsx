@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Wrench,
@@ -14,12 +14,16 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import api from "../../lib/axios";
+import {
+  useAdminTechnicians,
+  useCreateTechnician,
+  useDeleteUser,
+  useToggleUserStatus,
+  useUpdateTechnician,
+} from "../../hooks/useAdmin";
 
 const TechnicianManagement = () => {
   const { isDarkMode } = useTheme();
-  const [technicians, setTechnicians] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [actionLoading, setActionLoading] = useState(null);
@@ -30,41 +34,27 @@ const TechnicianManagement = () => {
   const [formData, setFormData] = useState({ name: "", phoneNumber: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchTechnicians();
-  }, [pagination.page, searchTerm]);
+  const techniciansQuery = useAdminTechnicians({
+    page: pagination.page,
+    limit: 10,
+    search: searchTerm || undefined,
+  });
 
-  const fetchTechnicians = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get("/admin/technicians", {
-        params: {
-          page: pagination.page,
-          limit: 10,
-          search: searchTerm || undefined,
-        },
-      });
-      setTechnicians(response.data.technicians);
-      setPagination(response.data.pagination);
-    } catch (error) {
-      console.error("Failed to fetch technicians:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const technicians = techniciansQuery.data?.technicians ?? [];
+  const paginationInfo = techniciansQuery.data?.pagination ?? pagination;
+
+  const toggleUserStatusMutation = useToggleUserStatus();
+  const deleteUserMutation = useDeleteUser();
+  const createTechnicianMutation = useCreateTechnician();
+  const updateTechnicianMutation = useUpdateTechnician();
 
   const toggleUserStatus = async (userId, newStatus) => {
     try {
       setActionLoading(userId);
-      await api.patch(`/admin/users/${userId}/toggle-status`, {
+      await toggleUserStatusMutation.mutateAsync({
+        userId,
         isActive: newStatus,
       });
-
-      setTechnicians(
-        technicians.map((tech) =>
-          tech._id === userId ? { ...tech, isActive: newStatus } : tech
-        )
-      );
     } catch (error) {
       console.error("Failed to toggle user status:", error);
     } finally {
@@ -75,9 +65,7 @@ const TechnicianManagement = () => {
   const deleteUser = async (userId) => {
     try {
       setActionLoading(userId);
-      await api.delete(`/admin/users/${userId}`);
-
-      setTechnicians(technicians.filter((tech) => tech._id !== userId));
+      await deleteUserMutation.mutateAsync(userId);
       setShowDeleteModal(null);
     } catch (error) {
       console.error("Failed to delete user:", error);
@@ -91,11 +79,10 @@ const TechnicianManagement = () => {
     e.preventDefault();
     try {
       setIsSubmitting(true);
-      await api.post("/admin/technicians", formData);
+      await createTechnicianMutation.mutateAsync(formData);
 
       setShowCreateModal(false);
       setFormData({ name: "", phoneNumber: "" });
-      fetchTechnicians();
     } catch (error) {
       console.error("Create technician error:", error);
       alert(error.response?.data?.message || "Failed to create technician");
@@ -108,12 +95,14 @@ const TechnicianManagement = () => {
     e.preventDefault();
     try {
       setIsSubmitting(true);
-      await api.put(`/admin/technicians/${selectedTechnician._id}`, formData);
+      await updateTechnicianMutation.mutateAsync({
+        technicianId: selectedTechnician._id,
+        payload: formData,
+      });
 
       setShowEditModal(false);
       setSelectedTechnician(null);
       setFormData({ name: "", phoneNumber: "" });
-      fetchTechnicians();
     } catch (error) {
       console.error("Update technician error:", error);
       alert(error.response?.data?.message || "Failed to update technician");
@@ -133,7 +122,7 @@ const TechnicianManagement = () => {
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  if (loading) {
+  if (techniciansQuery.isLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
@@ -224,7 +213,7 @@ const TechnicianManagement = () => {
                   isDarkMode ? "text-white" : "text-gray-900"
                 }`}
               >
-                All Technicians ({pagination.total})
+                All Technicians ({paginationInfo.total})
               </h2>
             </div>
 
@@ -394,9 +383,9 @@ const TechnicianManagement = () => {
             )}
 
             {/* Pagination */}
-            {pagination.pages > 1 && (
+            {paginationInfo.pages > 1 && (
               <div className="flex justify-center mt-8 space-x-2">
-                {[...Array(pagination.pages)].map((_, i) => (
+                {[...Array(paginationInfo.pages)].map((_, i) => (
                   <button
                     key={i + 1}
                     onClick={() =>
