@@ -1,13 +1,12 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Plus,
   FileText,
   Users,
   Wrench,
-  LogOut,
   Shield,
   ClipboardList,
   Package,
@@ -16,17 +15,10 @@ import {
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import useAuthStore from "../../store/authStore";
-import ThemeToggle from "../common/ThemeToggle";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { isDarkMode } = useTheme();
-  const { user, logout } = useAuthStore();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
+  const { user } = useAuthStore();
 
   const getMenuItems = () => {
     switch (user?.role) {
@@ -266,36 +258,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             ))}
           </ul>
         </nav>
-
-        {/* Footer */}
-        <div
-          className={`p-4 border-t ${
-            isDarkMode ? "border-gray-800" : "border-gray-200"
-          } flex-shrink-0 space-y-4`}
-        >
-          <div className="flex items-center justify-between">
-            <span
-              className={`text-sm font-semibold ${
-                isDarkMode ? "text-gray-300" : "text-gray-700"
-              }`}
-            >
-              Theme Mode
-            </span>
-            <ThemeToggle />
-          </div>
-
-          <button
-            onClick={handleLogout}
-            className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl transition-all duration-300 group ${
-              isDarkMode
-                ? "text-red-400 hover:bg-red-950/50 hover:text-red-300 border border-gray-800 hover:border-red-800/50"
-                : "text-red-600 hover:bg-red-50 hover:text-red-700 border border-gray-200 hover:border-red-300"
-            }`}
-          >
-            <LogOut className="h-6 w-6 group-hover:scale-110 transition-transform" />
-            <span className="font-semibold">Logout</span>
-          </button>
-        </div>
       </motion.div>
     </>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText,
@@ -22,13 +22,16 @@ import { Link } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import useAuthStore from "../../store/authStore";
-import api from "../../lib/axios";
 import { toast } from "react-toastify";
+import { useAdminDashboardStats } from "../../hooks/useAdmin";
+import api from "../../lib/axios";
 
 const AdminDashboard = () => {
   const { isDarkMode } = useTheme();
   const { user } = useAuthStore();
-  const [stats, setStats] = useState({
+
+  const dashboardStatsQuery = useAdminDashboardStats();
+  const stats = dashboardStatsQuery.data || {
     totalComplaints: 0,
     pendingComplaints: 0,
     inProgressComplaints: 0,
@@ -37,8 +40,8 @@ const AdminDashboard = () => {
     totalTechnicians: 0,
     activeTechnicians: 0,
     recentComplaints: [],
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  };
+  const isLoading = dashboardStatsQuery.isLoading;
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -49,22 +52,6 @@ const AdminDashboard = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState(null);
-
-  useEffect(() => {
-    fetchDashboardStats();
-  }, []);
-
-  const fetchDashboardStats = async () => {
-    try {
-      setIsLoading(true);
-      const response = await api.get("/admin/dashboard/stats");
-      setStats(response.data.stats);
-    } catch (error) {
-      console.error("Failed to fetch dashboard stats:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const openDetailsModal = async (complaint) => {
     try {

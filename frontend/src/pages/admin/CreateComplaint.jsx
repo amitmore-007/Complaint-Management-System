@@ -15,15 +15,16 @@ import {
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import api from "../../lib/axios";
 import { STORE_OPTIONS } from "../../utils/storeOptions";
 import StoreDropdown from "../../components/common/StoreDropdown";
+import { useCreateAdminComplaint } from "../../hooks/useComplaints";
 
 const CreateComplaint = () => {
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
   const [photos, setPhotos] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createComplaintMutation = useCreateAdminComplaint();
+  const isSubmitting = createComplaintMutation.isPending;
 
   const {
     register,
@@ -76,8 +77,6 @@ const CreateComplaint = () => {
 
   const onSubmit = async (data) => {
     try {
-      setIsSubmitting(true);
-
       const formData = new FormData();
       formData.append("title", data.title);
       formData.append("description", data.description);
@@ -89,11 +88,7 @@ const CreateComplaint = () => {
         formData.append("photos", photo.file);
       });
 
-      await api.post("/admin/complaints", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      await createComplaintMutation.mutateAsync(formData);
 
       toast.success("Complaint created successfully!");
 
@@ -106,8 +101,6 @@ const CreateComplaint = () => {
       toast.error(
         error.response?.data?.message || "Failed to create complaint"
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 

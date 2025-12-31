@@ -16,6 +16,9 @@ export const useAdminDashboardStats = () => {
   return useQuery({
     queryKey: adminKeys.dashboardStats(),
     queryFn: () => adminService.dashboardStats(),
+    staleTime: 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -42,6 +45,7 @@ export const useToggleUserStatus = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.techniciansRoot() });
       queryClient.invalidateQueries({ queryKey: adminKeys.clientsRoot() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
     },
   });
 };
@@ -54,6 +58,7 @@ export const useDeleteUser = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.techniciansRoot() });
       queryClient.invalidateQueries({ queryKey: adminKeys.clientsRoot() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
     },
   });
 };
@@ -65,6 +70,7 @@ export const useCreateTechnician = () => {
     mutationFn: (payload) => adminService.technicians.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.techniciansRoot() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
     },
   });
 };
@@ -77,6 +83,7 @@ export const useUpdateTechnician = () => {
       adminService.technicians.update(technicianId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.techniciansRoot() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
     },
   });
 };
@@ -88,6 +95,7 @@ export const useCreateClient = () => {
     mutationFn: (payload) => adminService.clients.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.clientsRoot() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
     },
   });
 };
@@ -100,6 +108,7 @@ export const useUpdateClient = () => {
       adminService.clients.update(clientId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.clientsRoot() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
     },
   });
 };

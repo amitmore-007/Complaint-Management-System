@@ -1,5 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { complaintService } from "../services/complaintService";
+import { adminKeys } from "./useAdmin";
+
+export const dashboardKeys = {
+  technicianAssignments: () => ["dashboard", "technician", "assignments"],
+};
 
 // Query keys
 export const complaintKeys = {
@@ -40,8 +45,6 @@ export const useComplaint = (id, options = {}) => {
       if (userRole === "admin") return complaintService.admin.getById(id);
       if (userRole === "client") return complaintService.client.getById(id);
 
-      // Technician has no dedicated complaint detail route in this backend.
-      // Technician screens should use assignments endpoints that already return complaint objects.
       throw new Error("Complaint detail is not available for technician role");
     },
     enabled: !!id && options.enabled !== false,
@@ -64,13 +67,40 @@ export const useAssignedComplaints = () => {
   });
 };
 
-// Fetch my complaints (Client)
+// Fetch my complaints (Technician)
 export const useMyComplaints = () => {
   return useQuery({
     queryKey: complaintKeys.technicianMyComplaints(),
     queryFn: async () => {
       return complaintService.technician.myComplaints();
     },
+  });
+};
+
+// Fetch my complaints (Client)
+export const useClientComplaints = (filters = {}) => {
+  return useQuery({
+    queryKey: complaintKeys.clientList(filters),
+    queryFn: async () => {
+      return complaintService.client.list(filters);
+    },
+    // Dashboards should not refetch on every navigation.
+    staleTime: 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: true,
+  });
+};
+
+// Technician dashboard assignments (needs backend stats payload)
+export const useTechnicianDashboardAssignments = () => {
+  return useQuery({
+    queryKey: dashboardKeys.technicianAssignments(),
+    queryFn: async () => {
+      return complaintService.technician.assignmentsDashboard();
+    },
+    staleTime: 60_000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -90,13 +120,53 @@ export const useCreateComplaint = () => {
 
   return useMutation({
     mutationFn: async (complaintData) => {
-      // Backward compatible default: create via admin endpoint.
-      // Prefer using role-specific create flows (admin/client/technician pages).
       return complaintService.admin.create(complaintData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
       queryClient.invalidateQueries({ queryKey: complaintKeys.client() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+    },
+  });
+};
+
+export const useCreateAdminComplaint = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (formData) => complaintService.admin.create(formData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+    },
+  });
+};
+
+export const useCreateClientComplaint = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (formData) => complaintService.client.create(formData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: complaintKeys.client() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+      // Admin complaints list should reflect new client complaints.
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+    },
+  });
+};
+
+export const useCreateTechnicianComplaint = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (formData) => complaintService.technician.create(formData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: complaintKeys.technicianMyComplaints(),
+      });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
     },
   });
 };
@@ -112,6 +182,8 @@ export const useAssignComplaint = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
       queryClient.invalidateQueries({ queryKey: complaintKeys.technician() });
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.technicianAssignments() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
     },
   });
 };
@@ -127,6 +199,9 @@ export const useUpdateComplaintStatus = () => {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
       queryClient.invalidateQueries({ queryKey: complaintKeys.technician() });
+      queryClient.invalidateQueries({ queryKey: complaintKeys.client() });
+      queryClient.invalidateQueries({ queryKey: dashboardKeys.technicianAssignments() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
       queryClient.invalidateQueries({
         queryKey: complaintKeys.detail(variables.id),
       });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import {
@@ -22,19 +22,31 @@ import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import useAuthStore from "../../store/authStore";
-import api from "../../lib/axios";
+import {
+  useTechnicianDashboardAssignments,
+  useUpdateComplaintStatus,
+} from "../../hooks/useComplaints";
 
 const TechnicianDashboard = () => {
   const { isDarkMode } = useTheme();
   const { user } = useAuthStore();
-  const [assignments, setAssignments] = useState([]);
-  const [stats, setStats] = useState({
-    total: 0,
-    assigned: 0,
-    inProgress: 0,
-    completed: 0,
-  });
-  const [isLoading, setIsLoading] = useState(true);
+
+  const assignmentsQuery = useTechnicianDashboardAssignments();
+  const updateStatusMutation = useUpdateComplaintStatus();
+
+  const assignments = useMemo(() => {
+    const payload = assignmentsQuery.data;
+    return Array.isArray(payload?.complaints) ? payload.complaints : [];
+  }, [assignmentsQuery.data]);
+
+  const stats = assignmentsQuery.data?.stats || {
+    total: assignments.length,
+    assigned: assignments.filter((c) => c.status === "assigned").length,
+    inProgress: assignments.filter((c) => c.status === "in-progress").length,
+    completed: assignments.filter((c) => c.status === "resolved").length,
+  };
+
+  const isLoading = assignmentsQuery.isLoading;
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
@@ -50,58 +62,6 @@ const TechnicianDashboard = () => {
   const [showStartWorkConfirm, setShowStartWorkConfirm] = useState(false);
   const [pendingStartComplaint, setPendingStartComplaint] = useState(null);
   const [isStartingWork, setIsStartingWork] = useState(false);
-
-  useEffect(() => {
-    fetchAssignments();
-  }, []);
-
-  const fetchAssignments = async () => {
-    try {
-      setIsLoading(true);
-
-      const response = await api.get("/technician/assignments");
-      // Handle the response structure
-      const responseData = response.data;
-
-      if (responseData.success) {
-        const data = responseData.data || {};
-        const complaints = data.complaints || [];
-        const stats = data.stats || {
-          total: 0,
-          assigned: 0,
-          inProgress: 0,
-          completed: 0,
-        };
-
-        setAssignments(complaints);
-        setStats(stats);
-
-        if (complaints.length === 0) {
-          console.log("ℹ️ No assignments found for technician");
-        }
-      } else {
-        console.error("❌ API returned success: false", responseData);
-        throw new Error(responseData.message || "Failed to fetch assignments");
-      }
-    } catch (error) {
-      console.error("❌ Failed to fetch assignments:", error);
-      console.error("❌ Error details:", {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status,
-      });
-
-      toast.error(
-        error.response?.data?.message || "Failed to load assignments"
-      );
-
-      // Set empty state on error
-      setAssignments([]);
-      setStats({ total: 0, assigned: 0, inProgress: 0, completed: 0 });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const updateComplaintStatus = async (
     complaintId,
@@ -146,28 +106,24 @@ const TechnicianDashboard = () => {
         return;
       }
 
-      const response = await api.patch(
-        `/technician/assignments/${complaintId}/status`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      await updateStatusMutation.mutateAsync({
+        id: complaintId,
+        payload: formData,
+      });
 
       toast.success(
         `Complaint ${
           newStatus === "in-progress" ? "started" : "completed"
         } successfully!`
       );
-      fetchAssignments();
+
+      await assignmentsQuery.refetch();
     } catch (error) {
       console.error("❌ Update status error:", error);
-      console.error("❌ Error response:", error.response?.data);
-
       const errorMessage =
-        error.response?.data?.message || "Failed to update status";
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to update status";
       toast.error(errorMessage);
     }
   };
