@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
@@ -18,57 +18,37 @@ import { Link } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import useAuthStore from "../../store/authStore";
-import api from "../../lib/axios";
+import { useClientComplaints } from "../../hooks/useComplaints";
 
 const ClientDashboard = () => {
   const { isDarkMode } = useTheme();
   const { user } = useAuthStore();
-  const [stats, setStats] = useState({
-    total: 0,
-    pending: 0,
-    inProgress: 0,
-    resolved: 0,
-  });
-  const [recentComplaints, setRecentComplaints] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const complaintsQuery = useClientComplaints();
+  const allComplaints = Array.isArray(complaintsQuery.data)
+    ? complaintsQuery.data
+    : [];
+  const isLoading = complaintsQuery.isLoading;
+
+  const { stats, recentComplaints } = useMemo(() => {
+    const sorted = [...allComplaints].sort((a, b) => {
+      const aTime = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTime - aTime;
+    });
+
+    const computedStats = {
+      total: allComplaints.length,
+      pending: allComplaints.filter((c) => c.status === "pending").length,
+      inProgress: allComplaints.filter((c) => c.status === "in-progress")
+        .length,
+      resolved: allComplaints.filter((c) => c.status === "resolved").length,
+    };
+
+    return { stats: computedStats, recentComplaints: sorted.slice(0, 5) };
+  }, [allComplaints]);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    try {
-      setIsLoading(true);
-
-      // Fetch all complaints for stats calculation
-      const allComplaintsResponse = await api.get("/client/complaints");
-      const allComplaints = allComplaintsResponse.data.complaints;
-
-      // Fetch recent complaints (limited for display)
-      const recentComplaintsResponse = await api.get(
-        "/client/complaints?limit=5"
-      );
-      const recentComplaints = recentComplaintsResponse.data.complaints;
-
-      setRecentComplaints(recentComplaints);
-
-      // Calculate stats based on ALL complaints, not just recent ones
-      const statsData = {
-        total: allComplaints.length,
-        pending: allComplaints.filter((c) => c.status === "pending").length,
-        inProgress: allComplaints.filter((c) => c.status === "in-progress")
-          .length,
-        resolved: allComplaints.filter((c) => c.status === "resolved").length,
-      };
-      setStats(statsData);
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const getStatusColor = (status) => {
     switch (status) {

@@ -83,6 +83,41 @@ export const complaintService = {
   },
 
   technician: {
+    assignmentsDashboard: async () => {
+      const { data } = await api.get(endpoints.technician.assignments.root);
+
+      if (data?.success) {
+        const payload = data.data || {};
+        const complaints = Array.isArray(payload.complaints)
+          ? payload.complaints
+          : [];
+
+        const stats = payload.stats || {
+          total: complaints.length,
+          assigned: complaints.filter((c) => c.status === "assigned").length,
+          inProgress: complaints.filter((c) => c.status === "in-progress")
+            .length,
+          completed: complaints.filter((c) => c.status === "resolved").length,
+        };
+
+        return { complaints, stats };
+      }
+
+      const complaints =
+        data?.complaints ?? data?.assignments ?? data?.data?.complaints ?? [];
+
+      const safeComplaints = Array.isArray(complaints) ? complaints : [];
+      const stats = {
+        total: safeComplaints.length,
+        assigned: safeComplaints.filter((c) => c.status === "assigned").length,
+        inProgress: safeComplaints.filter((c) => c.status === "in-progress")
+          .length,
+        completed: safeComplaints.filter((c) => c.status === "resolved").length,
+      };
+
+      return { complaints: safeComplaints, stats };
+    },
+
     assignments: async () => {
       const { data } = await api.get(endpoints.technician.assignments.root);
 
@@ -135,6 +170,5 @@ export const complaintService = {
 export const resolveComplaintDetailEndpoint = ({ role, id }) => {
   if (role === "admin") return endpoints.admin.complaints.byId(id);
   if (role === "client") return endpoints.client.complaints.byId(id);
-  // technician doesn't have a dedicated get-by-id route in this backend.
   return null;
 };

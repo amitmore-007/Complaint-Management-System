@@ -1292,9 +1292,21 @@ const AdminAssets = () => {
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors"
+                      disabled={updateRecordMutation.isPending}
+                      className={`flex-1 py-3 px-4 rounded-xl transition-colors inline-flex items-center justify-center gap-2 ${
+                        updateRecordMutation.isPending
+                          ? "bg-blue-600/70 text-white cursor-not-allowed"
+                          : "bg-blue-600 hover:bg-blue-700 text-white"
+                      }`}
                     >
-                      Update Record
+                      {updateRecordMutation.isPending && (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      )}
+                      <span>
+                        {updateRecordMutation.isPending
+                          ? "Updating..."
+                          : "Update Record"}
+                      </span>
                     </button>
                   </div>
                 </form>

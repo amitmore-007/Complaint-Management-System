@@ -4,6 +4,13 @@ import { BarChart3, LineChart, RefreshCcw } from "lucide-react";
 import toast from "react-hot-toast";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { useTheme } from "../../context/ThemeContext";
+
+import dayjs from "dayjs";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { MenuItem, TextField } from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import {
   fetchComplaintsCreatedVsResolvedStats,
   fetchTechniciansAssignedVsResolvedStats,
@@ -172,6 +179,16 @@ const ChartLoader = ({ isDarkMode }) => (
 
 const Reports = () => {
   const { isDarkMode } = useTheme();
+
+  const muiTheme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: isDarkMode ? "dark" : "light",
+        },
+      }),
+    [isDarkMode]
+  );
 
   const tz = useMemo(() => getBrowserTimeZone(), []);
 
@@ -692,205 +709,169 @@ const Reports = () => {
                 </button>
               </div>
 
-              <div
-                className={`grid grid-cols-1 md:grid-cols-3 gap-4 rounded-2xl p-4 border ${
-                  isDarkMode
-                    ? "border-gray-800 bg-black/30"
-                    : "border-gray-200 bg-gray-50"
-                }`}
-              >
-                <div>
-                  <label
-                    className={`block text-sm font-semibold mb-2 ${
-                      isDarkMode ? "text-gray-200" : "text-gray-800"
-                    }`}
-                  >
-                    Interval
-                  </label>
-                  <select
-                    value={interval}
-                    onChange={(e) => setInterval(e.target.value)}
-                    className={`w-full px-3 py-2 rounded-xl border outline-none ${
+              <ThemeProvider theme={muiTheme}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <div
+                    className={`grid grid-cols-1 md:grid-cols-3 gap-4 rounded-2xl p-4 border ${
                       isDarkMode
-                        ? "bg-gray-900 border-gray-800 text-white"
-                        : "bg-white border-gray-200 text-gray-900"
-                    }`}
-                    style={isDarkMode ? { colorScheme: "dark" } : {}}
-                  >
-                    <option value="day">Day</option>
-                    <option value="month">Month</option>
-                    <option value="year">Year</option>
-                  </select>
-                </div>
-
-                {interval === "day" && (
-                  <>
-                    <div>
-                      <label
-                        className={`block text-sm font-semibold mb-2 ${
-                          isDarkMode ? "text-gray-200" : "text-gray-800"
-                        }`}
-                      >
-                        From
-                      </label>
-                      <input
-                        type="date"
-                        value={fromDate}
-                        onChange={(e) => setFromDate(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl border outline-none ${
-                          isDarkMode
-                            ? "bg-gray-900 border-gray-800 text-white"
-                            : "bg-white border-gray-200 text-gray-900"
-                        }`}
-                        style={isDarkMode ? { colorScheme: "dark" } : {}}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className={`block text-sm font-semibold mb-2 ${
-                          isDarkMode ? "text-gray-200" : "text-gray-800"
-                        }`}
-                      >
-                        To
-                      </label>
-                      <input
-                        type="date"
-                        value={toDate}
-                        onChange={(e) => setToDate(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl border outline-none ${
-                          isDarkMode
-                            ? "bg-gray-900 border-gray-800 text-white"
-                            : "bg-white border-gray-200 text-gray-900"
-                        }`}
-                        style={isDarkMode ? { colorScheme: "dark" } : {}}
-                      />
-                    </div>
-                  </>
-                )}
-
-                {interval === "month" && (
-                  <>
-                    <div>
-                      <label
-                        className={`block text-sm font-semibold mb-2 ${
-                          isDarkMode ? "text-gray-200" : "text-gray-800"
-                        }`}
-                      >
-                        From month
-                      </label>
-                      <input
-                        type="month"
-                        value={fromMonth}
-                        onChange={(e) => setFromMonth(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl border outline-none ${
-                          isDarkMode
-                            ? "bg-gray-900 border-gray-800 text-white"
-                            : "bg-white border-gray-200 text-gray-900"
-                        }`}
-                        style={isDarkMode ? { colorScheme: "dark" } : {}}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className={`block text-sm font-semibold mb-2 ${
-                          isDarkMode ? "text-gray-200" : "text-gray-800"
-                        }`}
-                      >
-                        To month
-                      </label>
-                      <input
-                        type="month"
-                        value={toMonth}
-                        onChange={(e) => setToMonth(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl border outline-none ${
-                          isDarkMode
-                            ? "bg-gray-900 border-gray-800 text-white"
-                            : "bg-white border-gray-200 text-gray-900"
-                        }`}
-                        style={isDarkMode ? { colorScheme: "dark" } : {}}
-                      />
-                    </div>
-                  </>
-                )}
-
-                {interval === "year" && (
-                  <>
-                    <div>
-                      <label
-                        className={`block text-sm font-semibold mb-2 ${
-                          isDarkMode ? "text-gray-200" : "text-gray-800"
-                        }`}
-                      >
-                        From year
-                      </label>
-                      <input
-                        type="number"
-                        min="2000"
-                        max="2100"
-                        value={fromYear}
-                        onChange={(e) => setFromYear(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl border outline-none ${
-                          isDarkMode
-                            ? "bg-gray-900 border-gray-800 text-white"
-                            : "bg-white border-gray-200 text-gray-900"
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className={`block text-sm font-semibold mb-2 ${
-                          isDarkMode ? "text-gray-200" : "text-gray-800"
-                        }`}
-                      >
-                        To year
-                      </label>
-                      <input
-                        type="number"
-                        min="2000"
-                        max="2100"
-                        value={toYear}
-                        onChange={(e) => setToYear(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl border outline-none ${
-                          isDarkMode
-                            ? "bg-gray-900 border-gray-800 text-white"
-                            : "bg-white border-gray-200 text-gray-900"
-                        }`}
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div className="md:col-span-3 flex items-center justify-between gap-3 flex-wrap">
-                  <p
-                    className={`${
-                      isDarkMode ? "text-gray-500" : "text-gray-600"
-                    } text-sm`}
-                  >
-                    Timezone:{" "}
-                    <span
-                      className={`${
-                        isDarkMode ? "text-gray-300" : "text-gray-800"
-                      } font-semibold`}
-                    >
-                      {tz}
-                    </span>
-                  </p>
-
-                  <button
-                    onClick={loadComplaintsSeries}
-                    disabled={complaintLoading}
-                    className={`px-5 py-2.5 rounded-xl font-bold transition-all ${
-                      isDarkMode
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-500 hover:to-purple-500"
-                        : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500"
-                    } ${
-                      complaintLoading ? "opacity-60 cursor-not-allowed" : ""
+                        ? "border-gray-800 bg-black/30"
+                        : "border-gray-200 bg-gray-50"
                     }`}
                   >
-                    Apply
-                  </button>
-                </div>
-              </div>
+                    <div>
+                      <TextField
+                        select
+                        label="Interval"
+                        value={interval}
+                        onChange={(e) => setInterval(e.target.value)}
+                        size="small"
+                        fullWidth
+                        SelectProps={{
+                          MenuProps: {
+                            disableScrollLock: true,
+                          },
+                        }}
+                      >
+                        <MenuItem value="day">Day</MenuItem>
+                        <MenuItem value="month">Month</MenuItem>
+                        <MenuItem value="year">Year</MenuItem>
+                      </TextField>
+                    </div>
+
+                    {interval === "day" && (
+                      <>
+                        <div>
+                          <DatePicker
+                            label="From"
+                            value={fromDate ? dayjs(fromDate) : null}
+                            onChange={(v) =>
+                              setFromDate(v ? v.format("YYYY-MM-DD") : "")
+                            }
+                            slotProps={{
+                              textField: { size: "small", fullWidth: true },
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <DatePicker
+                            label="To"
+                            value={toDate ? dayjs(toDate) : null}
+                            onChange={(v) =>
+                              setToDate(v ? v.format("YYYY-MM-DD") : "")
+                            }
+                            slotProps={{
+                              textField: { size: "small", fullWidth: true },
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {interval === "month" && (
+                      <>
+                        <div>
+                          <DatePicker
+                            label="From month"
+                            views={["year", "month"]}
+                            openTo="month"
+                            format="YYYY-MM"
+                            value={fromMonth ? dayjs(`${fromMonth}-01`) : null}
+                            onChange={(v) =>
+                              setFromMonth(v ? v.format("YYYY-MM") : "")
+                            }
+                            slotProps={{
+                              textField: { size: "small", fullWidth: true },
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <DatePicker
+                            label="To month"
+                            views={["year", "month"]}
+                            openTo="month"
+                            format="YYYY-MM"
+                            value={toMonth ? dayjs(`${toMonth}-01`) : null}
+                            onChange={(v) =>
+                              setToMonth(v ? v.format("YYYY-MM") : "")
+                            }
+                            slotProps={{
+                              textField: { size: "small", fullWidth: true },
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {interval === "year" && (
+                      <>
+                        <div>
+                          <DatePicker
+                            label="From year"
+                            views={["year"]}
+                            openTo="year"
+                            format="YYYY"
+                            value={fromYear ? dayjs(`${fromYear}-01-01`) : null}
+                            onChange={(v) =>
+                              setFromYear(v ? v.format("YYYY") : "")
+                            }
+                            slotProps={{
+                              textField: { size: "small", fullWidth: true },
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <DatePicker
+                            label="To year"
+                            views={["year"]}
+                            openTo="year"
+                            format="YYYY"
+                            value={toYear ? dayjs(`${toYear}-01-01`) : null}
+                            onChange={(v) =>
+                              setToYear(v ? v.format("YYYY") : "")
+                            }
+                            slotProps={{
+                              textField: { size: "small", fullWidth: true },
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="md:col-span-3 flex items-center justify-between gap-3 flex-wrap">
+                      <p
+                        className={`${
+                          isDarkMode ? "text-gray-500" : "text-gray-600"
+                        } text-sm`}
+                      >
+                        Timezone:{" "}
+                        <span
+                          className={`${
+                            isDarkMode ? "text-gray-300" : "text-gray-800"
+                          } font-semibold`}
+                        >
+                          {tz}
+                        </span>
+                      </p>
+
+                      <button
+                        onClick={loadComplaintsSeries}
+                        disabled={complaintLoading}
+                        className={`px-5 py-2.5 rounded-xl font-bold transition-all ${
+                          isDarkMode
+                            ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-500 hover:to-purple-500"
+                            : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500"
+                        } ${
+                          complaintLoading
+                            ? "opacity-60 cursor-not-allowed"
+                            : ""
+                        }`}
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                </LocalizationProvider>
+              </ThemeProvider>
 
               <div
                 className={`rounded-2xl border ${
@@ -955,203 +936,179 @@ const Reports = () => {
                 </button>
               </div>
 
-              <div
-                className={`grid grid-cols-1 md:grid-cols-3 gap-4 rounded-2xl p-4 border ${
-                  isDarkMode
-                    ? "border-gray-800 bg-black/30"
-                    : "border-gray-200 bg-gray-50"
-                }`}
-              >
-                <div>
-                  <label
-                    className={`block text-sm font-semibold mb-2 ${
-                      isDarkMode ? "text-gray-200" : "text-gray-800"
+              <ThemeProvider theme={muiTheme}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <div
+                    className={`grid grid-cols-1 md:grid-cols-3 gap-4 rounded-2xl p-4 border ${
+                      isDarkMode
+                        ? "border-gray-800 bg-black/30"
+                        : "border-gray-200 bg-gray-50"
                     }`}
                   >
-                    Interval
-                  </label>
-                  <select
-                    value={techInterval}
-                    onChange={(e) => setTechInterval(e.target.value)}
-                    className={`w-full px-3 py-2 rounded-xl border outline-none ${
-                      isDarkMode
-                        ? "bg-gray-900 border-gray-800 text-white"
-                        : "bg-white border-gray-200 text-gray-900"
-                    }`}
-                    style={isDarkMode ? { colorScheme: "dark" } : {}}
-                  >
-                    <option value="day">Day</option>
-                    <option value="month">Month</option>
-                    <option value="year">Year</option>
-                  </select>
-                </div>
+                    <div>
+                      <TextField
+                        select
+                        label="Interval"
+                        value={techInterval}
+                        onChange={(e) => setTechInterval(e.target.value)}
+                        size="small"
+                        fullWidth
+                        SelectProps={{
+                          MenuProps: {
+                            disableScrollLock: true,
+                          },
+                        }}
+                      >
+                        <MenuItem value="day">Day</MenuItem>
+                        <MenuItem value="month">Month</MenuItem>
+                        <MenuItem value="year">Year</MenuItem>
+                      </TextField>
+                    </div>
 
-                {techInterval === "day" && (
-                  <>
-                    <div>
-                      <label
-                        className={`block text-sm font-semibold mb-2 ${
-                          isDarkMode ? "text-gray-200" : "text-gray-800"
-                        }`}
-                      >
-                        From
-                      </label>
-                      <input
-                        type="date"
-                        value={techFromDate}
-                        onChange={(e) => setTechFromDate(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl border outline-none ${
-                          isDarkMode
-                            ? "bg-gray-900 border-gray-800 text-white"
-                            : "bg-white border-gray-200 text-gray-900"
-                        }`}
-                        style={isDarkMode ? { colorScheme: "dark" } : {}}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className={`block text-sm font-semibold mb-2 ${
-                          isDarkMode ? "text-gray-200" : "text-gray-800"
-                        }`}
-                      >
-                        To
-                      </label>
-                      <input
-                        type="date"
-                        value={techToDate}
-                        onChange={(e) => setTechToDate(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl border outline-none ${
-                          isDarkMode
-                            ? "bg-gray-900 border-gray-800 text-white"
-                            : "bg-white border-gray-200 text-gray-900"
-                        }`}
-                        style={isDarkMode ? { colorScheme: "dark" } : {}}
-                      />
-                    </div>
-                  </>
-                )}
+                    {techInterval === "day" && (
+                      <>
+                        <div>
+                          <DatePicker
+                            label="From"
+                            value={techFromDate ? dayjs(techFromDate) : null}
+                            onChange={(v) =>
+                              setTechFromDate(v ? v.format("YYYY-MM-DD") : "")
+                            }
+                            slotProps={{
+                              textField: { size: "small", fullWidth: true },
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <DatePicker
+                            label="To"
+                            value={techToDate ? dayjs(techToDate) : null}
+                            onChange={(v) =>
+                              setTechToDate(v ? v.format("YYYY-MM-DD") : "")
+                            }
+                            slotProps={{
+                              textField: { size: "small", fullWidth: true },
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
 
-                {techInterval === "month" && (
-                  <>
-                    <div>
-                      <label
-                        className={`block text-sm font-semibold mb-2 ${
-                          isDarkMode ? "text-gray-200" : "text-gray-800"
-                        }`}
-                      >
-                        From month
-                      </label>
-                      <input
-                        type="month"
-                        value={techFromMonth}
-                        onChange={(e) => setTechFromMonth(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl border outline-none ${
-                          isDarkMode
-                            ? "bg-gray-900 border-gray-800 text-white"
-                            : "bg-white border-gray-200 text-gray-900"
-                        }`}
-                        style={isDarkMode ? { colorScheme: "dark" } : {}}
-                      />
-                    </div>
-                    <div>
-                      <label
-                        className={`block text-sm font-semibold mb-2 ${
-                          isDarkMode ? "text-gray-200" : "text-gray-800"
-                        }`}
-                      >
-                        To month
-                      </label>
-                      <input
-                        type="month"
-                        value={techToMonth}
-                        onChange={(e) => setTechToMonth(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl border outline-none ${
-                          isDarkMode
-                            ? "bg-gray-900 border-gray-800 text-white"
-                            : "bg-white border-gray-200 text-gray-900"
-                        }`}
-                        style={isDarkMode ? { colorScheme: "dark" } : {}}
-                      />
-                    </div>
-                  </>
-                )}
+                    {techInterval === "month" && (
+                      <>
+                        <div>
+                          <DatePicker
+                            label="From month"
+                            views={["year", "month"]}
+                            openTo="month"
+                            format="YYYY-MM"
+                            value={
+                              techFromMonth
+                                ? dayjs(`${techFromMonth}-01`)
+                                : null
+                            }
+                            onChange={(v) =>
+                              setTechFromMonth(v ? v.format("YYYY-MM") : "")
+                            }
+                            slotProps={{
+                              textField: { size: "small", fullWidth: true },
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <DatePicker
+                            label="To month"
+                            views={["year", "month"]}
+                            openTo="month"
+                            format="YYYY-MM"
+                            value={
+                              techToMonth ? dayjs(`${techToMonth}-01`) : null
+                            }
+                            onChange={(v) =>
+                              setTechToMonth(v ? v.format("YYYY-MM") : "")
+                            }
+                            slotProps={{
+                              textField: { size: "small", fullWidth: true },
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
 
-                {techInterval === "year" && (
-                  <>
-                    <div>
-                      <label
-                        className={`block text-sm font-semibold mb-2 ${
-                          isDarkMode ? "text-gray-200" : "text-gray-800"
+                    {techInterval === "year" && (
+                      <>
+                        <div>
+                          <DatePicker
+                            label="From year"
+                            views={["year"]}
+                            openTo="year"
+                            format="YYYY"
+                            value={
+                              techFromYear
+                                ? dayjs(`${techFromYear}-01-01`)
+                                : null
+                            }
+                            onChange={(v) =>
+                              setTechFromYear(v ? v.format("YYYY") : "")
+                            }
+                            slotProps={{
+                              textField: { size: "small", fullWidth: true },
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <DatePicker
+                            label="To year"
+                            views={["year"]}
+                            openTo="year"
+                            format="YYYY"
+                            value={
+                              techToYear ? dayjs(`${techToYear}-01-01`) : null
+                            }
+                            onChange={(v) =>
+                              setTechToYear(v ? v.format("YYYY") : "")
+                            }
+                            slotProps={{
+                              textField: { size: "small", fullWidth: true },
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="md:col-span-3 flex items-center justify-between gap-3 flex-wrap">
+                      <p
+                        className={`${
+                          isDarkMode ? "text-gray-500" : "text-gray-600"
+                        } text-sm`}
+                      >
+                        Timezone:{" "}
+                        <span
+                          className={`${
+                            isDarkMode ? "text-gray-300" : "text-gray-800"
+                          } font-semibold`}
+                        >
+                          {tz}
+                        </span>
+                      </p>
+
+                      <button
+                        onClick={loadTechnicianStats}
+                        disabled={techLoading}
+                        className={`px-5 py-2.5 rounded-xl font-bold transition-all ${
+                          isDarkMode
+                            ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-500 hover:to-purple-500"
+                            : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500"
+                        } ${
+                          techLoading ? "opacity-60 cursor-not-allowed" : ""
                         }`}
                       >
-                        From year
-                      </label>
-                      <input
-                        type="number"
-                        min="2000"
-                        max="2100"
-                        value={techFromYear}
-                        onChange={(e) => setTechFromYear(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl border outline-none ${
-                          isDarkMode
-                            ? "bg-gray-900 border-gray-800 text-white"
-                            : "bg-white border-gray-200 text-gray-900"
-                        }`}
-                      />
+                        Apply
+                      </button>
                     </div>
-                    <div>
-                      <label
-                        className={`block text-sm font-semibold mb-2 ${
-                          isDarkMode ? "text-gray-200" : "text-gray-800"
-                        }`}
-                      >
-                        To year
-                      </label>
-                      <input
-                        type="number"
-                        min="2000"
-                        max="2100"
-                        value={techToYear}
-                        onChange={(e) => setTechToYear(e.target.value)}
-                        className={`w-full px-3 py-2 rounded-xl border outline-none ${
-                          isDarkMode
-                            ? "bg-gray-900 border-gray-800 text-white"
-                            : "bg-white border-gray-200 text-gray-900"
-                        }`}
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div className="md:col-span-3 flex items-center justify-between gap-3 flex-wrap">
-                  <p
-                    className={`${
-                      isDarkMode ? "text-gray-500" : "text-gray-600"
-                    } text-sm`}
-                  >
-                    Timezone:{" "}
-                    <span
-                      className={`${
-                        isDarkMode ? "text-gray-300" : "text-gray-800"
-                      } font-semibold`}
-                    >
-                      {tz}
-                    </span>
-                  </p>
-
-                  <button
-                    onClick={loadTechnicianStats}
-                    disabled={techLoading}
-                    className={`px-5 py-2.5 rounded-xl font-bold transition-all ${
-                      isDarkMode
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-500 hover:to-purple-500"
-                        : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500"
-                    } ${techLoading ? "opacity-60 cursor-not-allowed" : ""}`}
-                  >
-                    Apply
-                  </button>
-                </div>
-              </div>
+                  </div>
+                </LocalizationProvider>
+              </ThemeProvider>
 
               <div
                 className={`rounded-2xl border ${
