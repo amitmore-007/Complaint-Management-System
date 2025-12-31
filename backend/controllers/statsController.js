@@ -39,7 +39,6 @@ export const getTechnicianAssignedVsResolvedStats = async (req, res) => {
   try {
     const { from, to, tz } = req.query;
 
-    // This endpoint is totals per tech, so interval isn't needed.
     const range = getIntervalAndRange({ interval: "month", from, to, tz });
 
     const data = await getTechniciansAssignedVsResolved({
