@@ -16,9 +16,10 @@ export const useAdminDashboardStats = () => {
   return useQuery({
     queryKey: adminKeys.dashboardStats(),
     queryFn: () => adminService.dashboardStats(),
-    staleTime: 60_000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: true,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: "always",
+    refetchInterval: 10_000,
   });
 };
 

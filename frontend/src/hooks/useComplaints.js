@@ -84,9 +84,8 @@ export const useClientComplaints = (filters = {}) => {
     queryFn: async () => {
       return complaintService.client.list(filters);
     },
-    // Dashboards should not refetch on every navigation.
     staleTime: 60_000,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
 };
@@ -99,7 +98,7 @@ export const useTechnicianDashboardAssignments = () => {
       return complaintService.technician.assignmentsDashboard();
     },
     staleTime: 60_000,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
 };
@@ -137,6 +136,9 @@ export const useCreateAdminComplaint = () => {
     mutationFn: async (formData) => complaintService.admin.create(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      // Admin-created complaints can belong to a client; make sure client views
+      // (dashboard + my complaints) refresh when the user returns.
+      queryClient.invalidateQueries({ queryKey: complaintKeys.client() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
     },
   });
@@ -160,7 +162,8 @@ export const useCreateTechnicianComplaint = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (formData) => complaintService.technician.create(formData),
+    mutationFn: async (formData) =>
+      complaintService.technician.create(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: complaintKeys.technicianMyComplaints(),
@@ -182,7 +185,9 @@ export const useAssignComplaint = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
       queryClient.invalidateQueries({ queryKey: complaintKeys.technician() });
-      queryClient.invalidateQueries({ queryKey: dashboardKeys.technicianAssignments() });
+      queryClient.invalidateQueries({
+        queryKey: dashboardKeys.technicianAssignments(),
+      });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
     },
   });
@@ -200,7 +205,9 @@ export const useUpdateComplaintStatus = () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
       queryClient.invalidateQueries({ queryKey: complaintKeys.technician() });
       queryClient.invalidateQueries({ queryKey: complaintKeys.client() });
-      queryClient.invalidateQueries({ queryKey: dashboardKeys.technicianAssignments() });
+      queryClient.invalidateQueries({
+        queryKey: dashboardKeys.technicianAssignments(),
+      });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
       queryClient.invalidateQueries({
         queryKey: complaintKeys.detail(variables.id),
