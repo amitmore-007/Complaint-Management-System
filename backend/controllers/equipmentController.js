@@ -434,7 +434,7 @@ export const deleteAssetRecord = async (req, res) => {
   }
 };
 
-// Export all asset records to Excel (Admin only)
+// export all asset records to excel
 export const exportAssetRecordsExcel = async (req, res) => {
   try {
     const equipmentList = await Equipment.find({ isActive: true }).sort({
