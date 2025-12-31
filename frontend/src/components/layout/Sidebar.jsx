@@ -258,7 +258,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             ))}
           </ul>
         </nav>
-
       </motion.div>
     </>
   );
