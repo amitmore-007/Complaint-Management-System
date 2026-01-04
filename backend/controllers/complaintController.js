@@ -6,10 +6,9 @@ import {
   uploadToCloudinary,
   deleteFromCloudinary,
 } from "../config/cloudinary.js";
-import {
-  sendStatusUpdateNotification,
-} from "../config/msg91.js";
+import { sendStatusUpdateNotification } from "../config/msg91.js";
 import { generateNextComplaintId } from "../utils/complaintId.js";
+import { autoAssignComplaintToDefaultTechnician } from "../utils/autoAssign.js";
 
 const normalizeIndianPhone10Digits = (phoneNumber) => {
   if (!phoneNumber) return "";
@@ -101,9 +100,13 @@ export const createComplaint = async (req, res) => {
 
     await complaint.save();
 
+    // Auto-assign every new complaint to the default technician (Soham)
+    await autoAssignComplaintToDefaultTechnician({ complaint });
+
     // Populate client info for response
     await complaint.populate("client", "name phoneNumber");
     await complaint.populate("store", "name managers");
+    await complaint.populate("assignedTechnician", "name phoneNumber");
 
     res.status(201).json({
       success: true,
@@ -528,13 +531,21 @@ export const updateComplaintStatus = async (req, res) => {
 
     if (recipientPhone) {
       try {
-        const notificationResult = await sendStatusUpdateNotification(
-          recipientPhone,
-          complaint.complaintId,
-          status,
-          recipientName,
-          complaint.assignedTechnician.name
-        );
+        const templateLocation = complaint.location || "";
+        const templateIssueTitle = complaint.title || "";
+
+        // Disabled per request: do not notify client when work starts (in-progress)
+        const notificationResult =
+          status === "in-progress"
+            ? { success: true, skipped: true }
+            : await sendStatusUpdateNotification(
+                recipientPhone,
+                complaint.complaintId,
+                status,
+                recipientName,
+                templateLocation,
+                templateIssueTitle
+              );
 
         // Also notify a fixed extra recipient when complaint is resolved
         if (status === "resolved") {
@@ -546,12 +557,15 @@ export const updateComplaintStatus = async (req, res) => {
 
           if (extraRecipientPhone10) {
             try {
+              const extraTemplateName = extraRecipientName || recipientName;
+
               const extraResult = await sendStatusUpdateNotification(
                 extraRecipientPhone10,
                 complaint.complaintId,
                 status,
-                recipientName,
-                complaint.assignedTechnician.name
+                extraTemplateName,
+                templateLocation,
+                templateIssueTitle
               );
 
               const extraNotification = new Notification({

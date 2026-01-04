@@ -16,6 +16,7 @@ import {
   deleteFromCloudinary,
 } from "../config/cloudinary.js";
 import { generateNextComplaintId } from "../utils/complaintId.js";
+import { autoAssignComplaintToDefaultTechnician } from "../utils/autoAssign.js";
 
 // ============================================
 // HELPER FUNCTIONS
@@ -303,9 +304,17 @@ export const createAdminComplaint = async (req, res) => {
 
     await complaint.save();
 
+    // Auto-assign every new complaint to the default technician (Soham)
+    await autoAssignComplaintToDefaultTechnician({
+      complaint,
+      assignedBy: adminId,
+    });
+
     // Populate admin + store info for response
     await complaint.populate("createdByAdmin", "name phoneNumber");
     await complaint.populate("store", "name managers");
+    await complaint.populate("assignedTechnician", "name phoneNumber");
+    await complaint.populate("assignedBy", "name");
 
     res.status(201).json({
       success: true,
@@ -427,9 +436,15 @@ export const assignComplaint = async (req, res) => {
     // Send WhatsApp notification to technician
     if (technician && technician.phoneNumber) {
       try {
+        const templateLocation = complaint.location || "";
+        const templateIssueTitle = complaint.title || "";
+
         const notificationResult = await sendAssignmentNotification(
           technician.phoneNumber,
-          complaint.complaintId
+          technician.name,
+          complaint.complaintId,
+          templateLocation,
+          templateIssueTitle
         );
 
         // Save notification record
@@ -543,7 +558,10 @@ export const autoAssignPendingComplaints = async () => {
       if (selectedTech.phoneNumber) {
         await sendAssignmentNotification(
           selectedTech.phoneNumber,
-          complaint.complaintId
+          selectedTech.name,
+          complaint.complaintId,
+          complaint.location || "",
+          complaint.title || ""
         );
       }
     }
