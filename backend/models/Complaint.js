@@ -20,7 +20,6 @@ const complaintSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    // Store reference (optional for backward compatibility)
     store: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Store",

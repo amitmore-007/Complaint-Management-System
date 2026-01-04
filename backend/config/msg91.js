@@ -98,7 +98,8 @@ export const sendStatusUpdate = async (
   clientName,
   complaintId,
   status,
-  technicianName
+  location,
+  issueTitle
 ) => {
   try {
     // Ensure phone number is in correct format
@@ -113,11 +114,19 @@ export const sendStatusUpdate = async (
 
     switch (status) {
       case "assigned":
-        templateName = "status_updates";
+        templateName = "complaint_assigned_update";
         components = {
           body_1: {
             type: "text",
-            value: complaintId,
+            value: clientName,
+          },
+          body_2: {
+            type: "text",
+            value: location || "",
+          },
+          body_3: {
+            type: "text",
+            value: issueTitle || "",
           },
         };
         break;
@@ -133,6 +142,14 @@ export const sendStatusUpdate = async (
             type: "text",
             value: complaintId,
           },
+          body_3: {
+            type: "text",
+            value: location || "",
+          },
+          body_4: {
+            type: "text",
+            value: issueTitle || "",
+          },
         };
         break;
 
@@ -145,7 +162,11 @@ export const sendStatusUpdate = async (
           },
           body_2: {
             type: "text",
-            value: complaintId,
+            value: location || "",
+          },
+          body_3: {
+            type: "text",
+            value: issueTitle || "",
           },
         };
         break;
@@ -209,7 +230,13 @@ export const sendStatusUpdate = async (
   }
 };
 
-export const sendAssignmentNotification = async (phoneNumber, complaintId) => {
+export const sendAssignmentNotification = async (
+  phoneNumber,
+  recipientName,
+  complaintId,
+  location,
+  issueTitle
+) => {
   try {
     if (!phoneNumber || !complaintId) {
       console.error(
@@ -225,7 +252,7 @@ export const sendAssignmentNotification = async (phoneNumber, complaintId) => {
     }
     formattedPhone = formattedPhone.replace("+", "");
 
-    // Use the status_updates template for assignment notifications
+    // Use the complaint_assigned_update template for assignment notifications
     const payload = {
       integrated_number: process.env.MSG91_INTEGRATED_NUMBER,
       content_type: "template",
@@ -233,7 +260,7 @@ export const sendAssignmentNotification = async (phoneNumber, complaintId) => {
         messaging_product: "whatsapp",
         type: "template",
         template: {
-          name: "status_updates",
+          name: "complaint_assigned_update",
           language: {
             code: "en",
             policy: "deterministic",
@@ -245,7 +272,15 @@ export const sendAssignmentNotification = async (phoneNumber, complaintId) => {
               components: {
                 body_1: {
                   type: "text",
-                  value: complaintId,
+                  value: recipientName || "",
+                },
+                body_2: {
+                  type: "text",
+                  value: location || "",
+                },
+                body_3: {
+                  type: "text",
+                  value: issueTitle || "",
                 },
               },
             },
@@ -292,14 +327,16 @@ export const sendProgressUpdate = async (
   complaintId,
   status,
   clientName,
-  technicianName
+  location,
+  issueTitle
 ) => {
   return await sendStatusUpdate(
     clientPhone,
     clientName,
     complaintId,
     status,
-    technicianName
+    location,
+    issueTitle
   );
 };
 
@@ -308,14 +345,16 @@ export const sendStatusUpdateNotification = async (
   complaintId,
   status,
   clientName,
-  technicianName
+  location,
+  issueTitle
 ) => {
   return await sendStatusUpdate(
     phoneNumber,
     clientName,
     complaintId,
     status,
-    technicianName
+    location,
+    issueTitle
   );
 };
 
