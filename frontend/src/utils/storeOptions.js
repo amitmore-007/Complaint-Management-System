@@ -3,6 +3,9 @@ export const STORE_OPTIONS = [
   "Kharadi",
   "Viman Nagar",
   "Wagholi",
+  "Warje",
+  "Bavdhan",
+  "Bibwewadi",
   "Koregaon Park",
   "MG Road",
   "Salunkhe Vihar",
@@ -18,6 +21,7 @@ export const STORE_OPTIONS = [
   "Sinhgad Road",
   "Hinjewadi",
   "Undri",
+  "Dhanori"
 ];
 
 export default STORE_OPTIONS;

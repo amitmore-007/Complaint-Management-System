@@ -18,6 +18,10 @@ export const STORE_CODE_MAP = {
   "Sinhgad Road": "SNR",
   Hinjewadi: "HNJ",
   Undri: "UND",
+  Dhanori: "DHN",
+  Warje: "WRJ",
+  Bibwewadi: "BBW",
+  Bavdhan: "BVD",
 };
 
 const fallbackStoreCode = (storeName) => {
