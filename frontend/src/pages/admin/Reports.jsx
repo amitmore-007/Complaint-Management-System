@@ -93,32 +93,34 @@ const formatPeriodLabel = (period, interval) => {
 };
 
 const Tabs = ({ tabs, active, onChange, isDarkMode }) => (
-  <div
-    className={`inline-flex rounded-2xl p-1 border ${
-      isDarkMode ? "border-gray-800 bg-gray-900" : "border-gray-200 bg-white"
-    }`}
-  >
-    {tabs.map((t) => {
-      const isActive = t.key === active;
-      return (
-        <button
-          key={t.key}
-          onClick={() => onChange(t.key)}
-          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
-            isActive
-              ? isDarkMode
-                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-                : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
-              : isDarkMode
-              ? "text-gray-300 hover:bg-gray-800"
-              : "text-gray-700 hover:bg-gray-100"
-          }`}
-        >
-          <t.icon className="h-4 w-4" />
-          {t.label}
-        </button>
-      );
-    })}
+  <div className="w-full sm:w-auto overflow-x-auto">
+    <div
+      className={`w-max sm:w-auto flex rounded-2xl p-1 border ${
+        isDarkMode ? "border-gray-800 bg-gray-900" : "border-gray-200 bg-white"
+      }`}
+    >
+      {tabs.map((t) => {
+        const isActive = t.key === active;
+        return (
+          <button
+            key={t.key}
+            onClick={() => onChange(t.key)}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${
+              isActive
+                ? isDarkMode
+                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                  : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                : isDarkMode
+                ? "text-gray-300 hover:bg-gray-800"
+                : "text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <t.icon className="h-4 w-4" />
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
   </div>
 );
 
@@ -179,6 +181,16 @@ const ChartLoader = ({ isDarkMode }) => (
 
 const Reports = () => {
   const { isDarkMode } = useTheme();
+
+  const isSmallScreen = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 480px)").matches;
+  }, []);
+
+  const chartRenderer = useMemo(
+    () => (isSmallScreen ? "svg" : "canvas"),
+    [isSmallScreen]
+  );
 
   const muiTheme = useMemo(
     () =>
@@ -359,7 +371,9 @@ const Reports = () => {
         textBorderWidth: 0,
       },
       tooltip: {
-        trigger: "item",
+        trigger: "axis",
+        axisPointer: { type: "shadow" },
+        confine: true,
         backgroundColor: isDarkMode
           ? "rgba(17,24,39,0.98)"
           : "rgba(255,255,255,0.98)",
@@ -372,14 +386,24 @@ const Reports = () => {
           fontWeight: 500,
         },
         formatter: (params) => {
-          const periodLabel = formatPeriodLabel(params.name, interval);
+          const items = Array.isArray(params) ? params : [params];
+          const axisValue = items[0]?.axisValue ?? items[0]?.name;
+          const periodLabel = formatPeriodLabel(axisValue, interval);
+
+          const rows = items
+            .map((p) => {
+              const value = typeof p?.value === "number" ? p.value : p?.value;
+              return `<div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                <span style="display: inline-block; width: 10px; height: 10px; background: ${p.color}; border-radius: 3px;"></span>
+                <span style="font-weight: 600;">${p.seriesName}:</span>
+                <span style="font-weight: 700; color: ${p.color};">${value}</span>
+              </div>`;
+            })
+            .join("");
+
           return `<div style="padding: 4px 0;">
             <div style="font-weight: 600; margin-bottom: 6px; font-size: 13px;">${periodLabel}</div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="display: inline-block; width: 10px; height: 10px; background: ${params.color}; border-radius: 50%;"></span>
-              <span style="font-weight: 600;">${params.seriesName}:</span>
-              <span style="font-weight: 700; color: ${params.color};">${params.value}</span>
-            </div>
+            ${rows}
           </div>`;
         },
       },
@@ -401,7 +425,7 @@ const Reports = () => {
       },
       xAxis: {
         type: "category",
-        boundaryGap: false,
+        boundaryGap: true,
         data: periods,
         axisLine: { lineStyle: { color: axisLineColor, width: 1.5 } },
         axisTick: { lineStyle: { color: axisLineColor, width: 1.5 } },
@@ -430,16 +454,10 @@ const Reports = () => {
       series: [
         {
           name: "Created",
-          type: "line",
-          smooth: true,
-          symbol: "circle",
-          symbolSize: 7,
-          lineStyle: { width: 3, color: "#3b82f6" },
-          itemStyle: {
-            color: "#3b82f6",
-            borderWidth: 2,
-            borderColor: "#fff",
-          },
+          type: "bar",
+          barWidth: 20,
+          barMaxWidth: 24,
+          itemStyle: { color: "#3b82f6", borderRadius: [8, 8, 4, 4] },
           label: {
             show: true,
             position: "top",
@@ -450,32 +468,23 @@ const Reports = () => {
             distance: 8,
           },
           emphasis: {
-            scale: true,
             focus: "series",
             itemStyle: {
-              borderWidth: 3,
               shadowBlur: 10,
               shadowColor: "rgba(59, 130, 246, 0.5)",
             },
           },
-          areaStyle: { opacity: 0.08, color: "#3b82f6" },
           data: created,
         },
         {
           name: "Resolved",
-          type: "line",
-          smooth: true,
-          symbol: "circle",
-          symbolSize: 7,
-          lineStyle: { width: 3, color: "#10b981" },
-          itemStyle: {
-            color: "#10b981",
-            borderWidth: 2,
-            borderColor: "#fff",
-          },
+          type: "bar",
+          barWidth: 20,
+          barMaxWidth: 24,
+          itemStyle: { color: "#10b981", borderRadius: [8, 8, 4, 4] },
           label: {
             show: true,
-            position: "bottom",
+            position: "top",
             color: "#10b981",
             fontSize: 11,
             fontWeight: 600,
@@ -483,16 +492,48 @@ const Reports = () => {
             distance: 8,
           },
           emphasis: {
-            scale: true,
             focus: "series",
             itemStyle: {
-              borderWidth: 3,
               shadowBlur: 10,
               shadowColor: "rgba(16, 185, 129, 0.5)",
             },
           },
-          areaStyle: { opacity: 0.08, color: "#10b981" },
           data: resolved,
+        },
+      ],
+      media: [
+        {
+          query: { maxWidth: 480 },
+          option: {
+            grid: {
+              left: 16,
+              right: 16,
+              top: 55,
+              bottom: interval === "day" ? 90 : 60,
+            },
+            legend: {
+              top: 4,
+              textStyle: {
+                fontSize: 11,
+              },
+            },
+            xAxis: {
+              axisLabel: {
+                rotate: interval === "day" ? 60 : 0,
+                fontSize: 10,
+                margin: 16,
+              },
+            },
+            yAxis: {
+              axisLabel: {
+                fontSize: 10,
+              },
+            },
+            series: [
+              { barWidth: 14, label: { fontSize: 9, distance: 6 } },
+              { barWidth: 14, label: { fontSize: 9, distance: 6 } },
+            ],
+          },
         },
       ],
     };
@@ -519,6 +560,7 @@ const Reports = () => {
       },
       tooltip: {
         trigger: "item",
+        confine: true,
         backgroundColor: isDarkMode
           ? "rgba(17,24,39,0.98)"
           : "rgba(255,255,255,0.98)",
@@ -578,13 +620,19 @@ const Reports = () => {
           fontSize: 12,
           fontWeight: 500,
           fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+          formatter: (value) => {
+            if (!isSmallScreen) return value;
+            const s = String(value ?? "");
+            return s.length > 14 ? `${s.slice(0, 14)}…` : s;
+          },
         },
       },
       series: [
         {
           name: "Assigned",
           type: "bar",
-          barWidth: 16,
+          barWidth: 20,
+          barMaxWidth: 24,
           itemStyle: {
             color: "#6366f1",
             borderRadius: [8, 8, 8, 8],
@@ -610,7 +658,8 @@ const Reports = () => {
         {
           name: "Resolved",
           type: "bar",
-          barWidth: 16,
+          barWidth: 20,
+          barMaxWidth: 24,
           itemStyle: {
             color: "#10b981",
             borderRadius: [8, 8, 8, 8],
@@ -634,8 +683,44 @@ const Reports = () => {
           data: resolved,
         },
       ],
+      media: [
+        {
+          query: { maxWidth: 480 },
+          option: {
+            grid: {
+              left: 16,
+              right: 16,
+              top: 55,
+              bottom: 28,
+            },
+            legend: {
+              top: 4,
+              textStyle: {
+                fontSize: 11,
+              },
+            },
+            yAxis: {
+              axisLabel: {
+                fontSize: 11,
+                width: 100,
+                overflow: "truncate",
+                ellipsis: "…",
+              },
+            },
+            xAxis: {
+              axisLabel: {
+                fontSize: 10,
+              },
+            },
+            series: [
+              { barWidth: 14, label: { fontSize: 9, distance: 4 } },
+              { barWidth: 14, label: { fontSize: 9, distance: 4 } },
+            ],
+          },
+        },
+      ],
     };
-  }, [techRows, isDarkMode]);
+  }, [techRows, isDarkMode, isSmallScreen]);
 
   const tabs = useMemo(
     () => [
@@ -647,7 +732,7 @@ const Reports = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1
@@ -672,7 +757,7 @@ const Reports = () => {
 
         {activeTab === "complaints" && (
           <Card isDarkMode={isDarkMode}>
-            <div className="p-6 space-y-5">
+            <div className="p-4 sm:p-6 space-y-5">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
                   <h2
@@ -712,7 +797,7 @@ const Reports = () => {
               <ThemeProvider theme={muiTheme}>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <div
-                    className={`grid grid-cols-1 md:grid-cols-3 gap-4 rounded-2xl p-4 border ${
+                    className={`grid grid-cols-1 md:grid-cols-3 gap-4 rounded-2xl p-3 sm:p-4 border ${
                       isDarkMode
                         ? "border-gray-800 bg-black/30"
                         : "border-gray-200 bg-gray-50"
@@ -886,13 +971,26 @@ const Reports = () => {
                       : "opacity-100 transition-opacity duration-300"
                   }
                 >
-                  <ReactECharts
-                    option={complaintsChartOption}
-                    style={{ height: 420, width: "100%" }}
-                    opts={{ renderer: "canvas" }}
-                    notMerge={true}
-                    lazyUpdate={true}
-                  />
+                  <div className="h-[340px] sm:h-[420px] w-full">
+                    <ReactECharts
+                      option={complaintsChartOption}
+                      style={{ height: "100%", width: "100%" }}
+                      opts={{
+                        renderer: chartRenderer,
+                        devicePixelRatio:
+                          chartRenderer === "canvas"
+                            ? Math.min(
+                                typeof window !== "undefined"
+                                  ? window.devicePixelRatio || 1
+                                  : 1,
+                                2
+                              )
+                            : undefined,
+                      }}
+                      notMerge={true}
+                      lazyUpdate={true}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -901,7 +999,7 @@ const Reports = () => {
 
         {activeTab === "technicians" && (
           <Card isDarkMode={isDarkMode}>
-            <div className="p-6 space-y-5">
+            <div className="p-4 sm:p-6 space-y-5">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
                   <h2
@@ -939,7 +1037,7 @@ const Reports = () => {
               <ThemeProvider theme={muiTheme}>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <div
-                    className={`grid grid-cols-1 md:grid-cols-3 gap-4 rounded-2xl p-4 border ${
+                    className={`grid grid-cols-1 md:grid-cols-3 gap-4 rounded-2xl p-3 sm:p-4 border ${
                       isDarkMode
                         ? "border-gray-800 bg-black/30"
                         : "border-gray-200 bg-gray-50"
@@ -1123,14 +1221,91 @@ const Reports = () => {
                       : "opacity-100 transition-opacity duration-300"
                   }
                 >
-                  <ReactECharts
-                    option={techChartOption}
-                    style={{ height: 520, width: "100%" }}
-                    opts={{ renderer: "canvas" }}
-                    notMerge={true}
-                    lazyUpdate={true}
-                  />
+                  <div className="h-[380px] sm:h-[520px] w-full">
+                    <ReactECharts
+                      option={techChartOption}
+                      style={{ height: "100%", width: "100%" }}
+                      opts={{
+                        renderer: chartRenderer,
+                        devicePixelRatio:
+                          chartRenderer === "canvas"
+                            ? Math.min(
+                                typeof window !== "undefined"
+                                  ? window.devicePixelRatio || 1
+                                  : 1,
+                                2
+                              )
+                            : undefined,
+                      }}
+                      notMerge={true}
+                      lazyUpdate={true}
+                    />
+                  </div>
                 </div>
+              </div>
+
+              <div
+                className={`rounded-2xl border ${
+                  isDarkMode ? "border-gray-800" : "border-gray-200"
+                } overflow-x-auto`}
+              >
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr
+                      className={
+                        isDarkMode
+                          ? "bg-black/30 text-gray-200"
+                          : "bg-gray-50 text-gray-800"
+                      }
+                    >
+                      <th className="text-left font-semibold px-4 py-3">
+                        Technician
+                      </th>
+                      <th className="text-right font-semibold px-4 py-3">
+                        Assigned
+                      </th>
+                      <th className="text-right font-semibold px-4 py-3">
+                        Resolved
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.isArray(techRows) && techRows.length > 0 ? (
+                      techRows.map((r, idx) => (
+                        <tr
+                          key={`${r.technicianId || r.technicianName}-${idx}`}
+                          className={
+                            isDarkMode
+                              ? "border-t border-gray-800 text-gray-200"
+                              : "border-t border-gray-200 text-gray-800"
+                          }
+                        >
+                          <td className="px-4 py-3 whitespace-nowrap max-w-[220px] truncate">
+                            {r.technicianName || "Unknown"}
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums">
+                            {r.assigned ?? 0}
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums">
+                            {r.resolved ?? 0}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr
+                        className={
+                          isDarkMode
+                            ? "border-t border-gray-800 text-gray-400"
+                            : "border-t border-gray-200 text-gray-500"
+                        }
+                      >
+                        <td className="px-4 py-4" colSpan={3}>
+                          No technician data for the selected range.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </Card>
