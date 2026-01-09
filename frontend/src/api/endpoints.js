@@ -88,6 +88,10 @@ export const endpoints = {
 
   stats: {
     complaintsCreatedVsResolved: "/stats/complaints/created-vs-resolved",
+    complaintsStatusFunnel: "/stats/complaints/status-funnel",
+    complaintsStoreLeaderboard: "/stats/complaints/store-leaderboard",
+    complaintsTimeToResolve: "/stats/complaints/time-to-resolve",
+    complaintsAging: "/stats/complaints/aging",
     techniciansAssignedVsResolved: "/stats/technicians/assigned-vs-resolved",
   },
 };

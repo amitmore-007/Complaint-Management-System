@@ -49,6 +49,62 @@ export const fetchTechniciansAssignedVsResolvedStats = async ({
   return res.data;
 };
 
+export const fetchComplaintsStatusFunnelStats = async ({
+  from,
+  to,
+  tz,
+} = {}) => {
+  const params = {};
+  if (from) params.from = from;
+  if (to) params.to = to;
+  if (tz) params.tz = tz;
+
+  const res = await api.get("/stats/complaints/status-funnel", { params });
+  return res.data;
+};
+
+export const fetchComplaintsStoreLeaderboardStats = async ({
+  from,
+  to,
+  tz,
+  limit,
+} = {}) => {
+  const params = {};
+  if (from) params.from = from;
+  if (to) params.to = to;
+  if (tz) params.tz = tz;
+  if (limit != null) params.limit = limit;
+
+  const res = await api.get("/stats/complaints/store-leaderboard", { params });
+  return res.data;
+};
+
+export const fetchComplaintsTimeToResolveStats = async ({
+  interval = "month",
+  from,
+  to,
+  tz,
+} = {}) => {
+  const params = {};
+  if (interval) params.interval = interval;
+  if (from) params.from = from;
+  if (to) params.to = to;
+  if (tz) params.tz = tz;
+
+  const res = await api.get("/stats/complaints/time-to-resolve", { params });
+  return res.data;
+};
+
+export const fetchComplaintsAgingStats = async ({ from, to, tz } = {}) => {
+  const params = {};
+  if (from) params.from = from;
+  if (to) params.to = to;
+  if (tz) params.tz = tz;
+
+  const res = await api.get("/stats/complaints/aging", { params });
+  return res.data;
+};
+
 // Request interceptor
 api.interceptors.request.use(
   (config) => {

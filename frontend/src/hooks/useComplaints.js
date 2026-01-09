@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { complaintService } from "../services/complaintService";
 import { adminKeys } from "./useAdmin";
+import { statsKeys } from "./useStats";
 
 export const dashboardKeys = {
   technicianAssignments: () => ["dashboard", "technician", "assignments"],
@@ -125,6 +126,7 @@ export const useCreateComplaint = () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
       queryClient.invalidateQueries({ queryKey: complaintKeys.client() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
     },
   });
 };
@@ -140,6 +142,7 @@ export const useCreateAdminComplaint = () => {
       // (dashboard + my complaints) refresh when the user returns.
       queryClient.invalidateQueries({ queryKey: complaintKeys.client() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
     },
   });
 };
@@ -154,6 +157,7 @@ export const useCreateClientComplaint = () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
       // Admin complaints list should reflect new client complaints.
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
     },
   });
 };
@@ -170,6 +174,7 @@ export const useCreateTechnicianComplaint = () => {
       });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
     },
   });
 };
@@ -189,6 +194,7 @@ export const useAssignComplaint = () => {
         queryKey: dashboardKeys.technicianAssignments(),
       });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
     },
   });
 };
@@ -212,6 +218,7 @@ export const useUpdateComplaintStatus = () => {
       queryClient.invalidateQueries({
         queryKey: complaintKeys.detail(variables.id),
       });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
     },
   });
 };
