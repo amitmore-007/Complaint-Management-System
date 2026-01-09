@@ -16,7 +16,6 @@ import {
 
 const router = express.Router();
 
-// Configure multer for file uploads - using memory storage for direct Cloudinary upload
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
