@@ -13,6 +13,10 @@ import {
   updateComplaintStatus,
   getResolvedComplaints,
 } from "../controllers/complaintController.js";
+import {
+  technicianCreateBillingRecord,
+  technicianListBillingRecords,
+} from "../controllers/billingController.js";
 
 const router = express.Router();
 
@@ -54,6 +58,14 @@ router.patch(
   authenticateTechnician,
   upload.array("resolutionPhotos", 5),
   updateComplaintStatus
+);
+
+router.get("/billing", authenticateTechnician, technicianListBillingRecords);
+router.post(
+  "/billing",
+  authenticateTechnician,
+  upload.any(),
+  technicianCreateBillingRecord
 );
 
 export default router;

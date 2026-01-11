@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   ClipboardList,
   Calendar,
@@ -27,6 +28,7 @@ import {
 const TechnicianAssignments = () => {
   const { isDarkMode } = useTheme();
   const { user } = useAuthStore();
+  const navigate = useNavigate();
 
   const assignmentsQuery = useAssignedComplaints();
   const updateStatusMutation = useUpdateComplaintStatus();
@@ -114,6 +116,12 @@ const TechnicianAssignments = () => {
           newStatus === "in-progress" ? "started" : "completed"
         } successfully!`
       );
+
+      if (newStatus === "resolved") {
+        navigate(
+          `/technician/billing?complaintId=${encodeURIComponent(complaintId)}`
+        );
+      }
     } catch (error) {
       console.error("❌ Update status error:", error);
       toast.error(error.response?.data?.message || "Failed to update status");

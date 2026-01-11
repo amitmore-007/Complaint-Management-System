@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   ClipboardList,
   Clock,
@@ -11,6 +12,7 @@ import {
   User,
   Play,
   CheckSquare,
+  FileText,
   Download,
   X,
   ChevronLeft,
@@ -26,13 +28,47 @@ import {
   useTechnicianDashboardAssignments,
   useUpdateComplaintStatus,
 } from "../../hooks/useComplaints";
+import { useResolvedComplaints } from "../../hooks/useComplaints";
+import { useTechnicianBillingRecords } from "../../hooks/useBilling";
 
 const TechnicianDashboard = () => {
   const { isDarkMode } = useTheme();
   const { user } = useAuthStore();
+  const navigate = useNavigate();
 
   const assignmentsQuery = useTechnicianDashboardAssignments();
   const updateStatusMutation = useUpdateComplaintStatus();
+  const billingQuery = useTechnicianBillingRecords({ page: 1, limit: 200 });
+  const resolvedQuery = useResolvedComplaints();
+
+  const billedComplaintIds = useMemo(() => {
+    const records = billingQuery.data?.records ?? [];
+    const ids = records
+      .map((r) => r?.complaint?._id ?? r?.complaint)
+      .filter(Boolean)
+      .map(String);
+    return new Set(ids);
+  }, [billingQuery.data]);
+
+  const isBillingPending = (complaint) => {
+    if (complaint?.status !== "resolved") return false;
+    if (!complaint?._id) return false;
+    return !billedComplaintIds.has(String(complaint._id));
+  };
+
+  const resolvedComplaints = useMemo(() => {
+    return Array.isArray(resolvedQuery.data) ? resolvedQuery.data : [];
+  }, [resolvedQuery.data]);
+
+  const pendingBillingComplaints = useMemo(() => {
+    if (billingQuery.isLoading || resolvedQuery.isLoading) return [];
+    return resolvedComplaints.filter(isBillingPending);
+  }, [
+    billingQuery.isLoading,
+    resolvedQuery.isLoading,
+    resolvedComplaints,
+    billedComplaintIds,
+  ]);
 
   const assignments = useMemo(() => {
     const payload = assignmentsQuery.data;
@@ -118,6 +154,13 @@ const TechnicianDashboard = () => {
       );
 
       await assignmentsQuery.refetch();
+
+      // After completing a complaint, take technician directly to billing
+      if (newStatus === "resolved") {
+        navigate(
+          `/technician/billing?complaintId=${encodeURIComponent(complaintId)}`
+        );
+      }
     } catch (error) {
       console.error("❌ Update status error:", error);
       const errorMessage =
@@ -906,6 +949,138 @@ const TechnicianDashboard = () => {
                   </div>
                 </motion.div>
               ))}
+            </div>
+          )}
+        </motion.div>
+
+        {/* Billing Pending Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className={`border rounded-2xl p-4 sm:p-6 shadow-2xl ${
+            isDarkMode
+              ? "bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700"
+              : "bg-white border-gray-200"
+          }`}
+        >
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <h2
+              className={`text-xl sm:text-2xl font-bold ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
+              Billing Pending
+            </h2>
+            <button
+              onClick={() => navigate("/technician/resolved-assignments")}
+              className={`text-sm font-semibold underline-offset-4 hover:underline ${
+                isDarkMode ? "text-blue-300" : "text-blue-600"
+              }`}
+            >
+              View all resolved
+            </button>
+          </div>
+
+          {billingQuery.isLoading || resolvedQuery.isLoading ? (
+            <div className="flex items-center justify-center h-24">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600" />
+            </div>
+          ) : pendingBillingComplaints.length === 0 ? (
+            <div
+              className={`p-6 rounded-2xl border text-center ${
+                isDarkMode
+                  ? "bg-gray-900 border-gray-800 text-gray-300"
+                  : "bg-gray-50 border-gray-200 text-gray-700"
+              }`}
+            >
+              <FileText className="h-9 w-9 mx-auto mb-2 opacity-70" />
+              No pending billing submissions for resolved complaints.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p
+                className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
+              >
+                Material/billing records are missing for{" "}
+                {pendingBillingComplaints.length} resolved complaint(s).
+              </p>
+
+              <div className="space-y-3">
+                {pendingBillingComplaints.slice(0, 5).map((c) => (
+                  <div
+                    key={c._id}
+                    className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border ${
+                      isDarkMode
+                        ? "bg-gray-900 border-gray-800"
+                        : "bg-white border-gray-200"
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span
+                          className={`font-bold ${
+                            isDarkMode ? "text-white" : "text-gray-900"
+                          }`}
+                        >
+                          {c.title}
+                        </span>
+                        <span
+                          className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                            isDarkMode
+                              ? "bg-yellow-900/30 text-yellow-200 border border-yellow-700/50"
+                              : "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                          }`}
+                        >
+                          BILLING PENDING
+                        </span>
+                        <span
+                          className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                            isDarkMode
+                              ? "bg-gray-800 text-gray-300"
+                              : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          {c.complaintId}
+                        </span>
+                      </div>
+                      <div
+                        className={`text-xs sm:text-sm mt-1 ${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        Location: {c.location}
+                      </div>
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() =>
+                          navigate(
+                            `/technician/billing?complaintId=${encodeURIComponent(
+                              c._id
+                            )}`
+                          )
+                        }
+                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-lg hover:from-yellow-700 hover:to-orange-700 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
+                      >
+                        <FileText className="h-4 w-4" />
+                        <span>Submit Billing</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {pendingBillingComplaints.length > 5 && (
+                <div
+                  className={`${
+                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                  } text-sm`}
+                >
+                  Showing 5 of {pendingBillingComplaints.length}. Use “View all
+                  resolved” to see everything.
+                </div>
+              )}
             </div>
           )}
         </motion.div>

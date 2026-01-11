@@ -12,6 +12,7 @@ import {
   Package,
   CheckCircle,
   BarChart3,
+  Receipt,
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import useAuthStore from "../../store/authStore";
@@ -54,6 +55,11 @@ const Sidebar = ({ isOpen, onClose }) => {
             path: "/technician/assignments",
           },
           {
+            icon: Receipt,
+            label: "Billing",
+            path: "/technician/billing",
+          },
+          {
             icon: Plus,
             label: "Create Complaint",
             path: "/technician/create-complaint",
@@ -85,6 +91,11 @@ const Sidebar = ({ isOpen, onClose }) => {
             icon: BarChart3,
             label: "Reports",
             path: "/admin/reports",
+          },
+          {
+            icon: Receipt,
+            label: "Billing",
+            path: "/admin/billing",
           },
           {
             icon: Plus,
