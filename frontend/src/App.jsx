@@ -28,6 +28,7 @@ import TechnicianManagement from "./pages/admin/TechnicianManagement";
 import AdminAssets from "./pages/admin/Assets";
 import AdminCreateComplaint from "./pages/admin/CreateComplaint";
 import AdminReports from "./pages/admin/Reports";
+import AdminBilling from "./pages/admin/Billing";
 
 // Technician Pages
 import TechnicianDashboard from "./pages/technician/Dashboard";
@@ -36,6 +37,7 @@ import TechnicianAssignments from "./pages/technician/Assignments";
 import ResolvedAssignments from "./pages/technician/ResolvedAssignments";
 import TechnicianCreateComplaint from "./pages/technician/CreateComplaint";
 import TechnicianMyComplaints from "./pages/technician/MyComplaints";
+import TechnicianBilling from "./pages/technician/Billing";
 
 import "./App.css";
 
@@ -293,6 +295,15 @@ function App() {
               }
             />
 
+            <Route
+              path="/admin/billing"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminBilling />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Technician Routes */}
             <Route
               path="/technician/dashboard"
@@ -344,6 +355,15 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["technician"]}>
                   <TechnicianAssets />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/technician/billing"
+              element={
+                <ProtectedRoute allowedRoles={["technician"]}>
+                  <TechnicianBilling />
                 </ProtectedRoute>
               }
             />

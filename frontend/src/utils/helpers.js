@@ -82,3 +82,50 @@ export const getIsSmallScreen = () => {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(max-width: 480px)").matches;
 };
+
+export const makeRowId = () =>
+  `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+export const formatMoneyINR = (
+  value,
+  { decimals = 2, fallback = "₹0" } = {}
+) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return `₹${num.toFixed(decimals)}`;
+};
+
+export const slugifyFilePart = (value, fallback = "item") => {
+  const slug = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/gi, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return slug || fallback;
+};
+
+export const downloadRemoteFile = async (url, filename) => {
+  if (!url) return;
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Failed to download");
+
+    const blob = await response.blob();
+    const objectUrl = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = objectUrl;
+    a.download = filename || "download";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(objectUrl);
+    return true;
+  } catch {
+    // Fallback: let the browser handle it
+    window.open(url, "_blank", "noopener,noreferrer");
+    return false;
+  }
+};

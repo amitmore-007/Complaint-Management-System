@@ -19,6 +19,11 @@ import {
   createAdminComplaint,
 } from "../controllers/adminController.js";
 import { authenticateAdmin } from "../middleware/roleAuth.js";
+import {
+  adminGetBillingRecord,
+  adminListBillingRecords,
+  adminUpdateBillingRecord,
+} from "../controllers/billingController.js";
 
 const router = express.Router();
 
@@ -71,5 +76,10 @@ router.patch(
   toggleUserStatus
 );
 router.delete("/users/:userId", authenticateAdmin, deleteUser);
+
+// billing
+router.get("/billing", authenticateAdmin, adminListBillingRecords);
+router.get("/billing/:id", authenticateAdmin, adminGetBillingRecord);
+router.put("/billing/:id", authenticateAdmin, adminUpdateBillingRecord);
 
 export default router;

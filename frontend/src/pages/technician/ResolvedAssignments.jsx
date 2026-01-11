@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   CheckCircle,
   Calendar,
@@ -17,15 +18,33 @@ import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import useAuthStore from "../../store/authStore";
 import { useResolvedComplaints } from "../../hooks/useComplaints";
+import { useTechnicianBillingRecords } from "../../hooks/useBilling";
 
 const ResolvedAssignments = () => {
   const { isDarkMode } = useTheme();
   const { user } = useAuthStore();
+  const navigate = useNavigate();
 
   const resolvedQuery = useResolvedComplaints();
+  const billingQuery = useTechnicianBillingRecords({ page: 1, limit: 200 });
   const resolvedComplaints = Array.isArray(resolvedQuery.data)
     ? resolvedQuery.data
     : [];
+
+  const billedComplaintIds = React.useMemo(() => {
+    const records = billingQuery.data?.records ?? [];
+    return new Set(
+      records
+        .map((r) => r?.complaint?._id ?? r?.complaint)
+        .filter(Boolean)
+        .map(String)
+    );
+  }, [billingQuery.data]);
+
+  const isBillingPending = (complaint) => {
+    if (!complaint?._id) return false;
+    return !billedComplaintIds.has(String(complaint._id));
+  };
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
@@ -92,7 +111,7 @@ const ResolvedAssignments = () => {
     }
   };
 
-  if (resolvedQuery.isLoading) {
+  if (resolvedQuery.isLoading || billingQuery.isLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
@@ -239,6 +258,17 @@ const ResolvedAssignments = () => {
                         <span className="px-3 py-1 text-xs sm:text-sm font-semibold rounded-full text-green-600 bg-green-100 dark:bg-green-900/30 whitespace-nowrap">
                           RESOLVED
                         </span>
+                        {isBillingPending(complaint) && (
+                          <span
+                            className={`px-3 py-1 text-xs sm:text-sm font-semibold rounded-full whitespace-nowrap ${
+                              isDarkMode
+                                ? "bg-yellow-900/30 text-yellow-200 border border-yellow-700/50"
+                                : "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                            }`}
+                          >
+                            BILLING PENDING
+                          </span>
+                        )}
                         <span
                           className={`text-xs sm:text-sm font-semibold capitalize whitespace-nowrap ${
                             isDarkMode ? "text-gray-400" : "text-gray-500"
@@ -430,10 +460,28 @@ const ResolvedAssignments = () => {
                     )}
                   </div>
 
-                  {/* Status Icon */}
+                  {/* Actions / Status Icon */}
                   <div className="flex justify-center lg:ml-4">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg">
-                      <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                    <div className="flex flex-col items-center gap-3">
+                      {isBillingPending(complaint) && (
+                        <button
+                          onClick={() =>
+                            navigate(
+                              `/technician/billing?complaintId=${encodeURIComponent(
+                                complaint._id
+                              )}`
+                            )
+                          }
+                          className="px-3 sm:px-4 py-2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-lg hover:from-yellow-700 hover:to-orange-700 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
+                        >
+                          <FileText className="h-4 w-4" />
+                          <span>Submit Billing</span>
+                        </button>
+                      )}
+
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg">
+                        <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                      </div>
                     </div>
                   </div>
                 </div>

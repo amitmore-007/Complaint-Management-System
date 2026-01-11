@@ -27,6 +27,10 @@ export const endpoints = {
       toggleStatus: (userId) => `/admin/users/${userId}/toggle-status`,
       byId: (userId) => `/admin/users/${userId}`,
     },
+    billing: {
+      root: "/admin/billing",
+      byId: (id) => `/admin/billing/${id}`,
+    },
   },
 
   client: {
@@ -56,6 +60,10 @@ export const endpoints = {
       resolved: "/technician/resolved-assignments",
       updateStatus: (complaintId) =>
         `/technician/assignments/${complaintId}/status`,
+    },
+    billing: {
+      root: "/technician/billing",
+      byId: (id) => `/technician/billing/${id}`,
     },
   },
 
