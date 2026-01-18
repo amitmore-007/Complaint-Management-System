@@ -90,7 +90,9 @@ const ComplaintStoreLeaderboardReportCard = () => {
     };
   }, [filters, tz]);
 
-  const limit = isSmallScreen ? 10 : 20;
+  // Fetch more than can comfortably fit, then let the chart slider pan through.
+  // (Keeps UI responsive while still supporting many stores.)
+  const limit = isSmallScreen ? 80 : 200;
   const query = useMemo(() => ({ ...rangeQuery, limit }), [rangeQuery, limit]);
 
   useEffect(() => {
@@ -130,7 +132,10 @@ const ComplaintStoreLeaderboardReportCard = () => {
     );
     const unresolved = rows.map((r) => Number(r.unresolved || 0));
 
-    const showDataZoom = names.length > (isSmallScreen ? 6 : 10);
+    // Show the slider whenever there are more than 6 stores, so admins can
+    // quickly pan/resize the visible window on crowded charts.
+    const visibleCount = isSmallScreen ? 6 : 10;
+    const showDataZoom = names.length > 6;
 
     const axisLabelColor = isDarkMode ? "#d1d5db" : "#6b7280";
     const axisLineColor = isDarkMode ? "#334155" : "#e5e7eb";
@@ -167,7 +172,7 @@ const ComplaintStoreLeaderboardReportCard = () => {
         left: 40,
         right: 30,
         top: 45,
-        bottom: showDataZoom ? 70 : 40,
+        bottom: showDataZoom ? 86 : 40,
         containLabel: true,
       },
       xAxis: {
@@ -205,19 +210,25 @@ const ComplaintStoreLeaderboardReportCard = () => {
             {
               type: "inside",
               xAxisIndex: 0,
-              start: 0,
-              end: 100,
+              // Make wheel/trackpad pan (not zoom), so users can quickly move the window.
+              zoomOnMouseWheel: false,
+              moveOnMouseWheel: true,
+              moveOnMouseMove: true,
+              startValue: names[0],
+              endValue: names[Math.min(names.length - 1, visibleCount - 1)],
             },
             {
               type: "slider",
               xAxisIndex: 0,
-              height: 18,
-              bottom: 10,
-              start: 0,
-              end: 100,
+              height: 20,
+              bottom: 12,
+              startValue: names[0],
+              endValue: names[Math.min(names.length - 1, visibleCount - 1)],
               showDetail: false,
               showDataShadow: false,
               brushSelect: false,
+              // Ensure the selected window remains usable on small datasets.
+              minValueSpan: Math.min(3, names.length),
               borderColor: isDarkMode ? "#334155" : "#e5e7eb",
               fillerColor: isDarkMode
                 ? "rgba(148,163,184,0.25)"
@@ -250,6 +261,8 @@ const ComplaintStoreLeaderboardReportCard = () => {
                 },
               },
               handleSize: 16,
+              handleIcon:
+                "path://M8.2,2.5h1.6v11H8.2V2.5z M12.2,2.5h1.6v11h-1.6V2.5z",
               handleStyle: {
                 color: isDarkMode ? "#94a3b8" : "#64748b",
                 borderColor: isDarkMode ? "#475569" : "#cbd5e1",
