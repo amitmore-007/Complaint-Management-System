@@ -488,10 +488,7 @@ export const exportAssetRecordsExcel = async (req, res) => {
 
     worksheet.columns = [...baseColumns, ...dynamicColumns];
 
-    // Build grouped headers:
-    // Row 1: base headers merged vertically, plus a single "Equipments" header spanning all equipment columns
-    // Row 2: equipment names (each spanning 2 columns)
-    // Row 3: "Status" / "Count"
+    // Build grouped headers
     const headerRow1Values = [
       "Sr No.",
       "Store Name",
