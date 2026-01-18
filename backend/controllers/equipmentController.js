@@ -235,7 +235,7 @@ export const getAssetRecords = async (req, res) => {
       isActive: true,
     }).select("name managers");
     const storeByLowerName = new Map(
-      stores.map((s) => [String(s.name).toLowerCase(), s])
+      stores.map((s) => [String(s.name).toLowerCase(), s]),
     );
 
     const recordsWithStore = records.map((r) => {
@@ -332,7 +332,7 @@ export const getAssetRecordById = async (req, res) => {
 
     const record = await AssetRecord.findById(id).populate(
       "technician",
-      "name phoneNumber"
+      "name phoneNumber",
     );
 
     if (!record) {
@@ -441,9 +441,26 @@ export const exportAssetRecordsExcel = async (req, res) => {
       name: 1,
     });
 
-    const records = await AssetRecord.find({})
+    // IMPORTANT:
+    // Technicians can submit multiple records for the same store.
+    // For Excel export we only include the latest record per store (case-insensitive).
+    const allRecordsSorted = await AssetRecord.find({})
       .populate("technician", "name phoneNumber")
-      .sort({ submissionDate: -1 });
+      .sort({ submissionDate: -1, createdAt: -1 });
+
+    const seenStoreKeys = new Set();
+    const records = [];
+    for (const record of allRecordsSorted) {
+      const storeKey = String(record.storeName || "")
+        .trim()
+        .toLowerCase();
+
+      // If storeName is missing, treat it as a single bucket.
+      const dedupeKey = storeKey || "__unknown_store__";
+      if (seenStoreKeys.has(dedupeKey)) continue;
+      seenStoreKeys.add(dedupeKey);
+      records.push(record);
+    }
 
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "Complaint Management System";
@@ -488,7 +505,7 @@ export const exportAssetRecordsExcel = async (req, res) => {
     if (equipmentList.length > 0) {
       headerRow1Values.push(
         "Equipments",
-        ...Array(dynamicColumns.length - 1).fill("")
+        ...Array(dynamicColumns.length - 1).fill(""),
       );
       for (const eq of equipmentList) {
         headerRow2Values.push(eq.name, "");
@@ -630,7 +647,7 @@ export const exportAssetRecordsExcel = async (req, res) => {
 
     res.setHeader(
       "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
     res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
 

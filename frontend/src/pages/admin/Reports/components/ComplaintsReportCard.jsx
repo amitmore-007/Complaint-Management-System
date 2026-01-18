@@ -137,7 +137,13 @@ const ComplaintsReportCard = () => {
     const splitLineColor = isDarkMode ? "#1f2937" : "#f3f4f6";
 
     const showDataZoom =
-      interval === "day" && periods.length > (isSmallScreen ? 12 : 24);
+      interval === "day" && periods.length > (isSmallScreen ? 8 : 12);
+
+    // Default visible window so the chart doesn't look crowded; admins can slide to older days
+    // or resize the window to focus on e.g. 3 days.
+    const defaultVisibleDays = isSmallScreen ? 7 : 14;
+    const endIndex = Math.max(0, periods.length - 1);
+    const startIndex = Math.max(0, periods.length - defaultVisibleDays);
 
     const xLabelRotate = interval === "day" ? 45 : 0;
     const gridBottom = showDataZoom ? 110 : interval === "day" ? 70 : 40;
@@ -210,19 +216,23 @@ const ComplaintsReportCard = () => {
             {
               type: "inside",
               xAxisIndex: 0,
-              start: 0,
-              end: 100,
+              zoomOnMouseWheel: false,
+              moveOnMouseWheel: true,
+              moveOnMouseMove: true,
+              startValue: periods[startIndex],
+              endValue: periods[endIndex],
             },
             {
               type: "slider",
               xAxisIndex: 0,
               height: 18,
               bottom: 10,
-              start: 0,
-              end: 100,
+              startValue: periods[startIndex],
+              endValue: periods[endIndex],
               showDetail: false,
               showDataShadow: false,
               brushSelect: false,
+              minValueSpan: Math.min(3, periods.length),
               borderColor: isDarkMode ? "#334155" : "#e5e7eb",
               fillerColor: isDarkMode
                 ? "rgba(148,163,184,0.25)"
@@ -255,6 +265,8 @@ const ComplaintsReportCard = () => {
                 },
               },
               handleSize: 16,
+              handleIcon:
+                "path://M8.2,2.5h1.6v11H8.2V2.5z M12.2,2.5h1.6v11h-1.6V2.5z",
               handleStyle: {
                 color: isDarkMode ? "#94a3b8" : "#64748b",
                 borderColor: isDarkMode ? "#475569" : "#cbd5e1",
