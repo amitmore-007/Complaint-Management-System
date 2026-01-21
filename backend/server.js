@@ -5,6 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import connectDB from "./config/database.js";
+import { seedStores } from "./utils/seedStores.js";
 
 // Route imports
 import clientRoutes from "./routes/clientRoutes.js";
@@ -37,7 +38,7 @@ const allowedOrigins = new Set(
   ]
     .flatMap((value) => (typeof value === "string" ? value.split(",") : []))
     .map((value) => value.trim())
-    .filter(Boolean)
+    .filter(Boolean),
 );
 
 const corsOptions = {
@@ -66,8 +67,32 @@ if (!fs.existsSync("uploads")) {
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Connect to MongoDB
-connectDB();
+const startServer = async () => {
+  // Connect to MongoDB
+  await connectDB();
+
+  // Optional one-time (or safe repeat) seeding of stores.
+  // Useful for Render Free tier where Shell access isn't available.
+  if (String(process.env.SEED_STORES_ON_START || "").toLowerCase() === "true") {
+    try {
+      const reactivate =
+        String(process.env.SEED_STORES_REACTIVATE || "").toLowerCase() ===
+        "true";
+      const result = await seedStores({ reactivate });
+      console.log(
+        `🌱 Stores seeded on start. Created: ${result.createdCount}, Reactivated: ${result.updatedCount}, Total: ${result.totalAll}, Active: ${result.totalActive}`,
+      );
+    } catch (error) {
+      console.error("❌ Store seed on start failed:", error);
+    }
+  }
+
+  // Start server
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🔗 API: http://localhost:${PORT}/api`);
+  });
+};
 
 // Health check
 app.get("/", (req, res) => {
@@ -104,10 +129,6 @@ app.use((error, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🔗 API: http://localhost:${PORT}/api`);
-});
+startServer();
 
 export default app;
