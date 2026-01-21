@@ -7,7 +7,10 @@ import { STORE_OPTIONS } from "../config/storeOptions.js";
 
 dotenv.config();
 
-const normalizedKey = (value) => String(value || "").trim().toLowerCase();
+const normalizedKey = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase();
 
 const ensureStoreExistsByName = async (storeName, { reactivate } = {}) => {
   const name = String(storeName || "").trim();
@@ -52,7 +55,9 @@ const main = async () => {
   await connectDB();
 
   const uniqueNames = Array.from(
-    new Map(STORE_OPTIONS.map((n) => [normalizedKey(n), String(n).trim()])).values(),
+    new Map(
+      STORE_OPTIONS.map((n) => [normalizedKey(n), String(n).trim()]),
+    ).values(),
   ).filter(Boolean);
 
   let createdCount = 0;
