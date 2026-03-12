@@ -7,6 +7,8 @@ const StoreDropdown = ({
   value,
   onChange,
   placeholder = "Select a store",
+  compact = false,
+  inputClassName = "",
 }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(value || "");
@@ -17,17 +19,25 @@ const StoreDropdown = ({
   const sortedOptions = useMemo(() => {
     const safeOptions = Array.isArray(options) ? options : [];
     return [...safeOptions].sort((a, b) =>
-      String(a).localeCompare(String(b), undefined, { sensitivity: "base" })
+      String(a).localeCompare(String(b), undefined, { sensitivity: "base" }),
     );
   }, [options]);
 
   const filteredOptions = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const currentValue = String(value || "")
+      .trim()
+      .toLowerCase();
+
+    // When opening the dropdown, show all options by default.
+    // Only filter after the user changes the query.
+    if (open && q === currentValue) return sortedOptions;
+
     if (!q) return sortedOptions;
     return sortedOptions.filter((name) =>
-      String(name).toLowerCase().includes(q)
+      String(name).toLowerCase().includes(q),
     );
-  }, [query, sortedOptions]);
+  }, [query, sortedOptions, open, value]);
 
   useEffect(() => {
     if (!open) {
@@ -84,7 +94,7 @@ const StoreDropdown = ({
           if (e.key === "ArrowDown") {
             e.preventDefault();
             setActiveIndex((idx) =>
-              Math.min(idx + 1, filteredOptions.length - 1)
+              Math.min(idx + 1, filteredOptions.length - 1),
             );
             return;
           }
@@ -108,11 +118,11 @@ const StoreDropdown = ({
             setActiveIndex(-1);
           }
         }}
-        className={`w-full pl-10 pr-10 py-3 border rounded-xl text-left transition-all duration-200 ${
+        className={`w-full pl-10 pr-10 border rounded-xl text-left transition-all duration-200 ${
           isDarkMode
             ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-        }`}
+        } ${compact ? "py-2" : "py-3"} ${inputClassName}`}
         role="combobox"
         aria-autocomplete="list"
         aria-expanded={open}
@@ -143,7 +153,9 @@ const StoreDropdown = ({
           }`}
           role="listbox"
         >
-          <div className="max-h-44 overflow-y-auto">
+          <div
+            className={`${compact ? "max-h-44" : "max-h-44"} overflow-y-auto`}
+          >
             {filteredOptions.length === 0 ? (
               <div
                 className={`px-4 py-3 text-sm ${
