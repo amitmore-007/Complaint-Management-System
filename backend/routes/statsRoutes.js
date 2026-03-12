@@ -2,6 +2,7 @@ import express from "express";
 import { authenticateAdmin } from "../middleware/roleAuth.js";
 import {
   getComplaintCreatedVsResolvedStats,
+  getComplaintCreatedVsResolvedDrilldownStats,
   getComplaintStatusFunnelStats,
   getComplaintStoreLeaderboardStats,
   getComplaintTimeToResolveStats,
@@ -14,25 +15,31 @@ const router = express.Router();
 router.get(
   "/complaints/created-vs-resolved",
   authenticateAdmin,
-  getComplaintCreatedVsResolvedStats
+  getComplaintCreatedVsResolvedStats,
+);
+
+router.get(
+  "/complaints/created-vs-resolved/drilldown",
+  authenticateAdmin,
+  getComplaintCreatedVsResolvedDrilldownStats,
 );
 
 router.get(
   "/complaints/status-funnel",
   authenticateAdmin,
-  getComplaintStatusFunnelStats
+  getComplaintStatusFunnelStats,
 );
 
 router.get(
   "/complaints/store-leaderboard",
   authenticateAdmin,
-  getComplaintStoreLeaderboardStats
+  getComplaintStoreLeaderboardStats,
 );
 
 router.get(
   "/complaints/time-to-resolve",
   authenticateAdmin,
-  getComplaintTimeToResolveStats
+  getComplaintTimeToResolveStats,
 );
 
 router.get("/complaints/aging", authenticateAdmin, getComplaintAgingStats);
@@ -40,7 +47,7 @@ router.get("/complaints/aging", authenticateAdmin, getComplaintAgingStats);
 router.get(
   "/technicians/assigned-vs-resolved",
   authenticateAdmin,
-  getTechnicianAssignedVsResolvedStats
+  getTechnicianAssignedVsResolvedStats,
 );
 
 export default router;

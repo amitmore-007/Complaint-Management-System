@@ -8,6 +8,7 @@ const ComplaintsChart = ({
   isDarkMode,
   chartRenderer,
   heightClassName = "h-[340px] sm:h-[420px]",
+  onEvents,
 }) => {
   return (
     <div
@@ -25,6 +26,7 @@ const ComplaintsChart = ({
           <ReactECharts
             option={option}
             style={{ height: "100%", width: "100%" }}
+            onEvents={onEvents}
             opts={{
               renderer: chartRenderer,
               devicePixelRatio:
@@ -33,7 +35,7 @@ const ComplaintsChart = ({
                       typeof window !== "undefined"
                         ? window.devicePixelRatio || 1
                         : 1,
-                      2
+                      2,
                     )
                   : undefined,
             }}

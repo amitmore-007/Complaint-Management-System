@@ -96,6 +96,8 @@ export const endpoints = {
 
   stats: {
     complaintsCreatedVsResolved: "/stats/complaints/created-vs-resolved",
+    complaintsCreatedVsResolvedDrilldown:
+      "/stats/complaints/created-vs-resolved/drilldown",
     complaintsStatusFunnel: "/stats/complaints/status-funnel",
     complaintsStoreLeaderboard: "/stats/complaints/store-leaderboard",
     complaintsTimeToResolve: "/stats/complaints/time-to-resolve",

@@ -1,6 +1,10 @@
-import { getIntervalAndRange } from "../utils/dateRange.js";
+import {
+  getIntervalAndRange,
+  getPeriodBucketRange,
+} from "../utils/dateRange.js";
 import {
   getComplaintsCreatedVsResolved,
+  getComplaintsCreatedVsResolvedDrilldown,
   getComplaintsStatusFunnel,
   getComplaintsStoreLeaderboard,
   getComplaintsTimeToResolve,
@@ -32,6 +36,36 @@ export const getComplaintCreatedVsResolvedStats = async (req, res) => {
     });
   } catch (error) {
     console.error("Created vs resolved stats error:", error);
+    res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+export const getComplaintCreatedVsResolvedDrilldownStats = async (req, res) => {
+  try {
+    const { interval, period, tz } = req.query;
+    const range = getPeriodBucketRange({ interval, period, tz });
+
+    const data = await getComplaintsCreatedVsResolvedDrilldown({
+      from: range.from,
+      to: range.to,
+    });
+
+    res.status(200).json({
+      success: true,
+      range: {
+        interval: range.interval,
+        period: range.period,
+        timezone: range.timezone,
+        from: range.fromISO,
+        to: range.toISO,
+      },
+      data,
+    });
+  } catch (error) {
+    console.error("Created vs resolved drilldown stats error:", error);
     res.status(error.status || 500).json({
       success: false,
       message: error.message || "Internal server error",

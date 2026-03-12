@@ -11,6 +11,11 @@ export const statsKeys = {
     "created-vs-resolved",
     params,
   ],
+  complaintsCreatedVsResolvedDrilldown: (params = {}) => [
+    ...statsKeys.complaintsRoot(),
+    "created-vs-resolved-drilldown",
+    params,
+  ],
   complaintsStatusFunnel: (params = {}) => [
     ...statsKeys.complaintsRoot(),
     "status-funnel",
@@ -54,6 +59,20 @@ export const useComplaintsCreatedVsResolvedStats = (params, options = {}) => {
     queryKey: statsKeys.complaintsCreatedVsResolved(params || {}),
     queryFn: () => statsService.complaints.createdVsResolved(params || {}),
     enabled: options.enabled ?? Boolean(params),
+  });
+};
+
+export const useComplaintsCreatedVsResolvedDrilldownStats = (
+  params,
+  options = {},
+) => {
+  return useQuery({
+    ...reportQueryDefaults,
+    ...options,
+    queryKey: statsKeys.complaintsCreatedVsResolvedDrilldown(params || {}),
+    queryFn: () =>
+      statsService.complaints.createdVsResolvedDrilldown(params || {}),
+    enabled: options.enabled ?? Boolean(params?.interval && params?.period),
   });
 };
 
