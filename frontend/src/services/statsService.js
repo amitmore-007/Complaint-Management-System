@@ -22,6 +22,16 @@ export const statsService = {
       return res.data;
     },
 
+    createdVsResolvedDrilldown: async (params = {}) => {
+      const res = await api.get(
+        endpoints.stats.complaintsCreatedVsResolvedDrilldown,
+        {
+          params: cleanParams(params),
+        },
+      );
+      return res.data;
+    },
+
     statusFunnel: async (params = {}) => {
       const res = await api.get(endpoints.stats.complaintsStatusFunnel, {
         params: cleanParams(params),

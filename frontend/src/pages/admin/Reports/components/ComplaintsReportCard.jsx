@@ -9,6 +9,7 @@ import Card from "./Card";
 import DateRangePicker from "./DateRangePicker";
 import ComplaintsChart from "./ComplaintsChart";
 import ComplaintsSeriesTable from "./ComplaintsSeriesTable";
+import ComplaintsDrilldownDrawer from "./ComplaintsDrilldownDrawer";
 
 import {
   addDays,
@@ -33,7 +34,7 @@ const ComplaintsReportCard = () => {
   const isSmallScreen = useMemo(() => getIsSmallScreen(), []);
   const chartRenderer = useMemo(
     () => (isSmallScreen ? "svg" : "canvas"),
-    [isSmallScreen]
+    [isSmallScreen],
   );
 
   const now = useMemo(() => new Date(), []);
@@ -45,7 +46,7 @@ const ComplaintsReportCard = () => {
   const [filters, setFilters] = useState(() => {
     const start = firstDayOfMonth(now);
     const end = new Date(
-      firstDayOfNextMonth(now).getTime() - 24 * 60 * 60 * 1000
+      firstDayOfNextMonth(now).getTime() - 24 * 60 * 60 * 1000,
     );
 
     return {
@@ -66,6 +67,7 @@ const ComplaintsReportCard = () => {
   });
 
   const [appliedQuery, setAppliedQuery] = useState(null);
+  const [drilldown, setDrilldown] = useState(null);
 
   const query = useMemo(() => {
     const interval = filters?.interval || "day";
@@ -124,6 +126,26 @@ const ComplaintsReportCard = () => {
     const interval = filters?.interval || "day";
     return interval === "day" && series.length > (isSmallScreen ? 12 : 24);
   }, [filters?.interval, series.length, isSmallScreen]);
+
+  const chartEvents = useMemo(
+    () => ({
+      click: (params) => {
+        if (params?.componentType !== "series") return;
+
+        const period = params?.name;
+        const seriesName = String(params?.seriesName || "").toLowerCase();
+
+        if (!period || !seriesName) return;
+
+        setDrilldown({
+          interval: filters?.interval || "day",
+          period,
+          defaultTab: seriesName.includes("resolved") ? "resolved" : "created",
+        });
+      },
+    }),
+    [filters?.interval],
+  );
 
   const chartOption = useMemo(() => {
     const interval = filters?.interval || "day";
@@ -310,6 +332,7 @@ const ComplaintsReportCard = () => {
         {
           name: "Created",
           type: "bar",
+          cursor: "pointer",
           barWidth: 20,
           barMaxWidth: 24,
           itemStyle: { color: "#3b82f6", borderRadius: [8, 8, 4, 4] },
@@ -334,6 +357,7 @@ const ComplaintsReportCard = () => {
         {
           name: "Resolved",
           type: "bar",
+          cursor: "pointer",
           barWidth: 20,
           barMaxWidth: 24,
           itemStyle: { color: "#10b981", borderRadius: [8, 8, 4, 4] },
@@ -450,17 +474,32 @@ const ComplaintsReportCard = () => {
           </p>
         ) : null}
 
+        <p
+          className={`${isDarkMode ? "text-gray-400" : "text-gray-600"} text-xs`}
+        >
+          Click any Created or Resolved bar to open the complaint list for that
+          period.
+        </p>
+
         <ComplaintsChart
           option={chartOption}
           loading={loading}
           isDarkMode={isDarkMode}
           chartRenderer={chartRenderer}
+          onEvents={chartEvents}
         />
 
         <ComplaintsSeriesTable
           series={series}
           interval={filters?.interval || "day"}
           isDarkMode={isDarkMode}
+        />
+
+        <ComplaintsDrilldownDrawer
+          drilldown={drilldown}
+          onClose={() => setDrilldown(null)}
+          isDarkMode={isDarkMode}
+          timezone={tz}
         />
       </div>
     </Card>

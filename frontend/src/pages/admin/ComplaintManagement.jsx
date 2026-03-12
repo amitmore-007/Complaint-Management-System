@@ -19,18 +19,21 @@ import {
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import StoreDropdown from "../../components/common/StoreDropdown";
 import {
   useComplaints,
   useComplaint,
   useAssignComplaint,
 } from "../../hooks/useComplaints";
 import { useAdminTechnicians } from "../../hooks/useAdmin";
+import STORE_OPTIONS from "../../utils/storeOptions";
 
 const ComplaintManagement = () => {
   const { isDarkMode } = useTheme();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
   const [selectedComplaintId, setSelectedComplaintId] = useState(null);
   const [selectedAssignComplaint, setSelectedAssignComplaint] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -41,7 +44,7 @@ const ComplaintManagement = () => {
   const { data: complaints = [], isLoading } = useComplaints();
   const { data: complaintDetails, isLoading: isLoadingDetails } = useComplaint(
     selectedComplaintId,
-    { enabled: showDetailsModal && !!selectedComplaintId, role: "admin" }
+    { enabled: showDetailsModal && !!selectedComplaintId, role: "admin" },
   );
   const assignComplaintMutation = useAssignComplaint();
   const isAssigning = assignComplaintMutation.isPending;
@@ -52,49 +55,71 @@ const ComplaintManagement = () => {
   });
   const technicians = techniciansData?.technicians ?? [];
 
+  const storeOptions = React.useMemo(() => {
+    const valuesByKey = new Map();
+
+    (Array.isArray(STORE_OPTIONS) ? STORE_OPTIONS : []).forEach((name) => {
+      const cleaned = String(name ?? "").trim();
+      if (!cleaned) return;
+      const key = cleaned.toLowerCase();
+      if (!valuesByKey.has(key)) valuesByKey.set(key, cleaned);
+    });
+
+    return Array.from(valuesByKey.values()).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" }),
+    );
+  }, []);
+
   const filteredComplaints = React.useMemo(() => {
     let filtered = complaints;
 
     // Filter by status
     if (statusFilter !== "all") {
       filtered = filtered.filter(
-        (complaint) => complaint.status === statusFilter
+        (complaint) => complaint.status === statusFilter,
       );
     }
 
     // Filter by priority
     if (priorityFilter !== "all") {
       filtered = filtered.filter(
-        (complaint) => complaint.priority === priorityFilter
+        (complaint) => complaint.priority === priorityFilter,
       );
+    }
+
+    // Filter by store/location
+    if (locationFilter !== "all") {
+      const selected = String(locationFilter).trim().toLowerCase();
+      filtered = filtered.filter((complaint) => {
+        const value = String(
+          complaint?.store?.name ?? complaint?.location ?? "",
+        )
+          .trim()
+          .toLowerCase();
+        return value === selected;
+      });
     }
 
     // Filter by search term
     if (searchTerm) {
+      const q = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (complaint) =>
-          complaint.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          complaint.description
+          complaint.title.toLowerCase().includes(q) ||
+          complaint.description.toLowerCase().includes(q) ||
+          String(complaint.store?.name ?? "")
             .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          complaint.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          complaint.complaintId
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          complaint.client?.name
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          complaint.createdByTechnician?.name
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          complaint.createdByAdmin?.name
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase())
+            .includes(q) ||
+          complaint.location.toLowerCase().includes(q) ||
+          complaint.complaintId.toLowerCase().includes(q) ||
+          complaint.client?.name.toLowerCase().includes(q) ||
+          complaint.createdByTechnician?.name.toLowerCase().includes(q) ||
+          complaint.createdByAdmin?.name.toLowerCase().includes(q),
       );
     }
 
     return filtered;
-  }, [complaints, statusFilter, priorityFilter, searchTerm]);
+  }, [complaints, statusFilter, priorityFilter, locationFilter, searchTerm]);
 
   const handleAssignComplaint = async () => {
     if (!selectedTechnician) {
@@ -116,7 +141,7 @@ const ComplaintManagement = () => {
     } catch (error) {
       console.error("Failed to assign complaint:", error);
       toast.error(
-        error.response?.data?.message || "Failed to assign complaint"
+        error.response?.data?.message || "Failed to assign complaint",
       );
     }
   };
@@ -211,7 +236,7 @@ const ComplaintManagement = () => {
               : "bg-white border-gray-200"
           }`}
         >
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {/* Search */}
             <div className="md:col-span-2">
               <div className="relative">
@@ -270,6 +295,21 @@ const ComplaintManagement = () => {
                 <option value="urgent">Urgent</option>
               </select>
             </div>
+
+            {/* Location / Store Filter */}
+            <div>
+              <StoreDropdown
+                isDarkMode={isDarkMode}
+                options={["All Stores", ...storeOptions]}
+                value={locationFilter === "all" ? "All Stores" : locationFilter}
+                onChange={(picked) =>
+                  setLocationFilter(picked === "All Stores" ? "all" : picked)
+                }
+                placeholder="All Stores"
+                compact
+                inputClassName="h-[42px] sm:h-[48px] py-0 text-sm sm:text-base"
+              />
+            </div>
           </div>
         </div>
 
@@ -286,11 +326,13 @@ const ComplaintManagement = () => {
                   isDarkMode ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                {searchTerm ||
-                statusFilter !== "all" ||
-                priorityFilter !== "all"
-                  ? "No complaints match your filters"
-                  : "No complaints yet"}
+                {locationFilter !== "all"
+                  ? `No complaints for ${locationFilter}`
+                  : searchTerm ||
+                      statusFilter !== "all" ||
+                      priorityFilter !== "all"
+                    ? "No complaints match your filters"
+                    : "No complaints yet"}
               </p>
             </div>
           ) : (
@@ -318,14 +360,14 @@ const ComplaintManagement = () => {
                       <div className="flex flex-wrap gap-2">
                         <span
                           className={`px-3 py-1 text-xs sm:text-sm font-medium rounded-full whitespace-nowrap ${getStatusColor(
-                            complaint.status
+                            complaint.status,
                           )}`}
                         >
                           {complaint.status.replace("-", " ").toUpperCase()}
                         </span>
                         <span
                           className={`text-xs sm:text-sm font-medium capitalize whitespace-nowrap ${getPriorityColor(
-                            complaint.priority
+                            complaint.priority,
                           )}`}
                         >
                           {complaint.priority} Priority
@@ -653,7 +695,7 @@ const ComplaintManagement = () => {
                         </h4>
                         <span
                           className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(
-                            complaintDetails.status
+                            complaintDetails.status,
                           )}`}
                         >
                           {complaintDetails.status
@@ -662,7 +704,7 @@ const ComplaintManagement = () => {
                         </span>
                         <span
                           className={`text-sm font-medium capitalize ${getPriorityColor(
-                            complaintDetails.priority
+                            complaintDetails.priority,
                           )}`}
                         >
                           {complaintDetails.priority} Priority
@@ -752,7 +794,7 @@ const ComplaintManagement = () => {
                             <Calendar className="h-4 w-4" />
                             <span>
                               {new Date(
-                                complaintDetails.createdAt
+                                complaintDetails.createdAt,
                               ).toLocaleString()}
                             </span>
                           </div>
@@ -803,7 +845,7 @@ const ComplaintManagement = () => {
                             >
                               <strong>Assigned:</strong>{" "}
                               {new Date(
-                                complaintDetails.assignedAt
+                                complaintDetails.assignedAt,
                               ).toLocaleString()}
                             </p>
                           )}
@@ -840,7 +882,7 @@ const ComplaintManagement = () => {
                             >
                               {complaintDetails.createdAt
                                 ? new Date(
-                                    complaintDetails.createdAt
+                                    complaintDetails.createdAt,
                                   ).toLocaleString()
                                 : "N/A"}
                             </p>
@@ -866,7 +908,7 @@ const ComplaintManagement = () => {
                                 }`}
                               >
                                 {new Date(
-                                  complaintDetails.assignedAt
+                                  complaintDetails.assignedAt,
                                 ).toLocaleString()}
                               </p>
                             </div>
@@ -892,7 +934,7 @@ const ComplaintManagement = () => {
                                 }`}
                               >
                                 {new Date(
-                                  complaintDetails.startedAt
+                                  complaintDetails.startedAt,
                                 ).toLocaleString()}
                               </p>
                             </div>
@@ -920,7 +962,7 @@ const ComplaintManagement = () => {
                               >
                                 {new Date(
                                   complaintDetails.completedAt ||
-                                    complaintDetails.resolvedAt
+                                    complaintDetails.resolvedAt,
                                 ).toLocaleString()}
                               </p>
                             </div>
@@ -1030,7 +1072,7 @@ const ComplaintManagement = () => {
                               >
                                 <strong>Completed on:</strong>{" "}
                                 {new Date(
-                                  complaintDetails.resolvedAt
+                                  complaintDetails.resolvedAt,
                                 ).toLocaleString()}
                               </p>
                             </div>
@@ -1058,7 +1100,7 @@ const ComplaintManagement = () => {
                                         alt={`Resolution photo ${index + 1}`}
                                         className="w-full h-24 object-cover rounded-lg border-2 border-green-300 dark:border-green-600"
                                       />
-                                    )
+                                    ),
                                   )}
                                 </div>
                               </div>

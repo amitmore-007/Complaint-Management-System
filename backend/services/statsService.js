@@ -38,7 +38,7 @@ const mergeTimeSeries = ({ createdRows, resolvedRows }) => {
   }
 
   return Array.from(map.values()).sort((a, b) =>
-    a.period.localeCompare(b.period)
+    a.period.localeCompare(b.period),
   );
 };
 
@@ -102,6 +102,42 @@ export const getComplaintsCreatedVsResolved = async ({
   const resolvedRows = result?.resolved || [];
 
   return mergeTimeSeries({ createdRows, resolvedRows });
+};
+
+export const getComplaintsCreatedVsResolvedDrilldown = async ({ from, to }) => {
+  const complaintFields =
+    "complaintId title description location priority status createdAt completedAt resolvedAt assignedAt startedAt";
+  const populateOptions = [
+    { path: "client", select: "name phoneNumber" },
+    { path: "createdByTechnician", select: "name phoneNumber" },
+    { path: "createdByAdmin", select: "name phoneNumber" },
+    { path: "assignedTechnician", select: "name phoneNumber" },
+    { path: "assignedBy", select: "name" },
+    { path: "store", select: "name managers" },
+  ];
+
+  const [created, resolved] = await Promise.all([
+    Complaint.find({
+      createdAt: { $gte: from, $lt: to },
+    })
+      .select(complaintFields)
+      .populate(populateOptions)
+      .sort({ createdAt: -1, complaintId: -1 })
+      .lean(),
+    Complaint.find({
+      status: "resolved",
+      completedAt: { $ne: null, $gte: from, $lt: to },
+    })
+      .select(complaintFields)
+      .populate(populateOptions)
+      .sort({ completedAt: -1, complaintId: -1 })
+      .lean(),
+  ]);
+
+  return {
+    created,
+    resolved,
+  };
 };
 
 export const getComplaintsStatusFunnel = async ({ from, to }) => {
@@ -404,7 +440,7 @@ export const getTechniciansAssignedVsResolved = async ({ from, to }) => {
 
   const ids = Array.from(map.values()).map((x) => x.technicianId);
   const technicians = await Technician.find({ _id: { $in: ids } }).select(
-    "name phoneNumber"
+    "name phoneNumber",
   );
   const techMap = new Map(technicians.map((t) => [String(t._id), t]));
 

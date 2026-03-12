@@ -59,7 +59,7 @@ export const getStatsRange = ({ from, to, tz }) => {
 
   if (!fromDt?.isValid || !toDt?.isValid) {
     const err = new Error(
-      "Invalid from/to date. Use YYYY-MM-DD or ISO date-time."
+      "Invalid from/to date. Use YYYY-MM-DD or ISO date-time.",
     );
     err.status = 400;
     throw err;
@@ -86,5 +86,72 @@ export const getIntervalAndRange = ({ interval, from, to, tz }) => {
   return {
     interval: parsedInterval,
     ...range,
+  };
+};
+
+export const getPeriodBucketRange = ({ interval, period, tz }) => {
+  const parsedInterval = parseInterval(interval);
+  const timezone = (tz || DEFAULT_TIMEZONE).toString();
+
+  if (!period || typeof period !== "string") {
+    const err = new Error("A period is required for drill-down.");
+    err.status = 400;
+    throw err;
+  }
+
+  let fromDt;
+
+  if (parsedInterval === "day") {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(period)) {
+      const err = new Error("Invalid day period. Use YYYY-MM-DD.");
+      err.status = 400;
+      throw err;
+    }
+
+    fromDt = DateTime.fromISO(period, { zone: timezone }).startOf("day");
+  } else if (parsedInterval === "month") {
+    if (!/^\d{4}-\d{2}$/.test(period)) {
+      const err = new Error("Invalid month period. Use YYYY-MM.");
+      err.status = 400;
+      throw err;
+    }
+
+    fromDt = DateTime.fromFormat(period, "yyyy-MM", {
+      zone: timezone,
+    }).startOf("month");
+  } else {
+    if (!/^\d{4}$/.test(period)) {
+      const err = new Error("Invalid year period. Use YYYY.");
+      err.status = 400;
+      throw err;
+    }
+
+    fromDt = DateTime.fromFormat(period, "yyyy", {
+      zone: timezone,
+    }).startOf("year");
+  }
+
+  if (!fromDt?.isValid) {
+    const err = new Error("Invalid period value.");
+    err.status = 400;
+    throw err;
+  }
+
+  const toDt = fromDt.plus({
+    [parsedInterval === "day"
+      ? "days"
+      : parsedInterval === "month"
+        ? "months"
+        : "years"]: 1,
+  });
+
+  return {
+    interval: parsedInterval,
+    period,
+    timezone,
+    from: fromDt.toUTC().toJSDate(),
+    to: toDt.toUTC().toJSDate(),
+    fromISO: fromDt.toISO(),
+    toISO: toDt.toISO(),
   };
 };
