@@ -307,7 +307,7 @@ const ComplaintManagement = () => {
                 }
                 placeholder="All Stores"
                 compact
-                inputClassName="text-sm sm:text-base"
+                inputClassName="h-[42px] sm:h-[48px] py-0 text-sm sm:text-base"
               />
             </div>
           </div>
