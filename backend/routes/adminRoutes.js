@@ -17,6 +17,8 @@ import {
   updateClient,
   updateTechnician,
   createAdminComplaint,
+  getComplaintAutoAssignSetting,
+  updateComplaintAutoAssignSetting,
 } from "../controllers/adminController.js";
 import { authenticateAdmin } from "../middleware/roleAuth.js";
 import {
@@ -50,12 +52,22 @@ router.get("/dashboard/stats", authenticateAdmin, getDashboardStats);
 
 // complaint management
 router.get("/complaints", authenticateAdmin, getAllComplaints);
+router.get(
+  "/complaints/auto-assign",
+  authenticateAdmin,
+  getComplaintAutoAssignSetting,
+);
+router.patch(
+  "/complaints/auto-assign",
+  authenticateAdmin,
+  updateComplaintAutoAssignSetting,
+);
 router.get("/complaints/:id", authenticateAdmin, getComplaintById);
 router.post(
   "/complaints",
   authenticateAdmin,
   upload.array("photos", 5),
-  createAdminComplaint
+  createAdminComplaint,
 );
 router.post("/complaints/assign", authenticateAdmin, assignComplaint);
 
@@ -73,7 +85,7 @@ router.put("/technicians/:id", authenticateAdmin, updateTechnician);
 router.patch(
   "/users/:userId/toggle-status",
   authenticateAdmin,
-  toggleUserStatus
+  toggleUserStatus,
 );
 router.delete("/users/:userId", authenticateAdmin, deleteUser);
 

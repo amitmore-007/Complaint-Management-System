@@ -9,6 +9,7 @@ import {
 import { sendStatusUpdateNotification } from "../config/msg91.js";
 import { generateNextComplaintId } from "../utils/complaintId.js";
 import { autoAssignComplaintToDefaultTechnician } from "../utils/autoAssign.js";
+import { getComplaintAutoAssignEnabled } from "../utils/complaintAutoAssignSetting.js";
 
 const normalizeIndianPhone10Digits = (phoneNumber) => {
   if (!phoneNumber) return "";
@@ -69,7 +70,7 @@ export const createComplaint = async (req, res) => {
     if (req.files && req.files.length > 0) {
       try {
         photos = await Promise.all(
-          req.files.map((file) => uploadToCloudinary(file))
+          req.files.map((file) => uploadToCloudinary(file)),
         );
       } catch (error) {
         console.error("Photo upload error:", error);
@@ -100,8 +101,10 @@ export const createComplaint = async (req, res) => {
 
     await complaint.save();
 
-    // Auto-assign every new complaint to the default technician (Soham)
-    await autoAssignComplaintToDefaultTechnician({ complaint });
+    const shouldAutoAssign = await getComplaintAutoAssignEnabled();
+    if (shouldAutoAssign) {
+      await autoAssignComplaintToDefaultTechnician({ complaint });
+    }
 
     // Populate client info for response
     await complaint.populate("client", "name phoneNumber");
@@ -208,7 +211,7 @@ export const updateComplaint = async (req, res) => {
 
       // Remove photos from complaint
       complaint.photos = complaint.photos.filter(
-        (photo) => !removedPhotoIds.includes(photo.publicId)
+        (photo) => !removedPhotoIds.includes(photo.publicId),
       );
     }
 
@@ -224,7 +227,7 @@ export const updateComplaint = async (req, res) => {
 
       try {
         const newPhotos = await Promise.all(
-          req.files.map((file) => uploadToCloudinary(file))
+          req.files.map((file) => uploadToCloudinary(file)),
         );
         complaint.photos.push(...newPhotos);
       } catch (error) {
@@ -320,7 +323,7 @@ export const getAssignedComplaints = async (req, res) => {
         complaints
           .filter((c) => !c.store && c.location)
           .map((c) => String(c.location).trim())
-          .filter(Boolean)
+          .filter(Boolean),
       ),
     ];
 
@@ -332,7 +335,7 @@ export const getAssignedComplaints = async (req, res) => {
       : [];
 
     const storeByLowerName = new Map(
-      stores.map((s) => [String(s.name).toLowerCase(), s])
+      stores.map((s) => [String(s.name).toLowerCase(), s]),
     );
 
     const complaintsWithStore = complaints.map((c) => {
@@ -430,7 +433,7 @@ export const updateComplaintStatus = async (req, res) => {
     if (!validTransitions[complaint.status]?.includes(status)) {
       console.log(
         "❌ Invalid status transition:",
-        `${complaint.status} -> ${status}`
+        `${complaint.status} -> ${status}`,
       );
       return res.status(400).json({
         success: false,
@@ -465,7 +468,7 @@ export const updateComplaintStatus = async (req, res) => {
       if (req.files && req.files.length > 0) {
         try {
           const uploadResults = await Promise.all(
-            req.files.map((file) => uploadToCloudinary(file))
+            req.files.map((file) => uploadToCloudinary(file)),
           );
           resolutionPhotos = uploadResults.map((result) => ({
             url: result.url,
@@ -544,7 +547,7 @@ export const updateComplaintStatus = async (req, res) => {
                 status,
                 recipientName,
                 templateLocation,
-                templateIssueTitle
+                templateIssueTitle,
               );
 
         // Also notify a fixed extra recipient when complaint is resolved
@@ -552,7 +555,7 @@ export const updateComplaintStatus = async (req, res) => {
           const extraRecipientName = process.env.RESOLVED_NOTIFY_NAME;
           const extraRecipientPhoneRaw = process.env.RESOLVED_NOTIFY_PHONE;
           const extraRecipientPhone10 = normalizeIndianPhone10Digits(
-            extraRecipientPhoneRaw
+            extraRecipientPhoneRaw,
           );
 
           if (extraRecipientPhone10) {
@@ -565,7 +568,7 @@ export const updateComplaintStatus = async (req, res) => {
                 status,
                 extraTemplateName,
                 templateLocation,
-                templateIssueTitle
+                templateIssueTitle,
               );
 
               const extraNotification = new Notification({
@@ -586,7 +589,7 @@ export const updateComplaintStatus = async (req, res) => {
             } catch (extraError) {
               console.error(
                 "❌ Extra recipient notification sending error:",
-                extraError
+                extraError,
               );
 
               const extraNotification = new Notification({
@@ -606,7 +609,7 @@ export const updateComplaintStatus = async (req, res) => {
           } else if (extraRecipientPhoneRaw) {
             console.warn(
               "⚠️ RESOLVED_NOTIFY_PHONE is set but could not be normalized:",
-              extraRecipientPhoneRaw
+              extraRecipientPhoneRaw,
             );
           }
         }
@@ -641,7 +644,7 @@ export const updateComplaintStatus = async (req, res) => {
       }
     } else {
       console.log(
-        "⚠️ Skipping notification - recipient not eligible or phone missing"
+        "⚠️ Skipping notification - recipient not eligible or phone missing",
       );
     }
 
@@ -732,7 +735,7 @@ export const getResolvedComplaints = async (req, res) => {
         complaints
           .filter((c) => !c.store && c.location)
           .map((c) => String(c.location).trim())
-          .filter(Boolean)
+          .filter(Boolean),
       ),
     ];
 
@@ -744,7 +747,7 @@ export const getResolvedComplaints = async (req, res) => {
       : [];
 
     const storeByLowerName = new Map(
-      stores.map((s) => [String(s.name).toLowerCase(), s])
+      stores.map((s) => [String(s.name).toLowerCase(), s]),
     );
 
     const complaintsWithStore = complaints.map((c) => {

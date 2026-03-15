@@ -17,6 +17,10 @@ import {
 } from "../config/cloudinary.js";
 import { generateNextComplaintId } from "../utils/complaintId.js";
 import { autoAssignComplaintToDefaultTechnician } from "../utils/autoAssign.js";
+import {
+  getComplaintAutoAssignEnabled,
+  setComplaintAutoAssignEnabled,
+} from "../utils/complaintAutoAssignSetting.js";
 
 // ============================================
 // HELPER FUNCTIONS
@@ -269,7 +273,7 @@ export const createAdminComplaint = async (req, res) => {
     if (req.files && req.files.length > 0) {
       try {
         const uploadResults = await Promise.all(
-          req.files.map((file) => uploadToCloudinary(file))
+          req.files.map((file) => uploadToCloudinary(file)),
         );
         photos = uploadResults.map((result) => ({
           url: result.url,
@@ -304,11 +308,13 @@ export const createAdminComplaint = async (req, res) => {
 
     await complaint.save();
 
-    // Auto-assign every new complaint to the default technician (Soham)
-    await autoAssignComplaintToDefaultTechnician({
-      complaint,
-      assignedBy: adminId,
-    });
+    const shouldAutoAssign = await getComplaintAutoAssignEnabled();
+    if (shouldAutoAssign) {
+      await autoAssignComplaintToDefaultTechnician({
+        complaint,
+        assignedBy: adminId,
+      });
+    }
 
     // Populate admin + store info for response
     await complaint.populate("createdByAdmin", "name phoneNumber");
@@ -387,7 +393,7 @@ export const assignComplaint = async (req, res) => {
     // Find the complaint with client info
     const complaint = await Complaint.findById(complaintId).populate(
       "client",
-      "name phoneNumber"
+      "name phoneNumber",
     );
 
     if (!complaint) {
@@ -444,7 +450,7 @@ export const assignComplaint = async (req, res) => {
           technician.name,
           complaint.complaintId,
           templateLocation,
-          templateIssueTitle
+          templateIssueTitle,
         );
 
         // Save notification record
@@ -464,7 +470,7 @@ export const assignComplaint = async (req, res) => {
         if (!notificationResult.success) {
           console.error(
             "❌ Failed to send assignment notification:",
-            notificationResult.error
+            notificationResult.error,
           );
         }
       } catch (notificationError) {
@@ -506,6 +512,58 @@ export const assignComplaint = async (req, res) => {
   }
 };
 
+export const getComplaintAutoAssignSetting = async (req, res) => {
+  try {
+    const enabled = await getComplaintAutoAssignEnabled();
+
+    res.status(200).json({
+      success: true,
+      setting: {
+        autoAssignEnabled: enabled,
+      },
+    });
+  } catch (error) {
+    console.error("Get complaint auto-assign setting error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const updateComplaintAutoAssignSetting = async (req, res) => {
+  try {
+    const { enabled } = req.body;
+
+    if (typeof enabled !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "enabled must be a boolean",
+      });
+    }
+
+    const setting = await setComplaintAutoAssignEnabled({
+      enabled,
+      adminId: req.user.id,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Auto assign ${enabled ? "enabled" : "disabled"} successfully`,
+      setting: {
+        autoAssignEnabled: Boolean(setting?.booleanValue),
+        updatedAt: setting?.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error("Update complaint auto-assign setting error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 // auto-assign pending complaints to available technicians
 export const autoAssignPendingComplaints = async () => {
   try {
@@ -536,7 +594,7 @@ export const autoAssignPendingComplaints = async () => {
           status: { $in: ["assigned", "in-progress"] },
         });
         return { technician: tech, assignmentCount: count };
-      })
+      }),
     );
 
     // Sort by assignment count (ascending)
@@ -561,7 +619,7 @@ export const autoAssignPendingComplaints = async () => {
           selectedTech.name,
           complaint.complaintId,
           complaint.location || "",
-          complaint.title || ""
+          complaint.title || "",
         );
       }
     }
@@ -638,7 +696,7 @@ export const getAllClients = async (req, res) => {
           ...client.toObject(),
           complaintCount,
         };
-      })
+      }),
     );
 
     res.status(200).json({
@@ -700,7 +758,7 @@ export const getAllTechnicians = async (req, res) => {
           completedAssignments,
           totalAssignments,
         };
-      })
+      }),
     );
 
     res.status(200).json({

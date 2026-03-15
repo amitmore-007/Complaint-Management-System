@@ -10,6 +10,7 @@ import {
 } from "../config/cloudinary.js";
 import { generateNextComplaintId } from "../utils/complaintId.js";
 import { autoAssignComplaintToDefaultTechnician } from "../utils/autoAssign.js";
+import { getComplaintAutoAssignEnabled } from "../utils/complaintAutoAssignSetting.js";
 
 // ============================================
 // HELPER FUNCTIONS
@@ -253,7 +254,7 @@ export const createTechnicianComplaint = async (req, res) => {
     if (req.files && req.files.length > 0) {
       try {
         photos = await Promise.all(
-          req.files.map((file) => uploadToCloudinary(file))
+          req.files.map((file) => uploadToCloudinary(file)),
         );
       } catch (error) {
         console.error("Photo upload error:", error);
@@ -304,8 +305,10 @@ export const createTechnicianComplaint = async (req, res) => {
 
     await complaint.save();
 
-    // Auto-assign every new complaint to the default technician (Soham)
-    await autoAssignComplaintToDefaultTechnician({ complaint });
+    const shouldAutoAssign = await getComplaintAutoAssignEnabled();
+    if (shouldAutoAssign) {
+      await autoAssignComplaintToDefaultTechnician({ complaint });
+    }
 
     // Populate technician info for response
     await complaint.populate("createdByTechnician", "name phoneNumber");
@@ -353,7 +356,7 @@ export const getMyTechnicianComplaints = async (req, res) => {
         complaints
           .filter((c) => !c.store && c.location)
           .map((c) => String(c.location).trim())
-          .filter(Boolean)
+          .filter(Boolean),
       ),
     ];
 
@@ -365,7 +368,7 @@ export const getMyTechnicianComplaints = async (req, res) => {
       : [];
 
     const storeByLowerName = new Map(
-      stores.map((s) => [String(s.name).toLowerCase(), s])
+      stores.map((s) => [String(s.name).toLowerCase(), s]),
     );
 
     const complaintsWithStore = complaints.map((c) => {
