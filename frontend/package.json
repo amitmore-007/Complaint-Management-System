@@ -29,6 +29,7 @@
     "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.15.0",
     "react-toastify": "^11.0.5",
+    "write-excel-file": "^3.0.6",
     "zustand": "^4.4.1"
   },
   "devDependencies": {

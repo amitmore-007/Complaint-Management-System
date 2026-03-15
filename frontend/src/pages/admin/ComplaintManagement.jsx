@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import writeXlsxFile from "write-excel-file/browser";
 import {
   Search,
   Filter,
@@ -15,11 +16,13 @@ import {
   CheckCircle,
   FileText,
   Loader2,
+  Download,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import StoreDropdown from "../../components/common/StoreDropdown";
+import { complaintService } from "../../services/complaintService";
 import {
   useComplaints,
   useComplaint,
@@ -41,6 +44,7 @@ const ComplaintManagement = () => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTechnician, setSelectedTechnician] = useState("");
+  const [isExportingComplaints, setIsExportingComplaints] = useState(false);
 
   // React Query hooks
   const { data: complaints = [], isLoading } = useComplaints();
@@ -191,6 +195,156 @@ const ComplaintManagement = () => {
     }
   };
 
+  const handleDownloadAllComplaints = async () => {
+    if (isExportingComplaints) return;
+
+    setIsExportingComplaints(true);
+    try {
+      const allComplaints = await complaintService.admin.listAll({
+        limit: 500,
+      });
+
+      if (!allComplaints.length) {
+        toast.error("No complaints found to export");
+        return;
+      }
+
+      const rows = allComplaints.map((complaint) => ({
+        complaintId: complaint?.complaintId || "",
+        title: complaint?.title || "",
+        description: complaint?.description || "",
+        status: complaint?.status || "",
+        priority: complaint?.priority || "",
+        location: complaint?.location || "",
+        creatorType: complaint?.creatorType || "",
+        creatorName:
+          complaint?.client?.name ||
+          complaint?.createdByAdmin?.name ||
+          complaint?.createdByTechnician?.name ||
+          "",
+        assignedTechnician: complaint?.assignedTechnician?.name || "",
+        assignedBy: complaint?.assignedBy?.name || "",
+        assignedAt: complaint?.assignedAt
+          ? new Date(complaint.assignedAt).toLocaleString()
+          : "",
+        createdAt: complaint?.createdAt
+          ? new Date(complaint.createdAt).toLocaleString()
+          : "",
+      }));
+
+      const schema = [
+        {
+          column: "Complaint ID",
+          type: String,
+          width: 18,
+          height: 22,
+          value: (r) => r.complaintId,
+        },
+        {
+          column: "Title",
+          type: String,
+          width: 30,
+          height: 22,
+          wrap: true,
+          value: (r) => r.title,
+        },
+        {
+          column: "Description",
+          type: String,
+          width: 45,
+          height: 22,
+          wrap: true,
+          value: (r) => r.description,
+        },
+        {
+          column: "Status",
+          type: String,
+          width: 14,
+          height: 22,
+          value: (r) => r.status,
+        },
+        {
+          column: "Priority",
+          type: String,
+          width: 12,
+          height: 22,
+          value: (r) => r.priority,
+        },
+        {
+          column: "Store",
+          type: String,
+          width: 24,
+          height: 22,
+          value: (r) => r.location,
+        },
+        {
+          column: "Creator Type",
+          type: String,
+          width: 14,
+          height: 22,
+          value: (r) => r.creatorType,
+        },
+        {
+          column: "Creator",
+          type: String,
+          width: 22,
+          height: 22,
+          value: (r) => r.creatorName,
+        },
+        {
+          column: "Assigned Technician",
+          type: String,
+          width: 24,
+          height: 22,
+          value: (r) => r.assignedTechnician,
+        },
+        {
+          column: "Assigned By",
+          type: String,
+          width: 20,
+          height: 22,
+          value: (r) => r.assignedBy,
+        },
+        {
+          column: "Assigned At",
+          type: String,
+          width: 22,
+          height: 22,
+          value: (r) => r.assignedAt,
+        },
+        {
+          column: "Created At",
+          type: String,
+          width: 22,
+          height: 22,
+          value: (r) => r.createdAt,
+        },
+      ];
+
+      const dateTag = new Date().toISOString().slice(0, 10);
+      await writeXlsxFile(rows, {
+        schema,
+        getHeaderStyle: () => ({
+          fontWeight: "bold",
+          fontSize: 13,
+          textColor: "#ffffff",
+          backgroundColor: "#1f4e78",
+          align: "center",
+          alignVertical: "center",
+          height: 26,
+        }),
+        fileName: `all-complaints-${dateTag}.xlsx`,
+      });
+
+      toast.success(`Downloaded ${rows.length} complaints`);
+    } catch (error) {
+      console.error("Failed to export complaints:", error);
+      toast.error("Failed to download complaints Excel");
+    } finally {
+      setIsExportingComplaints(false);
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "pending":
@@ -252,8 +406,22 @@ const ComplaintManagement = () => {
           </p>
         </div>
 
-        <div className="flex justify-end">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            type="button"
+            onClick={handleDownloadAllComplaints}
+            disabled={isExportingComplaints}
+            className="inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          >
+            {isExportingComplaints ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            <span>Download All Complaints</span>
+          </button>
+
+          <div className="flex items-center gap-3 self-end sm:self-auto">
             <p
               className={`text-sm font-semibold ${
                 isDarkMode ? "text-gray-200" : "text-gray-800"
