@@ -20,6 +20,7 @@ export const complaintKeys = {
   technicianMyComplaints: () => [...complaintKeys.technician(), "my"],
   client: () => [...complaintKeys.all, "client"],
   clientList: (filters) => [...complaintKeys.client(), "list", filters],
+  autoAssignSetting: () => [...complaintKeys.all, "auto-assign-setting"],
 };
 
 // Fetch all complaints (Admin)
@@ -195,6 +196,31 @@ export const useAssignComplaint = () => {
       });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
       queryClient.invalidateQueries({ queryKey: statsKeys.all });
+    },
+  });
+};
+
+export const useComplaintAutoAssignSetting = () => {
+  return useQuery({
+    queryKey: complaintKeys.autoAssignSetting(),
+    queryFn: async () => complaintService.admin.getAutoAssignSetting(),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: "always",
+  });
+};
+
+export const useUpdateComplaintAutoAssignSetting = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (enabled) =>
+      complaintService.admin.updateAutoAssignSetting(enabled),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: complaintKeys.autoAssignSetting(),
+      });
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
     },
   });
 };

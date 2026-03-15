@@ -14,6 +14,7 @@ export const endpoints = {
       root: "/admin/complaints",
       byId: (complaintId) => `/admin/complaints/${complaintId}`,
       assign: "/admin/complaints/assign",
+      autoAssign: "/admin/complaints/auto-assign",
     },
     technicians: {
       root: "/admin/technicians",

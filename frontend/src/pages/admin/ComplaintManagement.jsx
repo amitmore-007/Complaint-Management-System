@@ -24,6 +24,8 @@ import {
   useComplaints,
   useComplaint,
   useAssignComplaint,
+  useComplaintAutoAssignSetting,
+  useUpdateComplaintAutoAssignSetting,
 } from "../../hooks/useComplaints";
 import { useAdminTechnicians } from "../../hooks/useAdmin";
 import STORE_OPTIONS from "../../utils/storeOptions";
@@ -47,6 +49,9 @@ const ComplaintManagement = () => {
     { enabled: showDetailsModal && !!selectedComplaintId, role: "admin" },
   );
   const assignComplaintMutation = useAssignComplaint();
+  const { data: autoAssignEnabled = true, isLoading: isAutoAssignLoading } =
+    useComplaintAutoAssignSetting();
+  const updateAutoAssignMutation = useUpdateComplaintAutoAssignSetting();
   const isAssigning = assignComplaintMutation.isPending;
 
   const { data: techniciansData } = useAdminTechnicians({
@@ -167,6 +172,25 @@ const ComplaintManagement = () => {
     setSelectedComplaintId(null);
   };
 
+  const handleToggleAutoAssign = async () => {
+    if (updateAutoAssignMutation.isPending || isAutoAssignLoading) return;
+
+    const nextValue = !autoAssignEnabled;
+    try {
+      await updateAutoAssignMutation.mutateAsync(nextValue);
+      toast.success(
+        nextValue
+          ? "Auto assign enabled. New complaints will be auto-assigned."
+          : "Auto assign disabled. You can now assign complaints manually.",
+      );
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message ||
+          "Failed to update auto assign setting",
+      );
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case "pending":
@@ -226,6 +250,41 @@ const ComplaintManagement = () => {
           >
             Review, assign, and manage all complaints
           </p>
+        </div>
+
+        <div className="flex justify-end">
+          <div className="flex items-center gap-3">
+            <p
+              className={`text-sm font-semibold ${
+                isDarkMode ? "text-gray-200" : "text-gray-800"
+              }`}
+            >
+              Auto assign complaints
+            </p>
+
+            <button
+              type="button"
+              onClick={handleToggleAutoAssign}
+              disabled={
+                isAutoAssignLoading || updateAutoAssignMutation.isPending
+              }
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed ${
+                autoAssignEnabled
+                  ? "bg-green-500"
+                  : isDarkMode
+                    ? "bg-gray-600"
+                    : "bg-gray-300"
+              }`}
+              aria-label="Toggle complaint auto assign"
+              title="Toggle complaint auto assign"
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-200 ${
+                  autoAssignEnabled ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
         </div>
 
         {/* Filters */}

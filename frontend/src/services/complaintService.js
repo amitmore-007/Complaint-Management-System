@@ -12,7 +12,7 @@ export const complaintService = {
 
     getById: async (complaintId) => {
       const { data } = await api.get(
-        endpoints.admin.complaints.byId(complaintId)
+        endpoints.admin.complaints.byId(complaintId),
       );
       return data.complaint;
     },
@@ -25,13 +25,25 @@ export const complaintService = {
       return data;
     },
 
+    getAutoAssignSetting: async () => {
+      const { data } = await api.get(endpoints.admin.complaints.autoAssign);
+      return Boolean(data?.setting?.autoAssignEnabled);
+    },
+
+    updateAutoAssignSetting: async (enabled) => {
+      const { data } = await api.patch(endpoints.admin.complaints.autoAssign, {
+        enabled,
+      });
+      return Boolean(data?.setting?.autoAssignEnabled);
+    },
+
     create: async (formData) => {
       const { data } = await api.post(
         endpoints.admin.complaints.root,
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-        }
+        },
       );
       return data;
     },
@@ -47,7 +59,7 @@ export const complaintService = {
 
     getById: async (complaintId) => {
       const { data } = await api.get(
-        endpoints.client.complaints.byId(complaintId)
+        endpoints.client.complaints.byId(complaintId),
       );
       return data.complaint;
     },
@@ -58,7 +70,7 @@ export const complaintService = {
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-        }
+        },
       );
       return data;
     },
@@ -69,14 +81,14 @@ export const complaintService = {
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-        }
+        },
       );
       return data;
     },
 
     remove: async (complaintId) => {
       const { data } = await api.delete(
-        endpoints.client.complaints.byId(complaintId)
+        endpoints.client.complaints.byId(complaintId),
       );
       return data;
     },
@@ -149,7 +161,7 @@ export const complaintService = {
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-        }
+        },
       );
       return data;
     },
@@ -160,7 +172,7 @@ export const complaintService = {
         payload,
         payload instanceof FormData
           ? { headers: { "Content-Type": "multipart/form-data" } }
-          : undefined
+          : undefined,
       );
       return data;
     },
