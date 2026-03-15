@@ -10,6 +10,34 @@ export const complaintService = {
       return data.complaints;
     },
 
+    listAll: async ({ limit = 500 } = {}) => {
+      const allComplaints = [];
+      let page = 1;
+      let totalPages = 1;
+
+      while (page <= totalPages) {
+        const { data } = await api.get(endpoints.admin.complaints.root, {
+          params: { page, limit },
+        });
+
+        const complaints = Array.isArray(data?.complaints)
+          ? data.complaints
+          : [];
+        allComplaints.push(...complaints);
+
+        const serverPages = Number(data?.pagination?.pages);
+        if (Number.isFinite(serverPages) && serverPages > 0) {
+          totalPages = serverPages;
+        } else {
+          totalPages = complaints.length < limit ? page : page + 1;
+        }
+
+        page += 1;
+      }
+
+      return allComplaints;
+    },
+
     getById: async (complaintId) => {
       const { data } = await api.get(
         endpoints.admin.complaints.byId(complaintId),
