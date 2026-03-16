@@ -45,9 +45,13 @@ const ComplaintManagement = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTechnician, setSelectedTechnician] = useState("");
   const [isExportingComplaints, setIsExportingComplaints] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // React Query hooks
-  const { data: complaints = [], isLoading } = useComplaints();
+  const { data: complaints = [], isLoading } = useComplaints({
+    fetchAll: true,
+  });
   const { data: complaintDetails, isLoading: isLoadingDetails } = useComplaint(
     selectedComplaintId,
     { enabled: showDetailsModal && !!selectedComplaintId, role: "admin" },
@@ -129,6 +133,26 @@ const ComplaintManagement = () => {
 
     return filtered;
   }, [complaints, statusFilter, priorityFilter, locationFilter, searchTerm]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredComplaints.length / itemsPerPage),
+  );
+
+  const paginatedComplaints = React.useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredComplaints.slice(start, start + itemsPerPage);
+  }, [filteredComplaints, currentPage, itemsPerPage]);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, priorityFilter, locationFilter, itemsPerPage]);
+
+  React.useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const handleAssignComplaint = async () => {
     if (!selectedTechnician) {
@@ -563,7 +587,7 @@ const ComplaintManagement = () => {
               </p>
             </div>
           ) : (
-            filteredComplaints.map((complaint) => (
+            paginatedComplaints.map((complaint) => (
               <motion.div
                 key={complaint._id}
                 initial={{ opacity: 0, y: 20 }}
@@ -708,6 +732,70 @@ const ComplaintManagement = () => {
             ))
           )}
         </div>
+
+        {filteredComplaints.length > 0 && (
+          <div
+            className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${
+              isDarkMode
+                ? "bg-gray-800 border-gray-700 text-gray-300"
+                : "bg-white border-gray-200 text-gray-700"
+            }`}
+          >
+            <div className="flex items-center gap-3 text-sm">
+              <span>
+                Showing {(currentPage - 1) * itemsPerPage + 1}-
+                {Math.min(
+                  currentPage * itemsPerPage,
+                  filteredComplaints.length,
+                )}{" "}
+                of {filteredComplaints.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <label htmlFor="complaints-page-size">Rows:</label>
+                <select
+                  id="complaints-page-size"
+                  value={itemsPerPage}
+                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  className={`px-2 py-1 rounded-md border text-sm ${
+                    isDarkMode
+                      ? "bg-gray-700 border-gray-600 text-white"
+                      : "bg-white border-gray-300 text-gray-800"
+                  }`}
+                >
+                  {[10, 25, 50, 100].map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <span className="text-sm">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 rounded-lg border text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Assignment Modal */}
         <AnimatePresence>

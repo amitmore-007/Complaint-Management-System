@@ -28,6 +28,9 @@ export const useComplaints = (filters = {}) => {
   return useQuery({
     queryKey: complaintKeys.list(filters),
     queryFn: async () => {
+      if (filters?.fetchAll) {
+        return complaintService.admin.listAll();
+      }
       return complaintService.admin.list(filters);
     },
     // Admin needs to see technician-created complaints without hard refresh.
