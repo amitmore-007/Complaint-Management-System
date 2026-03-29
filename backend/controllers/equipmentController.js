@@ -98,7 +98,7 @@ export const createEquipment = async (req, res) => {
 export const updateEquipment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, isActive } = req.body;
+    const { name, isActive, fields } = req.body;
 
     const equipment = await Equipment.findById(id);
     if (!equipment) {
@@ -132,6 +132,10 @@ export const updateEquipment = async (req, res) => {
 
     if (isActive !== undefined) {
       equipment.isActive = isActive;
+    }
+
+    if (fields !== undefined) {
+      equipment.fields = fields;
     }
 
     await equipment.save();
