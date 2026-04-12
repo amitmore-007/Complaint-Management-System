@@ -658,6 +658,7 @@ export const updateComplaintStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ ===== COMPLAINT STATUS UPDATE ERROR =====");
+    console.error(error);
 
     res.status(500).json({
       success: false,
