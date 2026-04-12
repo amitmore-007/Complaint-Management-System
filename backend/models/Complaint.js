@@ -1,5 +1,12 @@
 import mongoose from "mongoose";
 
+const inferCreatorType = (doc) => {
+  if (doc.client) return "client";
+  if (doc.createdByTechnician) return "technician";
+  if (doc.createdByAdmin) return "admin";
+  return undefined;
+};
+
 const complaintSchema = new mongoose.Schema(
   {
     complaintId: {
@@ -104,7 +111,7 @@ const complaintSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Create indexes for better performance
@@ -117,6 +124,17 @@ complaintSchema.index({ status: 1 });
 complaintSchema.index({ createdAt: -1 });
 complaintSchema.index({ creatorType: 1 });
 complaintSchema.index({ store: 1 });
+
+// Backward compatibility for legacy complaints created before creatorType existed.
+complaintSchema.pre("validate", function (next) {
+  if (!this.creatorType) {
+    const inferredCreatorType = inferCreatorType(this);
+    if (inferredCreatorType) {
+      this.creatorType = inferredCreatorType;
+    }
+  }
+  next();
+});
 
 const Complaint = mongoose.model("Complaint", complaintSchema);
 
