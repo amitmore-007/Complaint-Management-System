@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Package,
@@ -11,6 +11,8 @@ import {
   X,
   Plus,
   Minus,
+  Phone,
+  Search,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
@@ -18,6 +20,7 @@ import DashboardLayout from "../../components/layout/DashboardLayout";
 import useAuthStore from "../../store/authStore";
 import api from "../../lib/axios";
 import { STORE_OPTIONS } from "../../utils/storeOptions";
+import { useStoresList } from "../../hooks/useStores";
 
 const TechnicianAssets = () => {
   const { isDarkMode } = useTheme();
@@ -32,6 +35,23 @@ const TechnicianAssets = () => {
   const [activeTab, setActiveTab] = useState("submit");
 
   const storeOptions = STORE_OPTIONS;
+
+  const [contactSearch, setContactSearch] = useState("");
+  const { data: stores = [], isLoading: storesLoading, refetch: refetchStores } = useStoresList();
+
+  const filteredStores = useMemo(() => {
+    const q = contactSearch.toLowerCase();
+    return stores.filter((store) => {
+      if (!q) return true;
+      if (String(store?.name || "").toLowerCase().includes(q)) return true;
+      const managers = Array.isArray(store?.managers) ? store.managers : [];
+      return managers.some(
+        (m) =>
+          String(m?.name || "").toLowerCase().includes(q) ||
+          String(m?.phoneNumber || "").toLowerCase().includes(q)
+      );
+    });
+  }, [stores, contactSearch]);
 
   useEffect(() => {
     fetchEquipment();
@@ -240,7 +260,173 @@ const TechnicianAssets = () => {
           >
             My Submissions
           </button>
+          <button
+            onClick={() => setActiveTab("contacts")}
+            className={`flex-1 py-2 sm:py-3 px-3 sm:px-4 rounded-lg font-medium transition-all text-sm sm:text-base ${
+              activeTab === "contacts"
+                ? "bg-blue-600 text-white shadow-lg"
+                : isDarkMode
+                ? "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                : "text-gray-600 hover:text-gray-900 hover:bg-white"
+            }`}
+          >
+            Contact Nos.
+          </button>
         </div>
+
+        {/* Contact Numbers Tab */}
+        {activeTab === "contacts" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4 sm:space-y-6"
+          >
+            {/* Search + Refresh */}
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1 max-w-md">
+                <Search
+                  className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 ${
+                    isDarkMode ? "text-gray-400" : "text-gray-500"
+                  }`}
+                />
+                <input
+                  type="text"
+                  placeholder="Search store or contact..."
+                  value={contactSearch}
+                  onChange={(e) => setContactSearch(e.target.value)}
+                  className={`w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-3 border rounded-xl text-sm sm:text-base transition-colors ${
+                    isDarkMode
+                      ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  }`}
+                />
+              </div>
+              <button
+                onClick={() => refetchStores?.()}
+                className={`px-4 py-2 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:text-base ${
+                  isDarkMode
+                    ? "bg-gray-700 hover:bg-gray-600 text-white"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-900"
+                }`}
+              >
+                Refresh
+              </button>
+            </div>
+
+            {/* Store Cards */}
+            {storesLoading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+              </div>
+            ) : filteredStores.length === 0 ? (
+              <div className="text-center py-12">
+                <Phone
+                  className={`h-12 w-12 mx-auto mb-4 ${
+                    isDarkMode ? "text-gray-600" : "text-gray-400"
+                  }`}
+                />
+                <p
+                  className={`text-lg font-medium ${
+                    isDarkMode ? "text-gray-400" : "text-gray-600"
+                  }`}
+                >
+                  No stores found
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                {filteredStores.map((store) => (
+                  <motion.div
+                    key={store._id}
+                    className={`border rounded-xl p-4 sm:p-6 transition-colors ${
+                      isDarkMode
+                        ? "bg-gray-800/50 border-gray-700 hover:border-gray-600"
+                        : "bg-white border-gray-200 hover:border-gray-300 hover:shadow-md"
+                    }`}
+                    whileHover={{ scale: 1.01 }}
+                  >
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div
+                        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                          isDarkMode ? "bg-blue-600/20" : "bg-blue-100"
+                        }`}
+                      >
+                        <Phone
+                          className={`h-5 w-5 sm:h-6 sm:w-6 ${
+                            isDarkMode ? "text-blue-400" : "text-blue-600"
+                          }`}
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <h3
+                          className={`font-semibold text-sm sm:text-base truncate ${
+                            isDarkMode ? "text-white" : "text-gray-900"
+                          }`}
+                        >
+                          {store.name}
+                        </h3>
+                        <p
+                          className={`text-xs sm:text-sm mt-0.5 ${
+                            isDarkMode ? "text-gray-400" : "text-gray-600"
+                          }`}
+                        >
+                          {(store.managers?.length || 0) === 0
+                            ? "No contacts added"
+                            : `${store.managers.length} contact(s)`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      className={`space-y-2 text-xs sm:text-sm ${
+                        isDarkMode ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
+                      {(Array.isArray(store.managers) ? store.managers : [])
+                        .slice(0, 4)
+                        .map((m, idx) => (
+                          <div
+                            key={`${store._id}-${idx}`}
+                            className="flex items-center justify-between gap-3"
+                          >
+                            <span className="truncate">
+                              {m?.name || "(No label)"}
+                            </span>
+                            <span
+                              className={`font-medium whitespace-nowrap ${
+                                isDarkMode ? "text-white" : "text-gray-900"
+                              }`}
+                            >
+                              {m?.phoneNumber || "-"}
+                            </span>
+                          </div>
+                        ))}
+                      {Array.isArray(store.managers) &&
+                        store.managers.length > 4 && (
+                          <p
+                            className={
+                              isDarkMode ? "text-gray-400" : "text-gray-500"
+                            }
+                          >
+                            +{store.managers.length - 4} more
+                          </p>
+                        )}
+                      {(!store.managers || store.managers.length === 0) && (
+                        <p
+                          className={
+                            isDarkMode ? "text-gray-500" : "text-gray-400"
+                          }
+                        >
+                          —
+                        </p>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Content */}
         {activeTab === "submit" ? (
@@ -458,7 +644,7 @@ const TechnicianAssets = () => {
               </div>
             </form>
           </motion.div>
-        ) : (
+        ) : activeTab === "history" ? (
           // History Tab
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -579,7 +765,7 @@ const TechnicianAssets = () => {
               </div>
             )}
           </motion.div>
-        )}
+        ) : null}
       </div>
     </DashboardLayout>
   );
