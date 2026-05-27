@@ -97,6 +97,17 @@ const complaintSchema = new mongoose.Schema(
         },
       },
     ],
+    resolutionVideos: [
+      {
+        url: String,
+        publicId: String,
+        originalName: String,
+        uploadedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
     resolutionNotes: {
       type: String,
       trim: true,

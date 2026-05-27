@@ -32,6 +32,7 @@ import {
 } from "../../hooks/useComplaints";
 import { useAdminTechnicians } from "../../hooks/useAdmin";
 import STORE_OPTIONS from "../../utils/storeOptions";
+import VideoPlayer from "../../components/player/VideoPlayer";
 
 const ComplaintManagement = () => {
   const { isDarkMode } = useTheme();
@@ -1335,8 +1336,8 @@ const ComplaintManagement = () => {
                     {/* Resolution Data - Only show for resolved complaints */}
                     {complaintDetails.status === "resolved" &&
                       (complaintDetails.resolutionNotes ||
-                        (complaintDetails.resolutionPhotos &&
-                          complaintDetails.resolutionPhotos.length > 0)) && (
+                        complaintDetails.resolutionPhotos?.length > 0 ||
+                        complaintDetails.resolutionVideos?.length > 0) && (
                         <div
                           className={`p-4 rounded-lg border ${
                             isDarkMode
@@ -1393,33 +1394,73 @@ const ComplaintManagement = () => {
                             </div>
                           )}
 
-                          {complaintDetails.resolutionPhotos &&
-                            complaintDetails.resolutionPhotos.length > 0 && (
-                              <div>
-                                <h6
-                                  className={`font-medium mb-3 ${
-                                    isDarkMode
-                                      ? "text-green-200"
-                                      : "text-green-800"
-                                  }`}
-                                >
-                                  Resolution Proof Photos (
-                                  {complaintDetails.resolutionPhotos.length})
-                                </h6>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                  {complaintDetails.resolutionPhotos.map(
-                                    (photo, index) => (
-                                      <img
-                                        key={index}
-                                        src={photo.url}
-                                        alt={`Resolution photo ${index + 1}`}
-                                        className="w-full h-24 object-cover rounded-lg border-2 border-green-300 dark:border-green-600"
-                                      />
-                                    ),
-                                  )}
-                                </div>
+                          {complaintDetails.resolutionPhotos?.length > 0 && (
+                            <div className="mb-4">
+                              <h6
+                                className={`font-medium mb-3 ${
+                                  isDarkMode ? "text-green-200" : "text-green-800"
+                                }`}
+                              >
+                                Resolution Proof Photos (
+                                {complaintDetails.resolutionPhotos.length})
+                              </h6>
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                {complaintDetails.resolutionPhotos.map(
+                                  (photo, index) => (
+                                    <img
+                                      key={index}
+                                      src={photo.url}
+                                      alt={`Resolution photo ${index + 1}`}
+                                      className="w-full h-24 object-cover rounded-lg border-2 border-green-300 dark:border-green-600"
+                                    />
+                                  ),
+                                )}
                               </div>
-                            )}
+                            </div>
+                          )}
+
+                          {complaintDetails.resolutionVideos?.length > 0 && (
+                            <div>
+                              <h6
+                                className={`font-medium mb-3 ${
+                                  isDarkMode ? "text-green-200" : "text-green-800"
+                                }`}
+                              >
+                                Resolution Videos (
+                                {complaintDetails.resolutionVideos.length})
+                              </h6>
+                              <div className="flex flex-wrap gap-3">
+                                {complaintDetails.resolutionVideos.map(
+                                  (vid, idx) => (
+                                    <div
+                                      key={idx}
+                                      className={`w-48 flex-shrink-0 border ${
+                                        isDarkMode
+                                          ? "border-gray-700 bg-gray-800"
+                                          : "border-gray-200 bg-white"
+                                      }`}
+                                    >
+                                      <VideoPlayer
+                                        src={vid.url}
+                                        className="w-full"
+                                      />
+                                      {vid.originalName && (
+                                        <p
+                                          className={`px-2 py-1.5 text-xs truncate border-t ${
+                                            isDarkMode
+                                              ? "border-gray-700 text-gray-400"
+                                              : "border-gray-200 text-gray-500"
+                                          }`}
+                                        >
+                                          {vid.originalName}
+                                        </p>
+                                      )}
+                                    </div>
+                                  ),
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                   </div>

@@ -32,6 +32,22 @@ const upload = multer({
   },
 });
 
+// Separate multer for status updates — allows images + videos
+const statusUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB for videos
+  fileFilter: (req, file, cb) => {
+    if (
+      file.mimetype.startsWith("image/") ||
+      file.mimetype.startsWith("video/")
+    ) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image or video files are allowed!"), false);
+    }
+  },
+});
+
 // Authentication routes
 router.post("/auth/send-otp", sendTechnicianOTP);
 router.post("/auth/verify-otp", verifyTechnicianOTP);
@@ -56,7 +72,10 @@ router.get(
 router.patch(
   "/assignments/:id/status",
   authenticateTechnician,
-  upload.array("resolutionPhotos", 5),
+  statusUpload.fields([
+    { name: "resolutionPhotos", maxCount: 5 },
+    { name: "resolutionVideos", maxCount: 2 },
+  ]),
   updateComplaintStatus
 );
 

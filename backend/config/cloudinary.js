@@ -63,6 +63,42 @@ export const uploadToCloudinary = async (file, folder = "cms-complaints") => {
   }
 };
 
+export const uploadVideoToCloudinary = async (
+  file,
+  folder = "cms-resolution-videos"
+) => {
+  try {
+    if (!file?.buffer) {
+      throw new Error("Missing required parameter - file buffer");
+    }
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder,
+          resource_type: "video",
+          // No image transformations for video
+        },
+        (error, result) => {
+          if (error) {
+            console.error("Cloudinary video upload error:", error);
+            reject(new Error("Failed to upload video"));
+          } else {
+            resolve({
+              publicId: result.public_id,
+              url: result.secure_url,
+              originalName: file.originalname,
+            });
+          }
+        }
+      );
+      uploadStream.end(file.buffer);
+    });
+  } catch (error) {
+    console.error("Cloudinary video upload error:", error);
+    throw new Error("Failed to upload video");
+  }
+};
+
 export const deleteFromCloudinary = async (publicId) => {
   try {
     await cloudinary.uploader.destroy(publicId);
