@@ -47,7 +47,31 @@ router.put(
 );
 router.delete("/:id", authenticateClient, deleteComplaint);
 
+// Separate multer instance for the status route — accepts images + videos
+const statusUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB (to accommodate videos)
+  fileFilter: (req, file, cb) => {
+    if (
+      file.mimetype.startsWith("image/") ||
+      file.mimetype.startsWith("video/")
+    ) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image or video files are allowed!"), false);
+    }
+  },
+});
+
 // Technician routes
-router.patch("/:id/status", authenticateTechnician, updateComplaintStatus);
+router.patch(
+  "/:id/status",
+  authenticateTechnician,
+  statusUpload.fields([
+    { name: "resolutionPhotos", maxCount: 5 },
+    { name: "resolutionVideos", maxCount: 2 },
+  ]),
+  updateComplaintStatus
+);
 
 export default router;

@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Eye,
   Camera,
+  Video,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
@@ -30,6 +31,7 @@ import {
 } from "../../hooks/useComplaints";
 import { useResolvedComplaints } from "../../hooks/useComplaints";
 import { useTechnicianBillingRecords } from "../../hooks/useBilling";
+import VideoPlayer from "../../components/player/VideoPlayer";
 
 const TechnicianDashboard = () => {
   const { isDarkMode } = useTheme();
@@ -93,6 +95,7 @@ const TechnicianDashboard = () => {
     notes: "",
     materialsUsed: "",
     photos: [],
+    videos: [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showStartWorkConfirm, setShowStartWorkConfirm] = useState(false);
@@ -123,8 +126,13 @@ const TechnicianDashboard = () => {
           formData.append("materialsUsed", resolutionData.materialsUsed);
         }
         if (resolutionData.photos && resolutionData.photos.length > 0) {
-          resolutionData.photos.forEach((photo, index) => {
+          resolutionData.photos.forEach((photo) => {
             formData.append("resolutionPhotos", photo);
+          });
+        }
+        if (resolutionData.videos && resolutionData.videos.length > 0) {
+          resolutionData.videos.forEach((video) => {
+            formData.append("resolutionVideos", video);
           });
         }
       }
@@ -268,13 +276,13 @@ const TechnicianDashboard = () => {
   const openResolutionModal = (complaint) => {
     setSelectedComplaint(complaint);
     setShowResolutionModal(true);
-    setResolutionData({ notes: "", materialsUsed: "", photos: [] });
+    setResolutionData({ notes: "", materialsUsed: "", photos: [], videos: [] });
   };
 
   const closeResolutionModal = () => {
     setShowResolutionModal(false);
     setSelectedComplaint(null);
-    setResolutionData({ notes: "", materialsUsed: "", photos: [] });
+    setResolutionData({ notes: "", materialsUsed: "", photos: [], videos: [] });
   };
 
   const handleResolutionSubmit = async () => {
@@ -323,6 +331,32 @@ const TechnicianDashboard = () => {
     setResolutionData((prev) => ({
       ...prev,
       photos: prev.photos.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleVideoChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + resolutionData.videos.length > 2) {
+      toast.error("Maximum 2 videos allowed");
+      return;
+    }
+    const oversized = files.find((f) => f.size > 100 * 1024 * 1024);
+    if (oversized) {
+      toast.error("Each video must be under 100 MB");
+      return;
+    }
+    setResolutionData((prev) => ({
+      ...prev,
+      videos: [...prev.videos, ...files],
+    }));
+    // reset the input so the same file can be re-selected after removal
+    e.target.value = "";
+  };
+
+  const removeVideo = (index) => {
+    setResolutionData((prev) => ({
+      ...prev,
+      videos: prev.videos.filter((_, i) => i !== index),
     }));
   };
 
@@ -1260,6 +1294,78 @@ const TechnicianDashboard = () => {
                             <button
                               onClick={() => removePhoto(index)}
                               className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Resolution Videos */}
+                  <div>
+                    <label
+                      className={`block text-sm font-medium mb-2 ${
+                        isDarkMode ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
+                      Resolution Proof Videos (Optional, max 2 × 100 MB)
+                    </label>
+
+                    <div
+                      className={`border-2 border-dashed rounded-xl p-6 text-center ${
+                        isDarkMode
+                          ? "border-gray-600 hover:border-gray-500"
+                          : "border-gray-300 hover:border-gray-400"
+                      }`}
+                    >
+                      <input
+                        type="file"
+                        multiple
+                        accept="video/mp4,video/quicktime,video/webm,video/avi,video/*"
+                        onChange={handleVideoChange}
+                        className="hidden"
+                        id="resolution-videos"
+                      />
+                      <label
+                        htmlFor="resolution-videos"
+                        className="cursor-pointer"
+                      >
+                        <Video
+                          className={`h-8 w-8 mx-auto mb-2 ${
+                            isDarkMode ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        />
+                        <p
+                          className={`text-sm ${
+                            isDarkMode ? "text-gray-400" : "text-gray-600"
+                          }`}
+                        >
+                          Click to add videos showing the resolved work
+                        </p>
+                        <p
+                          className={`text-xs mt-1 ${
+                            isDarkMode ? "text-gray-500" : "text-gray-500"
+                          }`}
+                        >
+                          MP4, MOV, WebM — up to 100 MB each, max 2 videos
+                        </p>
+                      </label>
+                    </div>
+
+                    {/* Video Previews */}
+                    {resolutionData.videos.length > 0 && (
+                      <div className="flex gap-3 mt-4">
+                        {resolutionData.videos.map((video, index) => (
+                          <div
+                            key={index}
+                            className="relative w-48 flex-shrink-0 rounded-xl overflow-hidden"
+                          >
+                            <VideoPlayer src={URL.createObjectURL(video)} />
+                            <button
+                              onClick={() => removeVideo(index)}
+                              className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors shadow-md z-10"
                             >
                               <X className="h-3 w-3" />
                             </button>

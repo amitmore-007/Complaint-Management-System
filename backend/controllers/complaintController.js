@@ -4,6 +4,7 @@ import Notification from "../models/Notification.js";
 import Store from "../models/Store.js";
 import {
   uploadToCloudinary,
+  uploadVideoToCloudinary,
   deleteFromCloudinary,
 } from "../config/cloudinary.js";
 import { sendStatusUpdateNotification } from "../config/msg91.js";
@@ -441,8 +442,9 @@ export const updateComplaintStatus = async (req, res) => {
       });
     }
 
-    // Handle resolution photos if complaint is being resolved
+    // Handle resolution photos + videos if complaint is being resolved
     let resolutionPhotos = [];
+    let resolutionVideos = [];
     if (status === "resolved") {
       // Validate resolution notes are required for resolved status
       if (!resolutionNotes || resolutionNotes.trim() === "") {
@@ -465,10 +467,15 @@ export const updateComplaintStatus = async (req, res) => {
         });
       }
 
-      if (req.files && req.files.length > 0) {
+      // req.files is now an object keyed by field name (from .fields())
+      const photoFiles = req.files?.resolutionPhotos || [];
+      const videoFiles = req.files?.resolutionVideos || [];
+
+      // Upload photos
+      if (photoFiles.length > 0) {
         try {
           const uploadResults = await Promise.all(
-            req.files.map((file) => uploadToCloudinary(file)),
+            photoFiles.map((file) => uploadToCloudinary(file)),
           );
           resolutionPhotos = uploadResults.map((result) => ({
             url: result.url,
@@ -478,13 +485,36 @@ export const updateComplaintStatus = async (req, res) => {
           }));
         } catch (error) {
           console.error("Resolution photo upload error:", error);
-          // Clean up any uploaded photos if one fails
           for (const photo of resolutionPhotos) {
             await deleteFromCloudinary(photo.publicId);
           }
           return res.status(400).json({
             success: false,
             message: "Failed to upload resolution photos",
+          });
+        }
+      }
+
+      // Upload videos
+      if (videoFiles.length > 0) {
+        try {
+          const uploadResults = await Promise.all(
+            videoFiles.map((file) => uploadVideoToCloudinary(file)),
+          );
+          resolutionVideos = uploadResults.map((result) => ({
+            url: result.url,
+            publicId: result.publicId,
+            originalName: result.originalName,
+            uploadedAt: new Date(),
+          }));
+        } catch (error) {
+          console.error("Resolution video upload error:", error);
+          for (const video of resolutionVideos) {
+            await deleteFromCloudinary(video.publicId);
+          }
+          return res.status(400).json({
+            success: false,
+            message: "Failed to upload resolution videos",
           });
         }
       }
@@ -510,6 +540,9 @@ export const updateComplaintStatus = async (req, res) => {
       }
       if (resolutionPhotos.length > 0) {
         complaint.resolutionPhotos = resolutionPhotos;
+      }
+      if (resolutionVideos.length > 0) {
+        complaint.resolutionVideos = resolutionVideos;
       }
     }
 

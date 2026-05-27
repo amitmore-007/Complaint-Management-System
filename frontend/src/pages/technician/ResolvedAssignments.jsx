@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import useAuthStore from "../../store/authStore";
+import VideoPlayer from "../../components/player/VideoPlayer";
 import { useResolvedComplaints } from "../../hooks/useComplaints";
 import { useTechnicianBillingRecords } from "../../hooks/useBilling";
 
@@ -456,6 +457,34 @@ const ResolvedAssignments = () => {
                           <strong>Resolution Notes:</strong>{" "}
                           {complaint.technicianNotes}
                         </p>
+                      </div>
+                    )}
+
+                    {/* Resolution Videos */}
+                    {complaint.resolutionVideos?.length > 0 && (
+                      <div className="mt-3">
+                        <p className={`text-xs font-semibold mb-2 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                          Resolution Videos ({complaint.resolutionVideos.length})
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                          {complaint.resolutionVideos.map((vid, idx) => (
+                            <div
+                              key={idx}
+                              className={`w-48 flex-shrink-0 border ${
+                                isDarkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
+                              }`}
+                            >
+                              <VideoPlayer src={vid.url} className="w-full" />
+                              {vid.originalName && (
+                                <p className={`px-2 py-1.5 text-xs truncate border-t ${
+                                  isDarkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"
+                                }`}>
+                                  {vid.originalName}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
