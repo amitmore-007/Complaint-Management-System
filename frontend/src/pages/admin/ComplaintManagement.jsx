@@ -17,6 +17,7 @@ import {
   FileText,
   Loader2,
   Download,
+  Share2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
@@ -194,6 +195,33 @@ const ComplaintManagement = () => {
   const closeDetailsModal = () => {
     setShowDetailsModal(false);
     setSelectedComplaintId(null);
+  };
+
+  const buildWhatsAppShareUrl = (complaint) => {
+    const technician = complaint.assignedTechnician?.name;
+    const statusLabel = complaint.status.replace("-", " ").toUpperCase();
+
+    const lines = [
+      `*Complaint Update — CMS*`,
+      ``,
+      `*Issue:* ${complaint.title}`,
+      `*Status:* ${statusLabel}`,
+      complaint.resolutionNotes
+        ? `*Resolution:* ${complaint.resolutionNotes}`
+        : null,
+      (complaint.resolvedAt || complaint.completedAt)
+        ? `*Resolved on:* ${new Date(complaint.resolvedAt || complaint.completedAt).toLocaleString()}`
+        : null,
+      ``,
+      `_Shared via Constro CMS`,
+    ];
+
+    const message = lines.filter((l) => l !== null).join("\n");
+    return `https://wa.me/?text=${encodeURIComponent(message)}`;
+  };
+
+  const handleShareOnWhatsApp = (complaint) => {
+    window.open(buildWhatsAppShareUrl(complaint), "_blank", "noopener,noreferrer");
   };
 
   const handleDownloadAllComplaints = async () => {
@@ -661,6 +689,14 @@ const ComplaintManagement = () => {
                       <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                     </button>
 
+                    <button
+                      onClick={() => handleShareOnWhatsApp(complaint)}
+                      className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                      title="Share on WhatsApp"
+                    >
+                      <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                    </button>
+
                     {complaint.status === "pending" && (
                       <button
                         onClick={() => openAssignModal(complaint)}
@@ -929,14 +965,24 @@ const ComplaintManagement = () => {
                     >
                       Complaint Details
                     </h3>
-                    <button
-                      onClick={closeDetailsModal}
-                      className={`p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${
-                        isDarkMode ? "text-gray-400" : "text-gray-600"
-                      }`}
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleShareOnWhatsApp(complaintDetails)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg text-green-600 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 dark:text-green-400 transition-colors"
+                        title="Share on WhatsApp"
+                      >
+                        <Share2 className="h-3.5 w-3.5" />
+                        Share
+                      </button>
+                      <button
+                        onClick={closeDetailsModal}
+                        className={`p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
