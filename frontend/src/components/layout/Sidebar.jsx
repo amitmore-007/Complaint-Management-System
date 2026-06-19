@@ -13,6 +13,7 @@ import {
   CheckCircle,
   BarChart3,
   Receipt,
+  Settings,
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import useAuthStore from "../../store/authStore";
@@ -114,6 +115,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             path: "/admin/technicians",
           },
           { icon: Package, label: "Asset Management", path: "/admin/assets" },
+          { icon: Settings, label: "Settings", path: "/admin/settings" },
         ];
       default:
         return [];

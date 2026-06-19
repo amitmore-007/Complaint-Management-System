@@ -10,7 +10,10 @@ const systemSettingSchema = new mongoose.Schema(
     },
     booleanValue: {
       type: Boolean,
-      required: true,
+    },
+    stringValue: {
+      type: String,
+      trim: true,
     },
     updatedByAdmin: {
       type: mongoose.Schema.Types.ObjectId,

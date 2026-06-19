@@ -75,6 +75,21 @@ export const complaintService = {
       );
       return data;
     },
+
+    getResolvedNotifyContact: async () => {
+      const { data } = await api.get(
+        endpoints.admin.settings.resolvedNotifyContact,
+      );
+      return data.setting;
+    },
+
+    updateResolvedNotifyContact: async ({ phone, name }) => {
+      const { data } = await api.patch(
+        endpoints.admin.settings.resolvedNotifyContact,
+        { phone, name },
+      );
+      return data.setting;
+    },
   },
 
   client: {
