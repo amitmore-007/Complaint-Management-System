@@ -29,6 +29,7 @@ import AdminAssets from "./pages/admin/Assets";
 import AdminCreateComplaint from "./pages/admin/CreateComplaint";
 import AdminReports from "./pages/admin/Reports";
 import AdminBilling from "./pages/admin/Billing";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 // Technician Pages
 import TechnicianDashboard from "./pages/technician/Dashboard";
@@ -300,6 +301,15 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
                   <AdminBilling />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/settings"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminSettings />
                 </ProtectedRoute>
               }
             />

@@ -21,6 +21,10 @@ import {
   getComplaintAutoAssignEnabled,
   setComplaintAutoAssignEnabled,
 } from "../utils/complaintAutoAssignSetting.js";
+import {
+  getResolvedNotifyContact,
+  setResolvedNotifyContact,
+} from "../utils/resolvedNotifyContactSetting.js";
 
 // ============================================
 // HELPER FUNCTIONS
@@ -561,6 +565,48 @@ export const updateComplaintAutoAssignSetting = async (req, res) => {
       success: false,
       message: "Internal server error",
     });
+  }
+};
+
+export const getResolvedNotifyContactSetting = async (req, res) => {
+  try {
+    const contact = await getResolvedNotifyContact();
+    res.status(200).json({ success: true, setting: contact });
+  } catch (error) {
+    console.error("Get resolved notify contact error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const updateResolvedNotifyContactSetting = async (req, res) => {
+  try {
+    const { phone, name } = req.body;
+
+    if (phone !== undefined && typeof phone !== "string") {
+      return res
+        .status(400)
+        .json({ success: false, message: "phone must be a string" });
+    }
+    if (name !== undefined && typeof name !== "string") {
+      return res
+        .status(400)
+        .json({ success: false, message: "name must be a string" });
+    }
+
+    const contact = await setResolvedNotifyContact({
+      phone,
+      name,
+      adminId: req.user.id,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Resolved notification contact updated successfully",
+      setting: contact,
+    });
+  } catch (error) {
+    console.error("Update resolved notify contact error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 

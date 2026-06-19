@@ -11,6 +11,7 @@ import { sendStatusUpdateNotification } from "../config/msg91.js";
 import { generateNextComplaintId } from "../utils/complaintId.js";
 import { autoAssignComplaintToDefaultTechnician } from "../utils/autoAssign.js";
 import { getComplaintAutoAssignEnabled } from "../utils/complaintAutoAssignSetting.js";
+import { getResolvedNotifyContact } from "../utils/resolvedNotifyContactSetting.js";
 
 const normalizeIndianPhone10Digits = (phoneNumber) => {
   if (!phoneNumber) return "";
@@ -585,8 +586,9 @@ export const updateComplaintStatus = async (req, res) => {
 
         // Also notify a fixed extra recipient when complaint is resolved
         if (status === "resolved") {
-          const extraRecipientName = process.env.RESOLVED_NOTIFY_NAME;
-          const extraRecipientPhoneRaw = process.env.RESOLVED_NOTIFY_PHONE;
+          const resolvedNotifyContact = await getResolvedNotifyContact();
+          const extraRecipientName = resolvedNotifyContact.name;
+          const extraRecipientPhoneRaw = resolvedNotifyContact.phone;
           const extraRecipientPhone10 = normalizeIndianPhone10Digits(
             extraRecipientPhoneRaw,
           );

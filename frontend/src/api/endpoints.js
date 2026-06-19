@@ -32,6 +32,9 @@ export const endpoints = {
       root: "/admin/billing",
       byId: (id) => `/admin/billing/${id}`,
     },
+    settings: {
+      resolvedNotifyContact: "/admin/settings/resolved-notify-contact",
+    },
   },
 
   client: {

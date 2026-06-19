@@ -19,6 +19,8 @@ import {
   createAdminComplaint,
   getComplaintAutoAssignSetting,
   updateComplaintAutoAssignSetting,
+  getResolvedNotifyContactSetting,
+  updateResolvedNotifyContactSetting,
 } from "../controllers/adminController.js";
 import { authenticateAdmin } from "../middleware/roleAuth.js";
 import {
@@ -88,6 +90,18 @@ router.patch(
   toggleUserStatus,
 );
 router.delete("/users/:userId", authenticateAdmin, deleteUser);
+
+// settings
+router.get(
+  "/settings/resolved-notify-contact",
+  authenticateAdmin,
+  getResolvedNotifyContactSetting,
+);
+router.patch(
+  "/settings/resolved-notify-contact",
+  authenticateAdmin,
+  updateResolvedNotifyContactSetting,
+);
 
 // billing
 router.get("/billing", authenticateAdmin, adminListBillingRecords);

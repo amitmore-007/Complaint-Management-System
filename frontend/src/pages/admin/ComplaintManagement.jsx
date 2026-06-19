@@ -27,8 +27,6 @@ import {
   useComplaints,
   useComplaint,
   useAssignComplaint,
-  useComplaintAutoAssignSetting,
-  useUpdateComplaintAutoAssignSetting,
 } from "../../hooks/useComplaints";
 import { useAdminTechnicians } from "../../hooks/useAdmin";
 import STORE_OPTIONS from "../../utils/storeOptions";
@@ -58,9 +56,6 @@ const ComplaintManagement = () => {
     { enabled: showDetailsModal && !!selectedComplaintId, role: "admin" },
   );
   const assignComplaintMutation = useAssignComplaint();
-  const { data: autoAssignEnabled = true, isLoading: isAutoAssignLoading } =
-    useComplaintAutoAssignSetting();
-  const updateAutoAssignMutation = useUpdateComplaintAutoAssignSetting();
   const isAssigning = assignComplaintMutation.isPending;
 
   const { data: techniciansData } = useAdminTechnicians({
@@ -199,25 +194,6 @@ const ComplaintManagement = () => {
   const closeDetailsModal = () => {
     setShowDetailsModal(false);
     setSelectedComplaintId(null);
-  };
-
-  const handleToggleAutoAssign = async () => {
-    if (updateAutoAssignMutation.isPending || isAutoAssignLoading) return;
-
-    const nextValue = !autoAssignEnabled;
-    try {
-      await updateAutoAssignMutation.mutateAsync(nextValue);
-      toast.success(
-        nextValue
-          ? "Auto assign enabled. New complaints will be auto-assigned."
-          : "Auto assign disabled. You can now assign complaints manually.",
-      );
-    } catch (error) {
-      toast.error(
-        error?.response?.data?.message ||
-          "Failed to update auto assign setting",
-      );
-    }
   };
 
   const handleDownloadAllComplaints = async () => {
@@ -431,53 +407,20 @@ const ComplaintManagement = () => {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-between">
           <button
             type="button"
             onClick={handleDownloadAllComplaints}
             disabled={isExportingComplaints}
-            className="inline-flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {isExportingComplaints ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Download className="h-4 w-4" />
             )}
-            <span>Download All Complaints</span>
+            <span>Download All</span>
           </button>
-
-          <div className="flex items-center gap-3 self-end sm:self-auto">
-            <p
-              className={`text-sm font-semibold ${
-                isDarkMode ? "text-gray-200" : "text-gray-800"
-              }`}
-            >
-              Auto assign complaints
-            </p>
-
-            <button
-              type="button"
-              onClick={handleToggleAutoAssign}
-              disabled={
-                isAutoAssignLoading || updateAutoAssignMutation.isPending
-              }
-              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed ${
-                autoAssignEnabled
-                  ? "bg-green-500"
-                  : isDarkMode
-                    ? "bg-gray-600"
-                    : "bg-gray-300"
-              }`}
-              aria-label="Toggle complaint auto assign"
-              title="Toggle complaint auto assign"
-            >
-              <span
-                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-200 ${
-                  autoAssignEnabled ? "translate-x-6" : "translate-x-1"
-                }`}
-              />
-            </button>
-          </div>
         </div>
 
         {/* Filters */}
