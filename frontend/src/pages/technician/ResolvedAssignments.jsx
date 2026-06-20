@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Eye,
   FileText,
+  Share2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
@@ -45,6 +46,30 @@ const ResolvedAssignments = () => {
   const isBillingPending = (complaint) => {
     if (!complaint?._id) return false;
     return !billedComplaintIds.has(String(complaint._id));
+  };
+
+  const buildWhatsAppShareUrl = (complaint) => {
+    const technician = complaint.assignedTechnician?.name;
+    const statusLabel = complaint.status.replace("-", " ").toUpperCase();
+    const lines = [
+      `*Complaint Update — CMS*`,
+      ``,
+      `*Issue:* ${complaint.title}`,
+      `*Status:* ${statusLabel}`,
+      technician ? `*Technician:* ${technician}` : null,
+      complaint.resolutionNotes ? `*Resolution:* ${complaint.resolutionNotes}` : null,
+      (complaint.resolvedAt || complaint.completedAt)
+        ? `*Resolved on:* ${new Date(complaint.resolvedAt || complaint.completedAt).toLocaleString()}`
+        : null,
+      ``,
+      `_Shared via Constro CMS_`,
+    ];
+    const message = lines.filter((l) => l !== null).join("\n");
+    return `https://wa.me/?text=${encodeURIComponent(message)}`;
+  };
+
+  const handleShareOnWhatsApp = (complaint) => {
+    window.open(buildWhatsAppShareUrl(complaint), "_blank", "noopener,noreferrer");
   };
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
@@ -507,6 +532,14 @@ const ResolvedAssignments = () => {
                           <span>Submit Billing</span>
                         </button>
                       )}
+
+                      <button
+                        onClick={() => handleShareOnWhatsApp(complaint)}
+                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
+                      >
+                        <Share2 className="h-4 w-4" />
+                        <span>Share</span>
+                      </button>
 
                       <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg">
                         <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
