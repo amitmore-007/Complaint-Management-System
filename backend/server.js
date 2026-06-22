@@ -15,6 +15,7 @@ import complaintRoutes from "./routes/complaintRoutes.js";
 import equipmentRoutes from "./routes/equipmentRoutes.js";
 import statsRoutes from "./routes/statsRoutes.js";
 import storeRoutes from "./routes/storeRoutes.js";
+import attendanceRoutes from "./routes/attendanceRoutes.js";
 
 // For ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -111,6 +112,7 @@ app.use("/api/complaints", complaintRoutes);
 app.use("/api/equipment", equipmentRoutes);
 app.use("/api/stores", storeRoutes);
 app.use("/api/stats", statsRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {

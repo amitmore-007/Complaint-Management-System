@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import {
   BarChart3,
   Building2,
+  CalendarCheck,
   Filter,
   Hourglass,
   LineChart,
@@ -18,6 +19,7 @@ import ComplaintStatusFunnelReportCard from "./components/ComplaintStatusFunnelR
 import ComplaintStoreLeaderboardReportCard from "./components/ComplaintStoreLeaderboardReportCard";
 import ComplaintTimeToResolveReportCard from "./components/ComplaintTimeToResolveReportCard";
 import ComplaintAgingReportCard from "./components/ComplaintAgingReportCard";
+import AttendanceReportCard from "./components/AttendanceReportCard";
 
 const ReportsPage = () => {
   const { isDarkMode } = useTheme();
@@ -31,6 +33,7 @@ const ReportsPage = () => {
       { key: "timeToResolve", label: "Time to Resolve", icon: Timer },
       { key: "aging", label: "Aging", icon: Hourglass },
       { key: "technicians", label: "Technicians", icon: BarChart3 },
+      { key: "attendance", label: "Attendance", icon: CalendarCheck },
     ],
     []
   );
@@ -72,6 +75,12 @@ const ReportsPage = () => {
           title: "Technicians",
           description:
             "Technician performance analytics for the selected period.",
+        };
+      case "attendance":
+        return {
+          title: "Attendance",
+          description:
+            "All users' recorded work and break timings for the selected date range.",
         };
       default:
         return { title: "Reports", description: "" };
@@ -133,6 +142,9 @@ const ReportsPage = () => {
         </div>
         <div className={activeTab === "technicians" ? "block" : "hidden"}>
           <TechniciansReportCard />
+        </div>
+        <div className={activeTab === "attendance" ? "block" : "hidden"}>
+          <AttendanceReportCard />
         </div>
       </div>
     </DashboardLayout>

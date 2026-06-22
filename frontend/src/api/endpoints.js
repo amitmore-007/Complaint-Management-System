@@ -98,6 +98,17 @@ export const endpoints = {
     managers: (storeId) => `/stores/${storeId}/managers`,
   },
 
+  attendance: {
+    checkIn: '/attendance/check-in',
+    checkOut: '/attendance/check-out',
+    breakStart: '/attendance/break/start',
+    breakEnd: '/attendance/break/end',
+    today: '/attendance/today',
+    history: '/attendance/history',
+    summary: '/attendance/summary',
+    all: '/attendance',
+  },
+
   stats: {
     complaintsCreatedVsResolved: "/stats/complaints/created-vs-resolved",
     complaintsCreatedVsResolvedDrilldown:

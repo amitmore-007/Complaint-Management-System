@@ -31,6 +31,10 @@ import AdminReports from "./pages/admin/Reports";
 import AdminBilling from "./pages/admin/Billing";
 import AdminSettings from "./pages/admin/AdminSettings";
 
+// Attendance Pages
+import MyAttendance from "./pages/attendance/MyAttendance";
+import AttendanceManagement from "./pages/admin/AttendanceManagement";
+
 // Technician Pages
 import TechnicianDashboard from "./pages/technician/Dashboard";
 import TechnicianAssets from "./pages/technician/Assets";
@@ -314,6 +318,24 @@ function App() {
               }
             />
 
+            <Route
+              path="/admin/attendance"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AttendanceManagement />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/my-attendance"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <MyAttendance />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Technician Routes */}
             <Route
               path="/technician/dashboard"
@@ -374,6 +396,15 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["technician"]}>
                   <TechnicianBilling />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/technician/attendance"
+              element={
+                <ProtectedRoute allowedRoles={["technician"]}>
+                  <MyAttendance />
                 </ProtectedRoute>
               }
             />

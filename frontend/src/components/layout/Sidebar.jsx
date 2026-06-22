@@ -14,6 +14,8 @@ import {
   BarChart3,
   Receipt,
   Settings,
+  Clock,
+  CalendarCheck,
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import useAuthStore from "../../store/authStore";
@@ -80,6 +82,11 @@ const Sidebar = ({ isOpen, onClose }) => {
             label: "Asset Management",
             path: "/technician/assets",
           },
+          {
+            icon: Clock,
+            label: "My Attendance",
+            path: "/technician/attendance",
+          },
         ];
       case "admin":
         return [
@@ -116,6 +123,8 @@ const Sidebar = ({ isOpen, onClose }) => {
           },
           { icon: Package, label: "Asset Management", path: "/admin/assets" },
           { icon: Settings, label: "Settings", path: "/admin/settings" },
+          { icon: CalendarCheck, label: "Attendance", path: "/admin/attendance" },
+          { icon: Clock, label: "My Attendance", path: "/admin/my-attendance" },
         ];
       default:
         return [];

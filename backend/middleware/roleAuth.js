@@ -76,6 +76,49 @@ export const authenticateTechnician = authenticateRole("technician");
 // authenticate as admin
 export const authenticateAdmin = authenticateRole("admin");
 
+// authenticate any valid role (admin, technician, client)
+export const authenticateAny = async (req, res, next) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'Access token required' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      return res.status(403).json({ success: false, message: 'Invalid or expired token' });
+    }
+
+    const { userId, role } = decoded;
+    let user;
+
+    if (role === 'admin') {
+      const Admin = (await import('../models/Admin.js')).default;
+      user = await Admin.findById(userId);
+    } else if (role === 'client') {
+      const Client = (await import('../models/Client.js')).default;
+      user = await Client.findById(userId);
+    } else if (role === 'technician') {
+      const Technician = (await import('../models/Technician.js')).default;
+      user = await Technician.findById(userId);
+    }
+
+    if (!user || !user.isActive) {
+      return res.status(401).json({ success: false, message: 'Invalid or inactive user' });
+    }
+
+    req.user = { id: user._id, role, ...user.toObject() };
+    next();
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    return res.status(403).json({ success: false, message: 'Authentication failed' });
+  }
+};
+
 // authorize multiple roles
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
