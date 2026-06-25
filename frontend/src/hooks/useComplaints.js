@@ -204,6 +204,26 @@ export const useAssignComplaint = () => {
   });
 };
 
+// Reassign complaint (Admin) — for already-assigned or in-progress complaints
+export const useReassignComplaint = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ complaintId, technicianId }) => {
+      return complaintService.admin.reassign({ complaintId, technicianId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: complaintKeys.technician() });
+      queryClient.invalidateQueries({
+        queryKey: dashboardKeys.technicianAssignments(),
+      });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
+    },
+  });
+};
+
 export const useComplaintAutoAssignSetting = () => {
   return useQuery({
     queryKey: complaintKeys.autoAssignSetting(),

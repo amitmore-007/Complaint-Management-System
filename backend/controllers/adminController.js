@@ -516,6 +516,138 @@ export const assignComplaint = async (req, res) => {
   }
 };
 
+// reassign complaint to a different technician
+export const reassignComplaint = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { technicianId } = req.body;
+    const adminId = req.user.id;
+
+    if (!technicianId) {
+      return res.status(400).json({
+        success: false,
+        message: "Technician ID is required",
+      });
+    }
+
+    const complaint = await Complaint.findById(id).populate(
+      "client",
+      "name phoneNumber",
+    );
+    if (!complaint) {
+      return res.status(404).json({
+        success: false,
+        message: "Complaint not found",
+      });
+    }
+
+    if (!["assigned", "in-progress"].includes(complaint.status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Only assigned or in-progress complaints can be reassigned",
+      });
+    }
+
+    const technician = await Technician.findById(technicianId);
+    if (!technician) {
+      return res.status(404).json({
+        success: false,
+        message: "Technician not found",
+      });
+    }
+    if (!technician.isActive) {
+      return res.status(400).json({
+        success: false,
+        message: "Technician is not active",
+      });
+    }
+
+    const previousTechnicianId = complaint.assignedTechnician
+      ? String(complaint.assignedTechnician)
+      : null;
+    const isNewTechnician = previousTechnicianId !== String(technicianId);
+
+    // Adjust activeAssignments counters
+    if (isNewTechnician) {
+      if (previousTechnicianId) {
+        await Technician.findByIdAndUpdate(previousTechnicianId, {
+          $inc: { activeAssignments: -1 },
+        });
+      }
+      await Technician.findByIdAndUpdate(technicianId, {
+        $inc: { activeAssignments: 1 },
+      });
+    }
+
+    // Reset complaint to assigned state for the new technician
+    complaint.assignedTechnician = technicianId;
+    complaint.assignedBy = adminId;
+    complaint.assignedAt = new Date();
+    complaint.status = "assigned";
+    complaint.startedAt = null;
+
+    await complaint.save();
+
+    // Notify the new technician
+    if (technician.phoneNumber) {
+      try {
+        const notificationResult = await sendAssignmentNotification(
+          technician.phoneNumber,
+          technician.name,
+          complaint.complaintId,
+          complaint.location || "",
+          complaint.title || "",
+        );
+
+        const notification = new Notification({
+          complaint: complaint._id,
+          recipient: technician.phoneNumber,
+          type: "assignment",
+          message: `Complaint ${complaint.complaintId} reassigned to ${technician.name}`,
+          status: notificationResult.success ? "sent" : "failed",
+          messageId: notificationResult.messageId,
+          error: notificationResult.success ? null : notificationResult.error,
+          sentAt: notificationResult.success ? new Date() : null,
+        });
+
+        await notification.save();
+      } catch (notificationError) {
+        console.error("❌ Reassign notification error:", notificationError);
+
+        const notification = new Notification({
+          complaint: complaint._id,
+          recipient: technician.phoneNumber,
+          type: "assignment",
+          message: `Complaint ${complaint.complaintId} reassigned to ${technician.name}`,
+          status: "failed",
+          error: notificationError.message,
+        });
+
+        await notification.save();
+      }
+    }
+
+    await complaint.populate([
+      { path: "client", select: "name phoneNumber" },
+      { path: "assignedTechnician", select: "name phoneNumber" },
+      { path: "assignedBy", select: "name" },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: "Complaint reassigned successfully",
+      complaint,
+    });
+  } catch (error) {
+    console.error("Reassign complaint error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
 export const getComplaintAutoAssignSetting = async (req, res) => {
   try {
     const enabled = await getComplaintAutoAssignEnabled();

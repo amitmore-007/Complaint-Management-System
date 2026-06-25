@@ -53,6 +53,14 @@ export const complaintService = {
       return data;
     },
 
+    reassign: async ({ complaintId, technicianId }) => {
+      const { data } = await api.patch(
+        endpoints.admin.complaints.reassign(complaintId),
+        { technicianId },
+      );
+      return data;
+    },
+
     getAutoAssignSetting: async () => {
       const { data } = await api.get(endpoints.admin.complaints.autoAssign);
       return Boolean(data?.setting?.autoAssignEnabled);

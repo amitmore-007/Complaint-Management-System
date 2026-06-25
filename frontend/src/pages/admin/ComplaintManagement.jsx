@@ -28,6 +28,7 @@ import {
   useComplaints,
   useComplaint,
   useAssignComplaint,
+  useReassignComplaint,
 } from "../../hooks/useComplaints";
 import { useAdminTechnicians } from "../../hooks/useAdmin";
 import STORE_OPTIONS from "../../utils/storeOptions";
@@ -44,6 +45,7 @@ const ComplaintManagement = () => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTechnician, setSelectedTechnician] = useState("");
+  const [isReassignMode, setIsReassignMode] = useState(false);
   const [isExportingComplaints, setIsExportingComplaints] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -57,7 +59,9 @@ const ComplaintManagement = () => {
     { enabled: showDetailsModal && !!selectedComplaintId, role: "admin" },
   );
   const assignComplaintMutation = useAssignComplaint();
-  const isAssigning = assignComplaintMutation.isPending;
+  const reassignComplaintMutation = useReassignComplaint();
+  const isAssigning =
+    assignComplaintMutation.isPending || reassignComplaintMutation.isPending;
 
   const { data: techniciansData } = useAdminTechnicians({
     page: 1,
@@ -161,27 +165,45 @@ const ComplaintManagement = () => {
       return;
     }
 
-    if (assignComplaintMutation.isPending) return;
+    if (isAssigning) return;
 
     try {
-      await assignComplaintMutation.mutateAsync({
-        complaintId: selectedAssignComplaint._id,
-        technicianId: selectedTechnician,
-      });
+      if (isReassignMode) {
+        await reassignComplaintMutation.mutateAsync({
+          complaintId: selectedAssignComplaint._id,
+          technicianId: selectedTechnician,
+        });
+        toast.success("Complaint reassigned successfully!");
+      } else {
+        await assignComplaintMutation.mutateAsync({
+          complaintId: selectedAssignComplaint._id,
+          technicianId: selectedTechnician,
+        });
+        toast.success("Complaint assigned successfully!");
+      }
 
-      toast.success("Complaint assigned successfully!");
       setShowAssignModal(false);
       setSelectedTechnician("");
+      setIsReassignMode(false);
     } catch (error) {
       console.error("Failed to assign complaint:", error);
       toast.error(
-        error.response?.data?.message || "Failed to assign complaint",
+        error.response?.data?.message ||
+          (isReassignMode ? "Failed to reassign complaint" : "Failed to assign complaint"),
       );
     }
   };
 
   const openAssignModal = (complaint) => {
+    setIsReassignMode(false);
     setSelectedAssignComplaint(complaint);
+    setShowAssignModal(true);
+  };
+
+  const openReassignModal = (complaint) => {
+    setIsReassignMode(true);
+    setSelectedAssignComplaint(complaint);
+    setSelectedTechnician("");
     setShowAssignModal(true);
   };
 
@@ -194,6 +216,7 @@ const ComplaintManagement = () => {
     setShowAssignModal(false);
     setSelectedAssignComplaint(null);
     setSelectedTechnician("");
+    setIsReassignMode(false);
   };
 
   const closeDetailsModal = () => {
@@ -711,6 +734,17 @@ const ComplaintManagement = () => {
                         <span>Assign</span>
                       </button>
                     )}
+
+                    {(complaint.status === "assigned" ||
+                      complaint.status === "in-progress") && (
+                      <button
+                        onClick={() => openReassignModal(complaint)}
+                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 flex items-center space-x-2 text-sm whitespace-nowrap"
+                      >
+                        <UserPlus className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span>Reassign</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -816,7 +850,7 @@ const ComplaintManagement = () => {
                         isDarkMode ? "text-white" : "text-gray-900"
                       }`}
                     >
-                      Assign Technician
+                      {isReassignMode ? "Reassign Technician" : "Assign Technician"}
                     </h3>
                     <button
                       onClick={closeAssignModal}
@@ -831,7 +865,7 @@ const ComplaintManagement = () => {
                   {selectedAssignComplaint && (
                     <div className="mb-6">
                       <h4
-                        className={`font-medium mb-2 ${
+                        className={`font-medium mb-1 ${
                           isDarkMode ? "text-white" : "text-gray-900"
                         }`}
                       >
@@ -850,6 +884,28 @@ const ComplaintManagement = () => {
                         ({selectedAssignComplaint.creatorType || "client"}) |
                         Location: {selectedAssignComplaint.location}
                       </p>
+
+                      {isReassignMode &&
+                        selectedAssignComplaint.assignedTechnician && (
+                          <div
+                            className={`mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                              isDarkMode
+                                ? "bg-amber-900/30 text-amber-300 border border-amber-700/40"
+                                : "bg-amber-50 text-amber-800 border border-amber-200"
+                            }`}
+                          >
+                            <UserPlus className="h-4 w-4 shrink-0" />
+                            <span>
+                              Currently assigned to{" "}
+                              <strong>
+                                {selectedAssignComplaint.assignedTechnician.name}
+                              </strong>
+                              . Selecting a new technician will reassign and
+                              reset the status to{" "}
+                              <strong>Assigned</strong>.
+                            </span>
+                          </div>
+                        )}
                     </div>
                   )}
 
@@ -917,7 +973,7 @@ const ComplaintManagement = () => {
                       ) : (
                         <>
                           <Check className="h-5 w-5" />
-                          <span>Assign</span>
+                          <span>{isReassignMode ? "Reassign" : "Assign"}</span>
                         </>
                       )}
                     </button>

@@ -6,6 +6,7 @@ import {
   getCurrentAdmin,
   getAllComplaints,
   assignComplaint,
+  reassignComplaint,
   getAllClients,
   getAllTechnicians,
   toggleUserStatus,
@@ -72,6 +73,7 @@ router.post(
   createAdminComplaint,
 );
 router.post("/complaints/assign", authenticateAdmin, assignComplaint);
+router.patch("/complaints/:id/reassign", authenticateAdmin, reassignComplaint);
 
 // user management - clients
 router.get("/clients", authenticateAdmin, getAllClients);
