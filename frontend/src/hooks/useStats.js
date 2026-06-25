@@ -26,6 +26,11 @@ export const statsKeys = {
     "store-leaderboard",
     params,
   ],
+  complaintsStoreLeaderboardDrilldown: (params = {}) => [
+    ...statsKeys.complaintsRoot(),
+    "store-leaderboard-drilldown",
+    params,
+  ],
   complaintsTimeToResolve: (params = {}) => [
     ...statsKeys.complaintsRoot(),
     "time-to-resolve",
@@ -93,6 +98,20 @@ export const useComplaintsStoreLeaderboardStats = (params, options = {}) => {
     queryKey: statsKeys.complaintsStoreLeaderboard(params || {}),
     queryFn: () => statsService.complaints.storeLeaderboard(params || {}),
     enabled: options.enabled ?? Boolean(params),
+  });
+};
+
+export const useComplaintsStoreLeaderboardDrilldownStats = (
+  params,
+  options = {},
+) => {
+  return useQuery({
+    ...reportQueryDefaults,
+    ...options,
+    queryKey: statsKeys.complaintsStoreLeaderboardDrilldown(params || {}),
+    queryFn: () =>
+      statsService.complaints.storeLeaderboardDrilldown(params || {}),
+    enabled: options.enabled ?? Boolean(params?.storeName),
   });
 };
 

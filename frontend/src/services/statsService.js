@@ -46,6 +46,14 @@ export const statsService = {
       return res.data;
     },
 
+    storeLeaderboardDrilldown: async (params = {}) => {
+      const res = await api.get(
+        endpoints.stats.complaintsStoreLeaderboardDrilldown,
+        { params: cleanParams(params) },
+      );
+      return res.data;
+    },
+
     timeToResolve: async (params = {}) => {
       const res = await api.get(endpoints.stats.complaintsTimeToResolve, {
         params: cleanParams(params),

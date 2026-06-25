@@ -8,6 +8,7 @@ import { useComplaintsStoreLeaderboardStats } from "../../../../hooks/useStats";
 import Card from "./Card";
 import DateRangePicker from "./DateRangePicker";
 import ComplaintsChart from "./ComplaintsChart";
+import ComplaintsStoreLeaderboardDrilldownDrawer from "./ComplaintsStoreLeaderboardDrilldownDrawer";
 
 import {
   addDays,
@@ -63,6 +64,7 @@ const ComplaintStoreLeaderboardReportCard = () => {
   });
 
   const [appliedQuery, setAppliedQuery] = useState(null);
+  const [drilldown, setDrilldown] = useState(null);
 
   const rangeQuery = useMemo(() => {
     const interval = filters?.interval || "day";
@@ -118,6 +120,30 @@ const ComplaintStoreLeaderboardReportCard = () => {
   const showScrollHint = useMemo(
     () => rows.length > (isSmallScreen ? 6 : 10),
     [rows.length, isSmallScreen]
+  );
+
+  const chartEvents = useMemo(
+    () => ({
+      click: (params) => {
+        if (params?.componentType !== "series") return;
+        const storeName = params?.name;
+        if (!storeName || !appliedQuery) return;
+
+        const seriesName = String(params?.seriesName || "").toLowerCase();
+        let defaultTab = "total";
+        if (seriesName === "resolved") defaultTab = "resolved";
+        else if (seriesName === "unresolved") defaultTab = "unresolved";
+
+        setDrilldown({
+          storeName,
+          from: appliedQuery.from,
+          to: appliedQuery.to,
+          tz: appliedQuery.tz,
+          defaultTab,
+        });
+      },
+    }),
+    [appliedQuery]
   );
 
   const option = useMemo(() => {
@@ -278,6 +304,7 @@ const ComplaintStoreLeaderboardReportCard = () => {
         {
           name: "Total",
           type: "bar",
+          cursor: "pointer",
           barMaxWidth: 26,
           barGap: "20%",
           barCategoryGap: "45%",
@@ -296,6 +323,7 @@ const ComplaintStoreLeaderboardReportCard = () => {
         {
           name: "Resolved",
           type: "bar",
+          cursor: "pointer",
           barMaxWidth: 26,
           barGap: "20%",
           barCategoryGap: "45%",
@@ -314,6 +342,7 @@ const ComplaintStoreLeaderboardReportCard = () => {
         {
           name: "Unresolved",
           type: "bar",
+          cursor: "pointer",
           barMaxWidth: 26,
           barGap: "20%",
           barCategoryGap: "45%",
@@ -389,12 +418,25 @@ const ComplaintStoreLeaderboardReportCard = () => {
           </p>
         ) : null}
 
+        <p
+          className={`${isDarkMode ? "text-gray-400" : "text-gray-600"} text-xs`}
+        >
+          Click any bar to view the complaints for that store.
+        </p>
+
         <ComplaintsChart
           option={option}
           loading={loading}
           isDarkMode={isDarkMode}
           chartRenderer={chartRenderer}
           heightClassName="h-[360px] sm:h-[520px]"
+          onEvents={chartEvents}
+        />
+
+        <ComplaintsStoreLeaderboardDrilldownDrawer
+          drilldown={drilldown}
+          onClose={() => setDrilldown(null)}
+          isDarkMode={isDarkMode}
         />
       </div>
     </Card>

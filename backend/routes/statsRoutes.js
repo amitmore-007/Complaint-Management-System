@@ -5,6 +5,7 @@ import {
   getComplaintCreatedVsResolvedDrilldownStats,
   getComplaintStatusFunnelStats,
   getComplaintStoreLeaderboardStats,
+  getComplaintStoreLeaderboardDrilldownStats,
   getComplaintTimeToResolveStats,
   getComplaintAgingStats,
   getTechnicianAssignedVsResolvedStats,
@@ -34,6 +35,12 @@ router.get(
   "/complaints/store-leaderboard",
   authenticateAdmin,
   getComplaintStoreLeaderboardStats,
+);
+
+router.get(
+  "/complaints/store-leaderboard/drilldown",
+  authenticateAdmin,
+  getComplaintStoreLeaderboardDrilldownStats,
 );
 
 router.get(

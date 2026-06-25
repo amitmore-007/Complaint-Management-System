@@ -374,6 +374,50 @@ export const getComplaintsAgingBuckets = async ({ from, to, timezone }) => {
   return order.map((b) => ({ bucket: b, count: map.get(b) || 0 }));
 };
 
+export const getComplaintsStoreLeaderboardDrilldown = async ({
+  storeName,
+  from,
+  to,
+}) => {
+  const locationKey = String(storeName || "")
+    .trim()
+    .toLowerCase();
+
+  const complaintFields =
+    "complaintId title description location priority status createdAt completedAt resolvedAt assignedAt startedAt";
+  const populateOptions = [
+    { path: "client", select: "name phoneNumber" },
+    { path: "createdByTechnician", select: "name phoneNumber" },
+    { path: "createdByAdmin", select: "name phoneNumber" },
+    { path: "assignedTechnician", select: "name phoneNumber" },
+    { path: "assignedBy", select: "name" },
+    { path: "store", select: "name managers" },
+  ];
+
+  const complaints = await Complaint.find({
+    createdAt: { $gte: from, $lt: to },
+    $expr: {
+      $eq: [
+        {
+          $toLower: {
+            $trim: { input: { $ifNull: ["$location", ""] } },
+          },
+        },
+        locationKey,
+      ],
+    },
+  })
+    .select(complaintFields)
+    .populate(populateOptions)
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const resolved = complaints.filter((c) => c.status === "resolved");
+  const unresolved = complaints.filter((c) => c.status !== "resolved");
+
+  return { total: complaints, resolved, unresolved };
+};
+
 export const getTechniciansAssignedVsResolved = async ({ from, to }) => {
   const [result] = await Complaint.aggregate([
     {

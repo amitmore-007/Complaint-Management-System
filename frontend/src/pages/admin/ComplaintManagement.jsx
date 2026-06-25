@@ -84,7 +84,11 @@ const ComplaintManagement = () => {
     let filtered = complaints;
 
     // Filter by status
-    if (statusFilter !== "all") {
+    if (statusFilter === "unresolved") {
+      filtered = filtered.filter(
+        (complaint) => complaint.status !== "resolved",
+      );
+    } else if (statusFilter !== "all") {
       filtered = filtered.filter(
         (complaint) => complaint.status === statusFilter,
       );
@@ -485,17 +489,18 @@ const ComplaintManagement = () => {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-2 sm:py-3 border rounded-xl transition-all duration-200 text-sm sm:text-base ${
+                  className={`w-full pl-10 pr-4 py-2 sm:py-3 border rounded-xl transition-all duration-200 text-sm sm:text-base cursor-pointer ${
                     isDarkMode
                       ? "bg-gray-700 border-gray-600 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   }`}
                 >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="assigned">Assigned</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="resolved">Resolved</option>
+                  <option className="cursor-pointer" value="all">All Status</option>
+                  <option className="cursor-pointer" value="unresolved">Unresolved</option>
+                  <option className="cursor-pointer" value="pending">Pending</option>
+                  <option className="cursor-pointer" value="assigned">Assigned</option>
+                  <option className="cursor-pointer" value="in-progress">In Progress</option>
+                  <option className="cursor-pointer" value="resolved">Resolved</option>
                 </select>
               </div>
             </div>
@@ -505,17 +510,17 @@ const ComplaintManagement = () => {
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className={`w-full px-4 py-2 sm:py-3 border rounded-xl transition-all duration-200 text-sm sm:text-base ${
+                className={`w-full px-4 py-2 sm:py-3 border rounded-xl transition-all duration-200 text-sm sm:text-base cursor-pointer ${
                   isDarkMode
                     ? "bg-gray-700 border-gray-600 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 }`}
               >
-                <option value="all">All Priority</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
+                <option className="cursor-pointer" value="all">All Priority</option>
+                <option className="cursor-pointer" value="low">Low</option>
+                <option className="cursor-pointer" value="medium">Medium</option>
+                <option className="cursor-pointer" value="high">High</option>
+                <option className="cursor-pointer" value="urgent">Urgent</option>
               </select>
             </div>
 

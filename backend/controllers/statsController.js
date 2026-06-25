@@ -1,12 +1,14 @@
 import {
   getIntervalAndRange,
   getPeriodBucketRange,
+  getStatsRange,
 } from "../utils/dateRange.js";
 import {
   getComplaintsCreatedVsResolved,
   getComplaintsCreatedVsResolvedDrilldown,
   getComplaintsStatusFunnel,
   getComplaintsStoreLeaderboard,
+  getComplaintsStoreLeaderboardDrilldown,
   getComplaintsTimeToResolve,
   getComplaintsAgingBuckets,
   getTechniciansAssignedVsResolved,
@@ -152,6 +154,42 @@ export const getComplaintStoreLeaderboardStats = async (req, res) => {
     });
   } catch (error) {
     console.error("Store leaderboard stats error:", error);
+    res.status(error.status || 500).json({
+      success: false,
+      message: error.message || "Internal server error",
+    });
+  }
+};
+
+export const getComplaintStoreLeaderboardDrilldownStats = async (req, res) => {
+  try {
+    const { storeName, from, to, tz } = req.query;
+
+    if (!storeName || String(storeName).trim() === "") {
+      return res
+        .status(400)
+        .json({ success: false, message: "storeName is required" });
+    }
+
+    const range = getStatsRange({ from, to, tz });
+
+    const data = await getComplaintsStoreLeaderboardDrilldown({
+      storeName,
+      from: range.from,
+      to: range.to,
+    });
+
+    res.status(200).json({
+      success: true,
+      range: {
+        timezone: range.timezone,
+        from: range.fromISO,
+        to: range.toISO,
+      },
+      data,
+    });
+  } catch (error) {
+    console.error("Store leaderboard drilldown stats error:", error);
     res.status(error.status || 500).json({
       success: false,
       message: error.message || "Internal server error",
