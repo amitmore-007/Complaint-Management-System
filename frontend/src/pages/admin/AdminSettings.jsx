@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { Zap, Bell, Phone, User, Save, CheckCircle, Settings } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
@@ -14,8 +14,8 @@ const SettingCard = ({ icon: Icon, iconBg, iconColor, title, description, childr
   const { isDarkMode } = useTheme();
   return (
     <div
-      className={`rounded-2xl border p-6 shadow-sm transition-shadow hover:shadow-md ${
-        isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+      className={`rounded-2xl border p-6 transition-colors ${
+        isDarkMode ? "bg-[#111] border-white/10" : "bg-white border-gray-200"
       }`}
     >
       <div className="flex items-start gap-4 mb-5">
@@ -106,10 +106,10 @@ const AdminSettings = () => {
     }
   };
 
-  const inputClass = `w-full px-3.5 py-2.5 text-sm border rounded-xl transition-all duration-200 ${
+  const inputClass = `w-full px-3.5 py-2.5 text-sm border rounded-lg transition-all duration-200 ${
     isDarkMode
-      ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-      : "bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent focus:bg-white"
+      ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      : "bg-white border-gray-200 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
   } disabled:opacity-50`;
 
   return (
@@ -119,7 +119,7 @@ const AdminSettings = () => {
         <div className="flex items-center gap-3">
           <div
             className={`p-2.5 rounded-xl ${
-              isDarkMode ? "bg-gray-800" : "bg-gray-100"
+              isDarkMode ? "bg-white/10" : "bg-gray-100"
             }`}
           >
             <Settings
@@ -206,7 +206,7 @@ const AdminSettings = () => {
                   ? "bg-blue-900/20 text-blue-400"
                   : "bg-blue-50 text-blue-600"
                 : isDarkMode
-                  ? "bg-gray-700/50 text-gray-400"
+                  ? "bg-white/10 text-gray-500"
                   : "bg-gray-100 text-gray-500"
             }`}
           >
@@ -313,7 +313,7 @@ const AdminSettings = () => {
               <div
                 className={`flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${
                   isDarkMode
-                    ? "bg-gray-700/50 text-gray-400"
+                    ? "bg-white/10 text-gray-500"
                     : "bg-gray-100 text-gray-500"
                 }`}
               >
@@ -354,3 +354,5 @@ const AdminSettings = () => {
 };
 
 export default AdminSettings;
+
+

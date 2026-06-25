@@ -7,7 +7,7 @@ const TechnicianTable = ({ rows, isDarkMode }) => {
   return (
     <div
       className={`rounded-2xl border ${
-        isDarkMode ? "border-gray-800" : "border-gray-200"
+        isDarkMode ? "border-white/10" : "border-gray-200"
       } overflow-x-auto`}
     >
       <table className="w-full text-sm">
@@ -38,7 +38,7 @@ const TechnicianTable = ({ rows, isDarkMode }) => {
             <tr
               className={
                 isDarkMode
-                  ? "border-t border-gray-800 text-gray-400"
+                  ? "border-t border-white/10 text-gray-400"
                   : "border-t border-gray-200 text-gray-500"
               }
             >

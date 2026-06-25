@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText,
@@ -262,10 +262,10 @@ const AdminDashboard = () => {
             >
               <Link to={card.link}>
                 <div
-                  className={`group relative p-6 rounded-2xl border transition-all duration-300 hover:shadow-2xl overflow-hidden ${
+                  className={`group relative p-6 rounded-2xl border transition-all duration-300 overflow-hidden ${
                     isDarkMode
-                      ? "bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700 hover:border-gray-600 hover:shadow-blue-500/10"
-                      : "bg-white border-gray-200 hover:border-gray-300 hover:shadow-lg"
+                      ? "bg-[#111] border-white/10"
+                      : "bg-white border-gray-200"
                   }`}
                 >
                   {/* Background gradient overlay - only show in dark mode */}
@@ -291,7 +291,7 @@ const AdminDashboard = () => {
                       </p>
                     </div>
                     <div
-                      className={`w-14 h-14 bg-gradient-to-r ${card.bgColor} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                      className={`w-14 h-14 bg-gradient-to-r ${card.bgColor} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}
                     >
                       <card.icon className="h-7 w-7 text-white" />
                     </div>
@@ -312,9 +312,9 @@ const AdminDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className={`border rounded-2xl p-6 shadow-2xl ${
+          className={`border rounded-2xl p-6 ${
             isDarkMode
-              ? "bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700"
+              ? "bg-[#111] border-white/10"
               : "bg-white border-gray-200"
           }`}
         >
@@ -361,10 +361,10 @@ const AdminDashboard = () => {
               {stats.recentComplaints.map((complaint) => (
                 <motion.div
                   key={complaint._id}
-                  className={`group border rounded-xl p-5 transition-all duration-300 hover:shadow-lg ${
+                  className={`group border rounded-xl p-5 transition-all duration-300 ${
                     isDarkMode
-                      ? "bg-gradient-to-r from-gray-800 to-gray-800/50 border-gray-700 hover:border-gray-600 hover:shadow-blue-500/5"
-                      : "bg-gray-50 border-gray-200 hover:border-gray-300 hover:shadow-md"
+                      ? "bg-[#111] border-white/10"
+                      : "bg-gray-50 border-gray-200"
                   }`}
                   whileHover={{ scale: 1.01 }}
                 >
@@ -417,7 +417,7 @@ const AdminDashboard = () => {
                             <span
                               className={`ml-2 text-xs px-2 py-0.5 rounded ${
                                 isDarkMode
-                                  ? "bg-gray-700 text-gray-300"
+                                  ? "bg-white/10 text-gray-300"
                                   : "bg-gray-200 text-gray-600"
                               }`}
                             >
@@ -493,7 +493,7 @@ const AdminDashboard = () => {
                 <img
                   src={selectedPhoto.url}
                   alt="Complaint photo"
-                  className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                  className="max-w-full max-h-full object-contain rounded-lg"
                 />
 
                 {currentComplaintPhotos.length > 1 && (
@@ -557,9 +557,9 @@ const AdminDashboard = () => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className={`w-full max-w-4xl max-h-[95vh] mx-4 my-4 overflow-hidden border rounded-2xl shadow-2xl ${
+                className={`w-full max-w-4xl max-h-[95vh] mx-4 my-4 overflow-hidden border rounded-2xl ${
                   isDarkMode
-                    ? "bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700"
+                    ? "bg-[#111] border-white/10"
                     : "bg-white border-gray-200"
                 }`}
                 onClick={(e) => e.stopPropagation()}
@@ -568,7 +568,7 @@ const AdminDashboard = () => {
                 <div
                   className={`sticky top-0 p-6 border-b backdrop-blur-sm ${
                     isDarkMode
-                      ? "border-gray-700 bg-gray-900/90"
+                      ? "border-white/10 bg-[#111]/90"
                       : "border-gray-200 bg-white/90"
                   }`}
                 >
@@ -593,7 +593,7 @@ const AdminDashboard = () => {
                       onClick={closeDetailsModal}
                       className={`p-2 rounded-lg transition-colors ${
                         isDarkMode
-                          ? "hover:bg-gray-800 text-gray-400"
+                          ? "hover:bg-white/10 text-gray-400"
                           : "hover:bg-gray-100 text-gray-500"
                       }`}
                     >
@@ -629,7 +629,7 @@ const AdminDashboard = () => {
                     <div
                       className={`border rounded-xl p-4 ${
                         isDarkMode
-                          ? "bg-gray-800/50 border-gray-700"
+                          ? "bg-white/5 border-white/10"
                           : "bg-gray-50 border-gray-200"
                       }`}
                     >
@@ -654,7 +654,7 @@ const AdminDashboard = () => {
                       <div
                         className={`border rounded-xl p-4 ${
                           isDarkMode
-                            ? "bg-gray-800/50 border-gray-700"
+                            ? "bg-white/5 border-white/10"
                             : "bg-gray-50 border-gray-200"
                         }`}
                       >
@@ -684,7 +684,7 @@ const AdminDashboard = () => {
                               <span
                                 className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
                                   isDarkMode
-                                    ? "bg-gray-700 text-gray-300"
+                                    ? "bg-white/10 text-gray-300"
                                     : "bg-gray-200 text-gray-600"
                                 }`}
                               >
@@ -716,7 +716,7 @@ const AdminDashboard = () => {
                       <div
                         className={`border rounded-xl p-4 ${
                           isDarkMode
-                            ? "bg-gray-800/50 border-gray-700"
+                            ? "bg-white/5 border-white/10"
                             : "bg-gray-50 border-gray-200"
                         }`}
                       >
@@ -813,7 +813,7 @@ const AdminDashboard = () => {
                     <div
                       className={`border rounded-xl p-4 ${
                         isDarkMode
-                          ? "bg-gray-800/50 border-gray-700"
+                          ? "bg-white/5 border-white/10"
                           : "bg-gray-50 border-gray-200"
                       }`}
                     >
@@ -938,7 +938,7 @@ const AdminDashboard = () => {
                         <div
                           className={`border rounded-xl p-4 ${
                             isDarkMode
-                              ? "bg-gray-800/50 border-gray-700"
+                              ? "bg-white/5 border-white/10"
                               : "bg-gray-50 border-gray-200"
                           }`}
                         >
@@ -1004,7 +1004,7 @@ const AdminDashboard = () => {
                       <div
                         className={`border rounded-xl p-4 ${
                           isDarkMode
-                            ? "bg-gray-800/50 border-gray-700"
+                            ? "bg-white/5 border-white/10"
                             : "bg-gray-50 border-gray-200"
                         }`}
                       >
@@ -1185,9 +1185,9 @@ const AdminDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className={`p-6 rounded-2xl shadow-lg border ${
+          className={`p-6 rounded-2xl border ${
             isDarkMode
-              ? "bg-gray-800 border-gray-700"
+              ? "bg-[#111] border-white/10"
               : "bg-white border-gray-200"
           }`}
         >
@@ -1282,3 +1282,5 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
+

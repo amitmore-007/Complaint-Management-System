@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -52,7 +52,7 @@ const ResolvedAssignments = () => {
     const technician = complaint.assignedTechnician?.name;
     const statusLabel = complaint.status.replace("-", " ").toUpperCase();
     const lines = [
-      `*Complaint Update — CMS*`,
+      `*Complaint Update â€” CMS*`,
       ``,
       `*Issue:* ${complaint.title}`,
       `*Status:* ${statusLabel}`,
@@ -263,7 +263,7 @@ const ResolvedAssignments = () => {
                 key={complaint._id}
                 className={`border rounded-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-lg ${
                   isDarkMode
-                    ? "bg-gradient-to-r from-gray-800 to-gray-800/50 border-gray-700 hover:border-gray-600 hover:shadow-green-500/5"
+                    ? "bg-[#111] border-white/10"
                     : "bg-white border-gray-200 hover:border-gray-300 hover:shadow-md"
                 }`}
                 initial={{ opacity: 0, y: 20 }}
@@ -330,7 +330,7 @@ const ResolvedAssignments = () => {
                             <span
                               className={`ml-1 text-xs px-1.5 py-0.5 rounded ${
                                 isDarkMode
-                                  ? "bg-gray-700 text-gray-300"
+                                  ? "bg-white/10 text-gray-300"
                                   : "bg-gray-200 text-gray-600"
                               }`}
                             >
@@ -360,7 +360,7 @@ const ResolvedAssignments = () => {
                               ? complaint.store.managers
                                   .map((m) => `${m.name} (${m.phoneNumber})`)
                                   .join(", ")
-                              : "—"}
+                              : "â€”"}
                           </span>
                         </div>
                       </div>
@@ -411,7 +411,7 @@ const ResolvedAssignments = () => {
                                     alt={`Complaint photo ${index + 1}`}
                                     className={`w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border ${
                                       isDarkMode
-                                        ? "border-gray-600"
+                                        ? "border-white/10"
                                         : "border-gray-300"
                                     }`}
                                     onClick={() =>
@@ -454,7 +454,7 @@ const ResolvedAssignments = () => {
                               <div
                                 className={`w-16 h-16 sm:w-20 sm:h-20 rounded-lg border-2 border-dashed flex items-center justify-center text-xs font-medium cursor-pointer transition-all ${
                                   isDarkMode
-                                    ? "border-gray-600 text-gray-400 hover:bg-gray-700/50"
+                                    ? "border-white/10 text-gray-400 hover:bg-white/5"
                                     : "border-gray-300 text-gray-500 hover:bg-gray-100"
                                 }`}
                               >
@@ -496,13 +496,13 @@ const ResolvedAssignments = () => {
                             <div
                               key={idx}
                               className={`w-48 flex-shrink-0 border ${
-                                isDarkMode ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"
+                                isDarkMode ? "border-white/10 bg-[#111]" : "border-gray-200 bg-white"
                               }`}
                             >
                               <VideoPlayer src={vid.url} className="w-full" />
                               {vid.originalName && (
                                 <p className={`px-2 py-1.5 text-xs truncate border-t ${
-                                  isDarkMode ? "border-gray-700 text-gray-400" : "border-gray-200 text-gray-500"
+                                  isDarkMode ? "border-white/10 text-gray-400" : "border-gray-200 text-gray-500"
                                 }`}>
                                   {vid.originalName}
                                 </p>
@@ -526,7 +526,7 @@ const ResolvedAssignments = () => {
                               )}`
                             )
                           }
-                          className="px-3 sm:px-4 py-2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-lg hover:from-yellow-700 hover:to-orange-700 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
+                          className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
                         >
                           <FileText className="h-4 w-4" />
                           <span>Submit Billing</span>
@@ -535,13 +535,13 @@ const ResolvedAssignments = () => {
 
                       <button
                         onClick={() => handleShareOnWhatsApp(complaint)}
-                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
+                        className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
                       >
                         <Share2 className="h-4 w-4" />
                         <span>Share</span>
                       </button>
 
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-emerald-600 rounded-xl flex items-center justify-center">
                         <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                       </div>
                     </div>
@@ -557,3 +557,4 @@ const ResolvedAssignments = () => {
 };
 
 export default ResolvedAssignments;
+

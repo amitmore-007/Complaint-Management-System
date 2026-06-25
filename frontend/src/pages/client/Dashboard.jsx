@@ -85,29 +85,25 @@ const ClientDashboard = () => {
       title: "Total Complaints",
       value: stats.total,
       icon: FileText,
-      color: "primary",
-      bgColor: "from-primary-500 to-primary-600",
+      bgColor: "bg-blue-600",
     },
     {
       title: "Pending",
       value: stats.pending,
       icon: Clock,
-      color: "yellow",
-      bgColor: "from-yellow-500 to-yellow-600",
+      bgColor: "bg-yellow-500",
     },
     {
       title: "In Progress",
       value: stats.inProgress,
       icon: AlertCircle,
-      color: "orange",
-      bgColor: "from-orange-500 to-orange-600",
+      bgColor: "bg-orange-500",
     },
     {
       title: "Resolved",
       value: stats.resolved,
       icon: CheckCircle,
-      color: "green",
-      bgColor: "from-green-500 to-green-600",
+      bgColor: "bg-emerald-500",
     },
   ];
 
@@ -135,7 +131,7 @@ const ClientDashboard = () => {
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
         className={`w-full max-w-4xl max-h-[95vh] overflow-y-auto mx-4 my-4 rounded-2xl shadow-2xl ${
-          isDarkMode ? "bg-gray-800" : "bg-white"
+          isDarkMode ? "bg-[#111] dark-scrollbar" : "bg-white"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -143,7 +139,7 @@ const ClientDashboard = () => {
         <div
           className={`sticky top-0 p-6 border-b ${
             isDarkMode
-              ? "border-gray-700 bg-gray-800"
+              ? "border-white/10 bg-[#111]"
               : "border-gray-200 bg-white"
           }`}
         >
@@ -167,7 +163,7 @@ const ClientDashboard = () => {
             <button
               onClick={onClose}
               className={`p-2 rounded-lg transition-colors ${
-                isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                isDarkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
               }`}
             >
               <X
@@ -221,7 +217,7 @@ const ClientDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div
               className={`p-4 rounded-lg ${
-                isDarkMode ? "bg-gray-700" : "bg-gray-50"
+                isDarkMode ? "bg-white/10" : "bg-gray-50"
               }`}
             >
               <div className="flex items-center space-x-2 mb-2">
@@ -245,7 +241,7 @@ const ClientDashboard = () => {
 
             <div
               className={`p-4 rounded-lg ${
-                isDarkMode ? "bg-gray-700" : "bg-gray-50"
+                isDarkMode ? "bg-white/10" : "bg-gray-50"
               }`}
             >
               <div className="flex items-center space-x-2 mb-2">
@@ -273,7 +269,7 @@ const ClientDashboard = () => {
             <div
               className={`p-4 rounded-lg border ${
                 isDarkMode
-                  ? "bg-blue-900/20 border-blue-700"
+                  ? "bg-white/10 border-white/10"
                   : "bg-blue-50 border-blue-200"
               }`}
             >
@@ -297,7 +293,7 @@ const ClientDashboard = () => {
               {complaint.assignedAt && (
                 <p
                   className={`text-sm mt-1 ${
-                    isDarkMode ? "text-blue-300" : "text-blue-600"
+                    isDarkMode ? "text-gray-400" : "text-blue-600"
                   }`}
                 >
                   Assigned on: {new Date(complaint.assignedAt).toLocaleString()}
@@ -344,7 +340,7 @@ const ClientDashboard = () => {
           {complaint.technicianNotes && (
             <div
               className={`p-4 rounded-lg ${
-                isDarkMode ? "bg-gray-700" : "bg-gray-50"
+                isDarkMode ? "bg-white/10" : "bg-gray-50"
               }`}
             >
               <h3
@@ -360,7 +356,7 @@ const ClientDashboard = () => {
             </div>
           )}
 
-          {/* Resolution Data - Only show for resolved complaints */}
+          {/* Resolution Data */}
           {complaint.status === "resolved" &&
             (complaint.resolutionNotes ||
               (complaint.resolutionPhotos &&
@@ -368,7 +364,7 @@ const ClientDashboard = () => {
               <div
                 className={`p-4 rounded-lg border ${
                   isDarkMode
-                    ? "bg-green-900/20 border-green-700"
+                    ? "bg-green-500/10 border-green-500/20"
                     : "bg-green-50 border-green-200"
                 }`}
               >
@@ -430,7 +426,7 @@ const ClientDashboard = () => {
                             <img
                               src={photo.url}
                               alt={`Resolution photo ${index + 1}`}
-                              className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border-2 border-green-200 dark:border-green-600"
+                              className="w-full h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border-2 border-green-500/30"
                               onClick={() => setSelectedImage(photo)}
                             />
                             <button
@@ -492,7 +488,7 @@ const ClientDashboard = () => {
 
           <Link to="/client/create-complaint">
             <motion.button
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-2xl font-semibold flex items-center space-x-2 hover:from-blue-700 hover:to-purple-700 shadow-lg shadow-blue-500/25"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center space-x-2 hover:bg-blue-700 text-sm"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -510,9 +506,9 @@ const ClientDashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              className={`p-6 rounded-2xl shadow-lg border backdrop-blur-sm ${
+              className={`p-6 rounded-2xl shadow-lg border ${
                 isDarkMode
-                  ? "bg-gray-900/50 border-gray-800"
+                  ? "bg-[#111] border-white/10"
                   : "bg-white border-gray-200"
               }`}
             >
@@ -534,7 +530,7 @@ const ClientDashboard = () => {
                   </p>
                 </div>
                 <div
-                  className={`w-12 h-12 bg-gradient-to-r ${card.bgColor} rounded-xl flex items-center justify-center`}
+                  className={`w-12 h-12 ${card.bgColor} rounded-xl flex items-center justify-center`}
                 >
                   <card.icon className="h-6 w-6 text-white" />
                 </div>
@@ -548,9 +544,9 @@ const ClientDashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className={`p-6 rounded-2xl shadow-lg border backdrop-blur-sm ${
+          className={`p-6 rounded-2xl shadow-lg border ${
             isDarkMode
-              ? "bg-gray-900/50 border-gray-800"
+              ? "bg-[#111] border-white/10"
               : "bg-white border-gray-200"
           }`}
         >
@@ -605,11 +601,11 @@ const ClientDashboard = () => {
               {recentComplaints.map((complaint) => (
                 <motion.div
                   key={complaint._id}
-                  className={`p-4 rounded-xl border ${
+                  className={`p-4 rounded-xl border transition-all duration-200 ${
                     isDarkMode
-                      ? "bg-gray-700/50 border-gray-600"
+                      ? "bg-white/10 border-white/10"
                       : "bg-gray-50 border-gray-200"
-                  } hover:shadow-md transition-all duration-200`}
+                  } hover:shadow-md`}
                   whileHover={{ scale: 1.01 }}
                 >
                   <div className="flex justify-between items-start">

@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from "react";
+﻿import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Package,
   MapPin,
+  ChevronDown,
   Save,
   RotateCcw,
   Calendar,
@@ -233,7 +234,7 @@ const TechnicianAssets = () => {
         {/* Tabs */}
         <div
           className={`flex space-x-1 rounded-xl p-1 ${
-            isDarkMode ? "bg-gray-800/50" : "bg-gray-100"
+            isDarkMode ? "bg-white/5" : "bg-gray-100"
           }`}
         >
           <button
@@ -242,7 +243,7 @@ const TechnicianAssets = () => {
               activeTab === "submit"
                 ? "bg-blue-600 text-white shadow-lg"
                 : isDarkMode
-                ? "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                ? "text-gray-400 hover:text-white hover:bg-white/5"
                 : "text-gray-600 hover:text-gray-900 hover:bg-white"
             }`}
           >
@@ -254,7 +255,7 @@ const TechnicianAssets = () => {
               activeTab === "history"
                 ? "bg-blue-600 text-white shadow-lg"
                 : isDarkMode
-                ? "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                ? "text-gray-400 hover:text-white hover:bg-white/5"
                 : "text-gray-600 hover:text-gray-900 hover:bg-white"
             }`}
           >
@@ -266,7 +267,7 @@ const TechnicianAssets = () => {
               activeTab === "contacts"
                 ? "bg-blue-600 text-white shadow-lg"
                 : isDarkMode
-                ? "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                ? "text-gray-400 hover:text-white hover:bg-white/5"
                 : "text-gray-600 hover:text-gray-900 hover:bg-white"
             }`}
           >
@@ -294,9 +295,9 @@ const TechnicianAssets = () => {
                   placeholder="Search store or contact..."
                   value={contactSearch}
                   onChange={(e) => setContactSearch(e.target.value)}
-                  className={`w-full pl-9 sm:pl-10 pr-4 py-2 sm:py-3 border rounded-xl text-sm sm:text-base transition-colors ${
+                  className={`w-full pl-9 pr-4 py-2 border rounded-xl text-sm transition-colors ${
                     isDarkMode
-                      ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   }`}
                 />
@@ -305,7 +306,7 @@ const TechnicianAssets = () => {
                 onClick={() => refetchStores?.()}
                 className={`px-4 py-2 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:text-base ${
                   isDarkMode
-                    ? "bg-gray-700 hover:bg-gray-600 text-white"
+                    ? "bg-white/10 hover:bg-white/20 text-white"
                     : "bg-gray-200 hover:bg-gray-300 text-gray-900"
                 }`}
               >
@@ -340,7 +341,7 @@ const TechnicianAssets = () => {
                     key={store._id}
                     className={`border rounded-xl p-4 sm:p-6 transition-colors ${
                       isDarkMode
-                        ? "bg-gray-800/50 border-gray-700 hover:border-gray-600"
+                        ? "bg-[#111] border-white/10"
                         : "bg-white border-gray-200 hover:border-gray-300 hover:shadow-md"
                     }`}
                     whileHover={{ scale: 1.01 }}
@@ -417,7 +418,7 @@ const TechnicianAssets = () => {
                             isDarkMode ? "text-gray-500" : "text-gray-400"
                           }
                         >
-                          —
+                          â€”
                         </p>
                       )}
                     </div>
@@ -435,7 +436,7 @@ const TechnicianAssets = () => {
             animate={{ opacity: 1, y: 0 }}
             className={`border rounded-2xl p-4 sm:p-6 ${
               isDarkMode
-                ? "bg-gray-800/50 border-gray-700"
+                ? "bg-[#111] border-white/10"
                 : "bg-white border-gray-200"
             }`}
           >
@@ -450,18 +451,13 @@ const TechnicianAssets = () => {
                   Select Store *
                 </label>
                 <div className="relative">
-                  <MapPin
-                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 ${
-                      isDarkMode ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  />
                   <select
                     value={selectedStore}
                     onChange={(e) => setSelectedStore(e.target.value)}
                     required
-                    className={`w-full pl-8 sm:pl-10 pr-4 py-2 sm:py-3 border rounded-xl text-sm sm:text-base transition-colors ${
+                    className={`w-full pl-4 pr-10 py-2 sm:py-3 border rounded-xl text-sm sm:text-base appearance-none cursor-pointer transition-colors ${
                       isDarkMode
-                        ? "bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        ? "bg-[#1a1a1a] border-white/10 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         : "bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     }`}
                   >
@@ -472,6 +468,7 @@ const TechnicianAssets = () => {
                       </option>
                     ))}
                   </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
                 </div>
               </div>
 
@@ -494,7 +491,7 @@ const TechnicianAssets = () => {
                           itemData.isPresent
                             ? "bg-green-500/10 border-green-500/30"
                             : isDarkMode
-                            ? "bg-gray-700/50 border-gray-600"
+                            ? "bg-white/10 border-white/10"
                             : "bg-gray-50 border-gray-200"
                         }`}
                       >
@@ -513,7 +510,7 @@ const TechnicianAssets = () => {
                                 }
                                 className={`w-4 h-4 sm:w-5 sm:h-5 text-blue-600 rounded focus:ring-blue-500 ${
                                   isDarkMode
-                                    ? "bg-gray-700 border-gray-600"
+                                    ? "bg-white/10 border-white/10"
                                     : "bg-white border-gray-300"
                                 }`}
                               />
@@ -555,7 +552,7 @@ const TechnicianAssets = () => {
                                   onClick={() => decrementCount(item._id)}
                                   className={`w-7 h-7 sm:w-8 sm:h-8 text-white rounded-lg flex items-center justify-center transition-colors ${
                                     isDarkMode
-                                      ? "bg-gray-600 hover:bg-gray-500"
+                                      ? "bg-white/10 hover:bg-white/20"
                                       : "bg-gray-500 hover:bg-gray-600"
                                   }`}
                                 >
@@ -601,7 +598,7 @@ const TechnicianAssets = () => {
                   placeholder="Any additional observations or notes..."
                   className={`w-full px-3 sm:px-4 py-2 sm:py-3 border rounded-xl text-sm sm:text-base transition-colors ${
                     isDarkMode
-                      ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                   }`}
                 />
@@ -614,7 +611,7 @@ const TechnicianAssets = () => {
                   onClick={resetForm}
                   className={`flex items-center justify-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:text-base ${
                     isDarkMode
-                      ? "bg-gray-700 hover:bg-gray-600 text-white"
+                      ? "bg-white/10 hover:bg-white/20 text-white"
                       : "bg-gray-200 hover:bg-gray-300 text-gray-900"
                   }`}
                 >
@@ -627,7 +624,7 @@ const TechnicianAssets = () => {
                   className={`flex-1 flex items-center justify-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-colors text-sm sm:text-base ${
                     isSubmitting || !selectedStore
                       ? isDarkMode
-                        ? "bg-gray-600 cursor-not-allowed text-gray-400"
+                        ? "bg-white/10 cursor-not-allowed text-gray-500"
                         : "bg-gray-300 cursor-not-allowed text-gray-500"
                       : "bg-blue-600 hover:bg-blue-700 text-white"
                   }`}
@@ -682,9 +679,9 @@ const TechnicianAssets = () => {
                 {myRecords.map((record) => (
                   <motion.div
                     key={record._id}
-                    className={`border rounded-xl p-4 sm:p-6 hover:border-gray-600 transition-colors ${
+                    className={`border rounded-xl p-4 sm:p-6 hover:border-white/20 transition-colors ${
                       isDarkMode
-                        ? "bg-gray-800/50 border-gray-700"
+                        ? "bg-[#111] border-white/10"
                         : "bg-white border-gray-200 hover:border-gray-300"
                     }`}
                     whileHover={{ scale: 1.01 }}
@@ -711,7 +708,7 @@ const TechnicianAssets = () => {
                               ).toLocaleDateString()}
                             </span>
                           </div>
-                          <span className="hidden sm:inline">•</span>
+                          <span className="hidden sm:inline">â€¢</span>
                           <span>
                             {new Date(
                               record.submissionDate
@@ -748,7 +745,7 @@ const TechnicianAssets = () => {
                     {record.notes && (
                       <div
                         className={`mt-4 p-3 rounded-lg ${
-                          isDarkMode ? "bg-gray-700/50" : "bg-gray-50"
+                          isDarkMode ? "bg-white/10" : "bg-gray-50"
                         }`}
                       >
                         <p

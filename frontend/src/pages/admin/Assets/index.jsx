@@ -36,16 +36,16 @@ const AdminAssetsPage = () => {
         {/* Tabs */}
         <div
           className={`flex space-x-1 rounded-xl p-1 ${
-            isDarkMode ? "bg-gray-800/50" : "bg-gray-100"
+            isDarkMode ? "bg-white/5" : "bg-gray-100"
           }`}
         >
           <button
             onClick={() => setActiveTab("manage")}
             className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
               activeTab === "manage"
-                ? "bg-blue-600 text-white shadow-lg"
+                ? "bg-blue-600 text-white"
                 : isDarkMode
-                  ? "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                  ? "text-gray-400 hover:text-white hover:bg-white/5"
                   : "text-gray-600 hover:text-gray-900 hover:bg-white"
             }`}
           >
@@ -55,9 +55,9 @@ const AdminAssetsPage = () => {
             onClick={() => setActiveTab("records")}
             className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
               activeTab === "records"
-                ? "bg-blue-600 text-white shadow-lg"
+                ? "bg-blue-600 text-white"
                 : isDarkMode
-                  ? "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                  ? "text-gray-400 hover:text-white hover:bg-white/5"
                   : "text-gray-600 hover:text-gray-900 hover:bg-white"
             }`}
           >
@@ -67,9 +67,9 @@ const AdminAssetsPage = () => {
             onClick={() => setActiveTab("contacts")}
             className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
               activeTab === "contacts"
-                ? "bg-blue-600 text-white shadow-lg"
+                ? "bg-blue-600 text-white"
                 : isDarkMode
-                  ? "text-gray-400 hover:text-white hover:bg-gray-700/50"
+                  ? "text-gray-400 hover:text-white hover:bg-white/5"
                   : "text-gray-600 hover:text-gray-900 hover:bg-white"
             }`}
           >

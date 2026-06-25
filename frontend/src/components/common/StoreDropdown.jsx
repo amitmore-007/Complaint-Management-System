@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Check, ChevronDown, MapPin } from "lucide-react";
 
 const StoreDropdown = ({
@@ -29,8 +29,6 @@ const StoreDropdown = ({
       .trim()
       .toLowerCase();
 
-    // When opening the dropdown, show all options by default.
-    // Only filter after the user changes the query.
     if (open && q === currentValue) return sortedOptions;
 
     if (!q) return sortedOptions;
@@ -118,10 +116,10 @@ const StoreDropdown = ({
             setActiveIndex(-1);
           }
         }}
-        className={`w-full pl-10 pr-10 border rounded-xl text-left transition-all duration-200 ${
+        className={`w-full pl-10 pr-10 border rounded-lg text-left transition-all duration-200 ${
           isDarkMode
-            ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            ? "bg-[#1a1a1a] border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         } ${compact ? "py-2" : "py-3"} ${inputClassName}`}
         role="combobox"
         aria-autocomplete="list"
@@ -146,20 +144,18 @@ const StoreDropdown = ({
 
       {open && (
         <div
-          className={`absolute left-0 right-0 top-full mt-2 z-50 border rounded-xl overflow-hidden ${
+          className={`absolute left-0 right-0 top-full mt-2 z-50 border rounded-xl overflow-hidden shadow-xl ${
             isDarkMode
-              ? "bg-gray-800 border-gray-700"
+              ? "bg-[#111] border-white/10"
               : "bg-white border-gray-200"
           }`}
           role="listbox"
         >
-          <div
-            className={`${compact ? "max-h-44" : "max-h-44"} overflow-y-auto`}
-          >
+          <div className={`max-h-44 overflow-y-auto ${isDarkMode ? "dark-scrollbar" : ""}`}>
             {filteredOptions.length === 0 ? (
               <div
                 className={`px-4 py-3 text-sm ${
-                  isDarkMode ? "text-gray-300" : "text-gray-600"
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
                 }`}
               >
                 No stores found
@@ -179,21 +175,21 @@ const StoreDropdown = ({
                     setActiveIndex(-1);
                   }}
                   onMouseEnter={() => setActiveIndex(idx)}
-                  className={`w-full px-4 py-2 text-left flex items-center justify-between transition-colors ${
+                  className={`w-full px-4 py-2.5 text-left flex items-center justify-between transition-colors text-sm ${
                     isDarkMode
-                      ? "hover:bg-gray-700 text-white"
-                      : "hover:bg-gray-50 text-gray-900"
+                      ? "text-gray-200 hover:bg-white/10"
+                      : "text-gray-900 hover:bg-gray-50"
                   } ${
                     idx === activeIndex
                       ? isDarkMode
-                        ? "bg-gray-700"
+                        ? "bg-white/10"
                         : "bg-gray-50"
                       : ""
                   }`}
                 >
                   <span>{name}</span>
                   {selected ? (
-                    <Check className="h-4 w-4 text-primary-500" />
+                    <Check className="h-4 w-4 text-blue-500" />
                   ) : null}
                 </button>
               );

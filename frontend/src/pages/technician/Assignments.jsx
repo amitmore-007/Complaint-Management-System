@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+﻿import React, { useMemo, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -124,7 +124,7 @@ const TechnicianAssignments = () => {
         );
       }
     } catch (error) {
-      console.error("❌ Update status error:", error);
+      console.error("âŒ Update status error:", error);
       toast.error(error.response?.data?.message || "Failed to update status");
     }
   };
@@ -257,7 +257,7 @@ const TechnicianAssignments = () => {
     const technician = complaint.assignedTechnician?.name;
     const statusLabel = complaint.status.replace("-", " ").toUpperCase();
     const lines = [
-      `*Complaint Update — CMS*`,
+      `*Complaint Update â€” CMS*`,
       ``,
       `*Issue:* ${complaint.title}`,
       `*Status:* ${statusLabel}`,
@@ -443,7 +443,7 @@ const TechnicianAssignments = () => {
                 key={complaint._id}
                 className={`border rounded-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-lg ${
                   isDarkMode
-                    ? "bg-gradient-to-r from-gray-800 to-gray-800/50 border-gray-700 hover:border-gray-600 hover:shadow-blue-500/5"
+                    ? "bg-[#111] border-white/10"
                     : "bg-white border-gray-200 hover:border-gray-300 hover:shadow-md"
                 }`}
                 initial={{ opacity: 0, y: 20 }}
@@ -504,7 +504,7 @@ const TechnicianAssignments = () => {
                             <span
                               className={`ml-1 text-xs px-1.5 py-0.5 rounded ${
                                 isDarkMode
-                                  ? "bg-gray-700 text-gray-300"
+                                  ? "bg-white/10 text-gray-300"
                                   : "bg-gray-200 text-gray-600"
                               }`}
                             >
@@ -534,7 +534,7 @@ const TechnicianAssignments = () => {
                               ? complaint.store.managers
                                   .map((m) => `${m.name} (${m.phoneNumber})`)
                                   .join(", ")
-                              : "—"}
+                              : "â€”"}
                           </span>
                         </div>
                       </div>
@@ -587,7 +587,7 @@ const TechnicianAssignments = () => {
                                     alt={`Complaint photo ${index + 1}`}
                                     className={`w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border ${
                                       isDarkMode
-                                        ? "border-gray-600"
+                                        ? "border-white/10"
                                         : "border-gray-300"
                                     }`}
                                     onClick={() =>
@@ -632,7 +632,7 @@ const TechnicianAssignments = () => {
                               <div
                                 className={`w-16 h-16 sm:w-20 sm:h-20 rounded-lg border-2 border-dashed flex items-center justify-center text-xs font-medium cursor-pointer transition-all ${
                                   isDarkMode
-                                    ? "border-gray-600 text-gray-400 hover:bg-gray-700/50"
+                                    ? "border-white/10 text-gray-400 hover:bg-white/5"
                                     : "border-gray-300 text-gray-500 hover:bg-gray-100"
                                 }`}
                               >
@@ -649,7 +649,7 @@ const TechnicianAssignments = () => {
                     {complaint.status === "assigned" && (
                       <motion.button
                         onClick={() => openStartWorkConfirm(complaint)}
-                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
+                        className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -661,7 +661,7 @@ const TechnicianAssignments = () => {
                     {complaint.status === "in-progress" && (
                       <motion.button
                         onClick={() => openResolutionModal(complaint)}
-                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
+                        className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -672,7 +672,7 @@ const TechnicianAssignments = () => {
 
                     <motion.button
                       onClick={() => handleShareOnWhatsApp(complaint)}
-                      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
+                      className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -701,7 +701,7 @@ const TechnicianAssignments = () => {
           >
             <div
               className={`w-full max-w-2xl max-h-[95vh] overflow-y-auto mx-4 my-4 rounded-2xl shadow-2xl ${
-                isDarkMode ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-[#111] dark-scrollbar" : "bg-white"
               }`}
             >
               <div className="p-6">
@@ -715,7 +715,7 @@ const TechnicianAssignments = () => {
                   </h3>
                   <button
                     onClick={closeResolutionModal}
-                    className={`p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${
+                    className={`p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors ${
                       isDarkMode ? "text-gray-400" : "text-gray-600"
                     }`}
                   >
@@ -762,7 +762,7 @@ const TechnicianAssignments = () => {
                       placeholder="Describe how the complaint was resolved..."
                       className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 ${
                         isDarkMode
-                          ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       }`}
                       required
@@ -790,7 +790,7 @@ const TechnicianAssignments = () => {
                       placeholder="List all materials used to resolve this complaint (e.g., LED bulbs, wires, switches, etc.)"
                       className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 resize-none ${
                         isDarkMode
-                          ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                           : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       }`}
                     />
@@ -809,7 +809,7 @@ const TechnicianAssignments = () => {
                     <div
                       className={`border-2 border-dashed rounded-xl p-6 text-center ${
                         isDarkMode
-                          ? "border-gray-600 hover:border-gray-500"
+                          ? "border-white/10 hover:border-gray-500"
                           : "border-gray-300 hover:border-gray-400"
                       }`}
                     >
@@ -875,7 +875,7 @@ const TechnicianAssignments = () => {
                       onClick={closeResolutionModal}
                       className={`flex-1 py-3 px-4 border rounded-xl font-semibold transition-all duration-200 ${
                         isDarkMode
-                          ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                          ? "border-white/10 text-gray-300 hover:bg-white/10"
                           : "border-gray-300 text-gray-700 hover:bg-gray-50"
                       }`}
                     >
@@ -889,7 +889,7 @@ const TechnicianAssignments = () => {
                         !resolutionData.materialsUsed.trim() ||
                         isSubmitting
                       }
-                      className="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                       {isSubmitting ? (
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -923,7 +923,7 @@ const TechnicianAssignments = () => {
           >
             <div
               className={`w-full max-w-md mx-4 rounded-2xl shadow-2xl ${
-                isDarkMode ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-[#111]" : "bg-white"
               }`}
               onClick={(e) => e.stopPropagation()}
             >
@@ -941,7 +941,7 @@ const TechnicianAssignments = () => {
                     disabled={isStartingWork}
                     className={`p-2 rounded-lg transition-colors ${
                       isDarkMode
-                        ? "text-gray-400 hover:bg-gray-700"
+                        ? "text-gray-400 hover:bg-white/10"
                         : "text-gray-600 hover:bg-gray-100"
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
@@ -971,7 +971,7 @@ const TechnicianAssignments = () => {
                     disabled={isStartingWork}
                     className={`flex-1 py-3 px-4 border rounded-xl font-semibold transition-all duration-200 ${
                       isDarkMode
-                        ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                        ? "border-white/10 text-gray-300 hover:bg-white/10"
                         : "border-gray-300 text-gray-700 hover:bg-gray-50"
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
@@ -981,7 +981,7 @@ const TechnicianAssignments = () => {
                   <button
                     onClick={confirmStartWork}
                     disabled={isStartingWork}
-                    className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-orange-700 hover:to-orange-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   >
                     {isStartingWork ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -1003,3 +1003,4 @@ const TechnicianAssignments = () => {
 };
 
 export default TechnicianAssignments;
+

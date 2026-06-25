@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Clock, Coffee, LogIn, LogOut, UserX, Play, RefreshCw } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -11,7 +11,7 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import { useTheme } from '../../context/ThemeContext';
 import { useAllAttendance, useAttendanceSummary } from '../../hooks/useAttendance';
 
-// ── helpers ─────────────────────────────────────────────────────────────────
+// â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const toShort = (totalSeconds = 0) => {
   const h = Math.floor(totalSeconds / 3600);
@@ -20,7 +20,7 @@ const toShort = (totalSeconds = 0) => {
 };
 
 const fmtTime = (date) =>
-  date ? new Date(date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—';
+  date ? new Date(date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'â€”';
 
 const todayStr = () => {
   const d = new Date();
@@ -30,16 +30,16 @@ const todayStr = () => {
 const initials = (name = '') =>
   name.split(' ').slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('');
 
-// ── role config ──────────────────────────────────────────────────────────────
+// â”€â”€ role config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const ROLE_CFG = {
   admin:      { bg: 'bg-purple-100 text-purple-700', avatar: 'bg-gradient-to-br from-purple-500 to-indigo-600', label: 'Admin' },
   technician: { bg: 'bg-blue-100 text-blue-700',     avatar: 'bg-gradient-to-br from-blue-500 to-cyan-600',    label: 'Technician' },
   client:     { bg: 'bg-teal-100 text-teal-700',     avatar: 'bg-gradient-to-br from-teal-500 to-green-500',   label: 'Client' },
 };
-const defaultRole = { bg: 'bg-gray-100 text-gray-600', avatar: 'bg-gradient-to-br from-gray-400 to-gray-600', label: '—' };
+const defaultRole = { bg: 'bg-gray-100 text-gray-600', avatar: 'bg-gradient-to-br from-gray-400 to-gray-600', label: 'â€”' };
 
-// ── status badge ─────────────────────────────────────────────────────────────
+// â”€â”€ status badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const StatusBadge = ({ status }) => {
   if (status === 'working')
@@ -61,7 +61,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// ── live work-time cell ───────────────────────────────────────────────────────
+// â”€â”€ live work-time cell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const LiveWorkTime = ({ totalWorkSeconds, currentSessionStart, isWorking }) => {
   const [display, setDisplay] = useState(totalWorkSeconds);
@@ -84,7 +84,7 @@ const LiveWorkTime = ({ totalWorkSeconds, currentSessionStart, isWorking }) => {
   );
 };
 
-// ── main component ────────────────────────────────────────────────────────────
+// â”€â”€ main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const AttendanceManagement = () => {
   const { isDarkMode } = useTheme();
@@ -115,7 +115,7 @@ const AttendanceManagement = () => {
     { title: 'Not Checked In', value: summary?.not_checked_in ?? 0, icon: UserX,  bgColor: 'from-red-500 to-rose-600',      shadow: 'shadow-red-500/20'   },
   ];
 
-  const surface = isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200';
+  const surface = isDarkMode ? 'bg-[#111] border-white/10' : 'bg-white border-gray-200';
   const thClass = `px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide whitespace-nowrap ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`;
   const tdClass = `px-4 py-3.5 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`;
 
@@ -123,7 +123,7 @@ const AttendanceManagement = () => {
     <DashboardLayout>
       <div className="py-8 px-4 md:px-6 space-y-6">
 
-        {/* ── header ── */}
+        {/* â”€â”€ header â”€â”€ */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
@@ -133,11 +133,11 @@ const AttendanceManagement = () => {
               </span>
             </div>
             <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-              {records.length} record{records.length !== 1 ? 's' : ''} · last refreshed {lastRefresh.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              {records.length} record{records.length !== 1 ? 's' : ''} Â· last refreshed {lastRefresh.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </p>
           </div>
 
-          {/* ── filters ── */}
+          {/* â”€â”€ filters â”€â”€ */}
           <ThemeProvider theme={muiTheme}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <div className="flex flex-wrap items-center gap-3">
@@ -167,7 +167,7 @@ const AttendanceManagement = () => {
                 <button
                   onClick={() => refetch()}
                   disabled={isFetching}
-                  className={`h-10 w-10 inline-flex items-center justify-center rounded-xl border transition-colors cursor-pointer disabled:cursor-not-allowed ${isDarkMode ? 'border-gray-700 hover:bg-gray-800 text-gray-400' : 'border-gray-200 hover:bg-gray-50 text-gray-500'} disabled:opacity-50`}
+                  className={`h-10 w-10 inline-flex items-center justify-center rounded-xl border transition-colors cursor-pointer disabled:cursor-not-allowed ${isDarkMode ? 'border-white/10 hover:bg-white/10 text-gray-400' : 'border-gray-200 hover:bg-gray-50 text-gray-500'} disabled:opacity-50`}
                   title="Refresh now"
                 >
                   <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
@@ -178,7 +178,7 @@ const AttendanceManagement = () => {
           </ThemeProvider>
         </div>
 
-        {/* ── summary cards ── */}
+        {/* â”€â”€ summary cards â”€â”€ */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {summaryCards.map((card, i) => (
             <motion.div
@@ -189,10 +189,9 @@ const AttendanceManagement = () => {
             >
               <div className={`group relative p-5 rounded-2xl border transition-all duration-300 overflow-hidden ${
                 isDarkMode
-                  ? 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700 hover:border-gray-600'
-                  : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-lg'
+                  ? 'bg-[#111] border-white/10'
+                  : 'bg-white border-gray-200 hover:border-gray-300'
               }`}>
-                <div className={`absolute inset-0 opacity-0 group-hover:opacity-5 bg-gradient-to-br ${card.bgColor} transition-opacity`} />
                 <div className="relative flex items-center justify-between">
                   <div>
                     <p className={`text-xs font-medium mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{card.title}</p>
@@ -207,16 +206,16 @@ const AttendanceManagement = () => {
           ))}
         </div>
 
-        {/* ── table ── */}
+        {/* â”€â”€ table â”€â”€ */}
         <div className={`rounded-2xl border overflow-hidden ${surface} shadow-sm`}>
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <div className="animate-spin w-8 h-8 rounded-full border-2 border-blue-600 border-t-transparent" />
-              <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Loading attendance…</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Loading attendanceâ€¦</p>
             </div>
           ) : records.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isDarkMode ? 'bg-white/10' : 'bg-gray-100'}`}>
                 <Users className={`w-8 h-8 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
               </div>
               <p className={`font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>No records for this date</p>
@@ -225,7 +224,7 @@ const AttendanceManagement = () => {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className={isDarkMode ? 'bg-gray-800/80' : 'bg-gray-50'}>
+                <thead className={isDarkMode ? 'bg-white/5' : 'bg-gray-50'}>
                   <tr>
                     <th className={thClass}>Employee</th>
                     <th className={thClass}>Role</th>
@@ -251,7 +250,7 @@ const AttendanceManagement = () => {
                     return (
                       <tr
                         key={r._id}
-                        className={`border-t transition-colors ${isDarkMode ? 'border-gray-800 hover:bg-gray-800/40' : 'border-gray-100 hover:bg-gray-50/80'} ${rowHighlight}`}
+                        className={`border-t transition-colors ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-gray-100 hover:bg-gray-50/80'} ${rowHighlight}`}
                       >
                         <td className={`${tdClass} min-w-[180px]`}>
                           <div className="flex items-center gap-3">
@@ -305,3 +304,5 @@ const AttendanceManagement = () => {
 };
 
 export default AttendanceManagement;
+
+

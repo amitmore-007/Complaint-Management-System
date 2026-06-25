@@ -6,7 +6,7 @@ const TechnicianRow = ({ row, index, isDarkMode }) => {
       key={`${row?.technicianId || row?.technicianName}-${index}`}
       className={
         isDarkMode
-          ? "border-t border-gray-800 text-gray-200"
+          ? "border-t border-white/10 text-gray-200"
           : "border-t border-gray-200 text-gray-800"
       }
     >

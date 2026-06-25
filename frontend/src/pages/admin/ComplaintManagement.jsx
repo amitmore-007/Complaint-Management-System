@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import writeXlsxFile from "write-excel-file/browser";
 import {
@@ -18,6 +18,7 @@ import {
   Loader2,
   Download,
   Share2,
+  ChevronDown,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
@@ -412,7 +413,7 @@ const ComplaintManagement = () => {
       case "resolved":
         return "text-green-600 bg-green-100 dark:bg-green-900/30";
       default:
-        return "text-gray-600 bg-gray-100 dark:bg-gray-900/30";
+        return "text-gray-600 bg-gray-100 dark:bg-white/5";
     }
   };
 
@@ -467,7 +468,7 @@ const ComplaintManagement = () => {
             type="button"
             onClick={handleDownloadAllComplaints}
             disabled={isExportingComplaints}
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {isExportingComplaints ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -482,7 +483,7 @@ const ComplaintManagement = () => {
         <div
           className={`p-4 sm:p-6 rounded-2xl shadow-lg border ${
             isDarkMode
-              ? "bg-gray-800 border-gray-700"
+              ? "bg-[#111] border-white/10"
               : "bg-white border-gray-200"
           }`}
         >
@@ -496,10 +497,10 @@ const ComplaintManagement = () => {
                   placeholder="Search complaints..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-2 sm:py-3 border rounded-xl transition-all duration-200 text-sm sm:text-base ${
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg transition-all duration-200 text-sm ${
                     isDarkMode
-                      ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      ? "bg-white/10 border-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   }`}
                 />
               </div>
@@ -508,43 +509,46 @@ const ComplaintManagement = () => {
             {/* Status Filter */}
             <div>
               <div className="relative">
-                <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-2 sm:py-3 border rounded-xl transition-all duration-200 text-sm sm:text-base cursor-pointer ${
+                  className={`w-full pl-4 pr-10 py-2 border rounded-lg appearance-none cursor-pointer transition-all duration-200 text-sm ${
                     isDarkMode
-                      ? "bg-gray-700 border-gray-600 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      ? "bg-[#1a1a1a] border-white/10 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   }`}
                 >
-                  <option className="cursor-pointer" value="all">All Status</option>
-                  <option className="cursor-pointer" value="unresolved">Unresolved</option>
-                  <option className="cursor-pointer" value="pending">Pending</option>
-                  <option className="cursor-pointer" value="assigned">Assigned</option>
-                  <option className="cursor-pointer" value="in-progress">In Progress</option>
-                  <option className="cursor-pointer" value="resolved">Resolved</option>
+                  <option value="all">All Status</option>
+                  <option value="unresolved">Unresolved</option>
+                  <option value="pending">Pending</option>
+                  <option value="assigned">Assigned</option>
+                  <option value="in-progress">In Progress</option>
+                  <option value="resolved">Resolved</option>
                 </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
               </div>
             </div>
 
             {/* Priority Filter */}
             <div>
-              <select
-                value={priorityFilter}
-                onChange={(e) => setPriorityFilter(e.target.value)}
-                className={`w-full px-4 py-2 sm:py-3 border rounded-xl transition-all duration-200 text-sm sm:text-base cursor-pointer ${
-                  isDarkMode
-                    ? "bg-gray-700 border-gray-600 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                }`}
-              >
-                <option className="cursor-pointer" value="all">All Priority</option>
-                <option className="cursor-pointer" value="low">Low</option>
-                <option className="cursor-pointer" value="medium">Medium</option>
-                <option className="cursor-pointer" value="high">High</option>
-                <option className="cursor-pointer" value="urgent">Urgent</option>
-              </select>
+              <div className="relative">
+                <select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  className={`w-full pl-4 pr-10 py-2 border rounded-lg appearance-none cursor-pointer transition-all duration-200 text-sm ${
+                    isDarkMode
+                      ? "bg-[#1a1a1a] border-white/10 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  }`}
+                >
+                  <option value="all">All Priority</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+              </div>
             </div>
 
             {/* Location / Store Filter */}
@@ -558,7 +562,7 @@ const ComplaintManagement = () => {
                 }
                 placeholder="All Stores"
                 compact
-                inputClassName="h-[42px] sm:h-[48px] py-0 text-sm sm:text-base"
+                inputClassName="h-[38px] py-0 text-sm"
               />
             </div>
           </div>
@@ -569,7 +573,7 @@ const ComplaintManagement = () => {
           {filteredComplaints.length === 0 ? (
             <div
               className={`text-center py-8 sm:py-12 rounded-2xl ${
-                isDarkMode ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-[#111]" : "bg-white"
               } shadow-lg`}
             >
               <p
@@ -594,7 +598,7 @@ const ComplaintManagement = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className={`p-4 sm:p-6 rounded-2xl shadow-lg border ${
                   isDarkMode
-                    ? "bg-gray-800 border-gray-700"
+                    ? "bg-[#111] border-white/10"
                     : "bg-white border-gray-200"
                 } hover:shadow-xl transition-all duration-200`}
               >
@@ -651,7 +655,7 @@ const ComplaintManagement = () => {
                             <span
                               className={`ml-2 text-xs px-1.5 py-0.5 rounded ${
                                 isDarkMode
-                                  ? "bg-gray-700 text-gray-300"
+                                  ? "bg-white/10 text-gray-300"
                                   : "bg-gray-200 text-gray-600"
                               }`}
                             >
@@ -728,7 +732,7 @@ const ComplaintManagement = () => {
                     {complaint.status === "pending" && (
                       <button
                         onClick={() => openAssignModal(complaint)}
-                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 flex items-center space-x-2 text-sm whitespace-nowrap"
+                        className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm whitespace-nowrap"
                       >
                         <UserPlus className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span>Assign</span>
@@ -739,7 +743,7 @@ const ComplaintManagement = () => {
                       complaint.status === "in-progress") && (
                       <button
                         onClick={() => openReassignModal(complaint)}
-                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:from-primary-700 hover:to-primary-800 transition-all duration-200 flex items-center space-x-2 text-sm whitespace-nowrap"
+                        className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm whitespace-nowrap"
                       >
                         <UserPlus className="h-3 w-3 sm:h-4 sm:w-4" />
                         <span>Reassign</span>
@@ -756,7 +760,7 @@ const ComplaintManagement = () => {
           <div
             className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${
               isDarkMode
-                ? "bg-gray-800 border-gray-700 text-gray-300"
+                ? "bg-[#111] border-white/10 text-gray-300"
                 : "bg-white border-gray-200 text-gray-700"
             }`}
           >
@@ -771,22 +775,25 @@ const ComplaintManagement = () => {
               </span>
               <div className="flex items-center gap-2">
                 <label htmlFor="complaints-page-size">Rows:</label>
-                <select
-                  id="complaints-page-size"
-                  value={itemsPerPage}
-                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                  className={`px-2 py-1 rounded-md border text-sm ${
-                    isDarkMode
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "bg-white border-gray-300 text-gray-800"
-                  }`}
-                >
-                  {[10, 25, 50, 100].map((size) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    id="complaints-page-size"
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    className={`pl-2 pr-6 py-1 rounded-md border text-sm appearance-none cursor-pointer ${
+                      isDarkMode
+                        ? "bg-[#1a1a1a] border-white/10 text-white"
+                        : "bg-white border-gray-300 text-gray-800"
+                    }`}
+                  >
+                    {[10, 25, 50, 100].map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+                </div>
               </div>
             </div>
 
@@ -839,7 +846,7 @@ const ComplaintManagement = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 className={`w-full max-w-md max-h-[95vh] overflow-y-auto mx-4 my-4 rounded-2xl shadow-2xl ${
-                  isDarkMode ? "bg-gray-800" : "bg-white"
+                  isDarkMode ? "bg-[#111]" : "bg-white"
                 }`}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -854,7 +861,7 @@ const ComplaintManagement = () => {
                     </h3>
                     <button
                       onClick={closeAssignModal}
-                      className={`p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${
+                      className={`p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors ${
                         isDarkMode ? "text-gray-400" : "text-gray-600"
                       }`}
                     >
@@ -918,25 +925,28 @@ const ComplaintManagement = () => {
                       Select Technician (
                       {technicians.filter((t) => t.isActive).length} available)
                     </label>
-                    <select
-                      value={selectedTechnician}
-                      onChange={(e) => setSelectedTechnician(e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 ${
-                        isDarkMode
-                          ? "bg-gray-700 border-gray-600 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                          : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      }`}
-                    >
-                      <option value="">Select a technician...</option>
-                      {technicians
-                        .filter((tech) => tech.isActive)
-                        .map((tech) => (
-                          <option key={tech._id} value={tech._id}>
-                            {tech.name} ({tech.activeAssignments || 0} active,{" "}
-                            {tech.completedAssignments || 0} completed)
-                          </option>
-                        ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={selectedTechnician}
+                        onChange={(e) => setSelectedTechnician(e.target.value)}
+                        className={`w-full pl-4 pr-10 py-3 border rounded-lg appearance-none cursor-pointer transition-all duration-200 ${
+                          isDarkMode
+                            ? "bg-[#1a1a1a] border-white/10 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        }`}
+                      >
+                        <option value="">Select a technician...</option>
+                        {technicians
+                          .filter((tech) => tech.isActive)
+                          .map((tech) => (
+                            <option key={tech._id} value={tech._id}>
+                              {tech.name} ({tech.activeAssignments || 0} active,{" "}
+                              {tech.completedAssignments || 0} completed)
+                            </option>
+                          ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                    </div>
                     {technicians.filter((t) => t.isActive).length === 0 && (
                       <p className="text-sm text-red-500 mt-2">
                         No active technicians available
@@ -954,9 +964,9 @@ const ComplaintManagement = () => {
                   <div className="flex space-x-4">
                     <button
                       onClick={closeAssignModal}
-                      className={`flex-1 py-3 px-4 border rounded-xl font-semibold transition-all duration-200 ${
+                      className={`flex-1 py-2.5 px-4 border rounded-lg font-semibold transition-all duration-200 ${
                         isDarkMode
-                          ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                          ? "border-blue-600/30 text-blue-400 hover:bg-blue-600/10"
                           : "border-gray-300 text-gray-700 hover:bg-gray-50"
                       }`}
                     >
@@ -966,7 +976,7 @@ const ComplaintManagement = () => {
                     <button
                       onClick={handleAssignComplaint}
                       disabled={!selectedTechnician || isAssigning}
-                      className="flex-1 bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      className="flex-1 bg-blue-600 text-white py-2.5 px-4 rounded-lg font-semibold flex items-center justify-center space-x-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {isAssigning ? (
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -1007,14 +1017,14 @@ const ComplaintManagement = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 className={`w-full max-w-2xl max-h-[95vh] mx-4 my-4 overflow-hidden rounded-2xl shadow-2xl ${
-                  isDarkMode ? "bg-gray-800" : "bg-white"
+                  isDarkMode ? "bg-[#111]" : "bg-white"
                 }`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div
                   className={`p-6 border-b ${
                     isDarkMode
-                      ? "border-gray-700 bg-gray-800"
+                      ? "border-white/10 bg-[#111]"
                       : "border-gray-200 bg-white"
                   }`}
                 >
@@ -1037,7 +1047,7 @@ const ComplaintManagement = () => {
                       </button>
                       <button
                         onClick={closeDetailsModal}
-                        className={`p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${
+                        className={`p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors ${
                           isDarkMode ? "text-gray-400" : "text-gray-600"
                         }`}
                       >
@@ -1110,7 +1120,7 @@ const ComplaintManagement = () => {
                               <span
                                 className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
                                   isDarkMode
-                                    ? "bg-gray-700 text-gray-300"
+                                    ? "bg-white/10 text-gray-300"
                                     : "bg-gray-200 text-gray-600"
                                 }`}
                               >
@@ -1374,7 +1384,7 @@ const ComplaintManagement = () => {
                         <p
                           className={`p-3 rounded-lg ${
                             isDarkMode
-                              ? "bg-gray-700 text-gray-300"
+                              ? "bg-white/10 text-gray-300"
                               : "bg-gray-100 text-gray-700"
                           }`}
                         >
@@ -1486,7 +1496,7 @@ const ComplaintManagement = () => {
                                       key={idx}
                                       className={`w-48 flex-shrink-0 border ${
                                         isDarkMode
-                                          ? "border-gray-700 bg-gray-800"
+                                          ? "border-white/10 bg-[#111]"
                                           : "border-gray-200 bg-white"
                                       }`}
                                     >
@@ -1498,7 +1508,7 @@ const ComplaintManagement = () => {
                                         <p
                                           className={`px-2 py-1.5 text-xs truncate border-t ${
                                             isDarkMode
-                                              ? "border-gray-700 text-gray-400"
+                                              ? "border-white/10 text-gray-400"
                                               : "border-gray-200 text-gray-500"
                                           }`}
                                         >
@@ -1525,3 +1535,5 @@ const ComplaintManagement = () => {
 };
 
 export default ComplaintManagement;
+
+

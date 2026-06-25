@@ -13,7 +13,7 @@ const ComplaintsChart = ({
   return (
     <div
       className={`rounded-2xl border ${
-        isDarkMode ? "border-gray-800" : "border-gray-200"
+        isDarkMode ? "border-white/10" : "border-gray-200"
       } p-3 relative`}
     >
       {loading && <ChartLoader isDarkMode={isDarkMode} />}

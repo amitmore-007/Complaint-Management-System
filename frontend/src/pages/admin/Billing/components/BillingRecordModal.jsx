@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Download, Eye, Save, X } from "lucide-react";
 
@@ -28,9 +28,9 @@ const BillingRecordModal = ({
           initial={{ scale: 0.98, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.98, opacity: 0 }}
-          className={`w-full max-w-4xl rounded-3xl border shadow-2xl overflow-hidden ${
+          className={`w-full max-w-4xl rounded-3xl border overflow-hidden ${
             isDarkMode
-              ? "bg-gray-950 border-gray-800"
+              ? "bg-[#111] border-white/10"
               : "bg-white border-gray-200"
           }`}
           onClick={(e) => e.stopPropagation()}
@@ -58,7 +58,7 @@ const BillingRecordModal = ({
               onClick={onClose}
               className={`p-2 rounded-xl border ${
                 isDarkMode
-                  ? "border-gray-800 text-gray-200 hover:bg-gray-900"
+                  ? "border-blue-600/30 text-blue-400 hover:bg-blue-600/10"
                   : "border-gray-200 text-gray-700 hover:bg-gray-50"
               }`}
               type="button"
@@ -72,7 +72,7 @@ const BillingRecordModal = ({
               <div
                 className={`p-4 rounded-2xl border ${
                   isDarkMode
-                    ? "bg-gray-900 border-gray-800"
+                    ? "bg-[#111] border-white/10"
                     : "bg-gray-50 border-gray-200"
                 }`}
               >
@@ -95,7 +95,7 @@ const BillingRecordModal = ({
               <div
                 className={`p-4 rounded-2xl border ${
                   isDarkMode
-                    ? "bg-gray-900 border-gray-800"
+                    ? "bg-[#111] border-white/10"
                     : "bg-gray-50 border-gray-200"
                 }`}
               >
@@ -132,7 +132,7 @@ const BillingRecordModal = ({
                   <div
                     className={`min-w-[900px] rounded-2xl border ${
                       isDarkMode
-                        ? "bg-gray-900 border-gray-800"
+                        ? "bg-[#111] border-white/10"
                         : "bg-gray-50 border-gray-200"
                     }`}
                   >
@@ -153,7 +153,7 @@ const BillingRecordModal = ({
                           key={idx}
                           className={`grid grid-cols-12 gap-3 p-3 rounded-2xl border ${
                             isDarkMode
-                              ? "bg-gray-950 border-gray-800"
+                              ? "bg-[#111] border-white/10"
                               : "bg-white border-gray-200"
                           }`}
                         >
@@ -163,9 +163,9 @@ const BillingRecordModal = ({
                               onChange={(e) =>
                                 onUpdateMaterial(idx, { name: e.target.value })
                               }
-                              className={`w-full px-3 py-2 rounded-xl border text-sm ${
+                              className={`w-full px-3 py-2 rounded-lg border text-sm ${
                                 isDarkMode
-                                  ? "bg-gray-950 border-gray-800 text-white"
+                                  ? "bg-[#1a1a1a] border-white/10 text-white"
                                   : "bg-white border-gray-200 text-gray-900"
                               }`}
                             />
@@ -180,9 +180,9 @@ const BillingRecordModal = ({
                                   quantity: e.target.value,
                                 })
                               }
-                              className={`w-full px-3 py-2 rounded-xl border text-sm ${
+                              className={`w-full px-3 py-2 rounded-lg border text-sm ${
                                 isDarkMode
-                                  ? "bg-gray-950 border-gray-800 text-white"
+                                  ? "bg-[#1a1a1a] border-white/10 text-white"
                                   : "bg-white border-gray-200 text-gray-900"
                               }`}
                             />
@@ -195,9 +195,9 @@ const BillingRecordModal = ({
                               onChange={(e) =>
                                 onUpdateMaterial(idx, { price: e.target.value })
                               }
-                              className={`w-full px-3 py-2 rounded-xl border text-sm ${
+                              className={`w-full px-3 py-2 rounded-lg border text-sm ${
                                 isDarkMode
-                                  ? "bg-gray-950 border-gray-800 text-white"
+                                  ? "bg-[#1a1a1a] border-white/10 text-white"
                                   : "bg-white border-gray-200 text-gray-900"
                               }`}
                             />
@@ -210,9 +210,9 @@ const BillingRecordModal = ({
                                   href={m.billPhoto.url}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold ${
+                                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-semibold ${
                                     isDarkMode
-                                      ? "border-gray-800 text-gray-200 hover:bg-gray-900"
+                                      ? "border-blue-600/30 text-blue-400 hover:bg-blue-600/10"
                                       : "border-gray-200 text-gray-700 hover:bg-gray-50"
                                   } whitespace-nowrap`}
                                 >
@@ -229,13 +229,13 @@ const BillingRecordModal = ({
                                   onClick={() =>
                                     onDownloadBill(m.billPhoto.url, m.name)
                                   }
-                                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold ${
+                                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-semibold ${
                                     downloadingBillUrl === m.billPhoto.url
                                       ? "opacity-60 cursor-not-allowed"
                                       : ""
                                   } ${
                                     isDarkMode
-                                      ? "border-gray-800 text-gray-200 hover:bg-gray-900"
+                                      ? "border-blue-600/30 text-blue-400 hover:bg-blue-600/10"
                                       : "border-gray-200 text-gray-700 hover:bg-gray-50"
                                   } whitespace-nowrap`}
                                 >
@@ -261,7 +261,7 @@ const BillingRecordModal = ({
               <div
                 className={`p-5 rounded-2xl border ${
                   isDarkMode
-                    ? "bg-gray-900 border-gray-800"
+                    ? "bg-[#111] border-white/10"
                     : "bg-gray-50 border-gray-200"
                 }`}
               >
@@ -296,7 +296,7 @@ const BillingRecordModal = ({
                 disabled={isSaving}
                 className={`px-4 py-2 rounded-xl border font-semibold ${
                   isDarkMode
-                    ? "border-gray-800 text-gray-200 hover:bg-gray-900"
+                    ? "border-blue-600/30 text-blue-400 hover:bg-blue-600/10"
                     : "border-gray-200 text-gray-700 hover:bg-gray-50"
                 }`}
                 type="button"
@@ -307,12 +307,8 @@ const BillingRecordModal = ({
               <button
                 onClick={onSave}
                 disabled={isSaving}
-                className={`inline-flex items-center gap-2 px-5 py-2 rounded-xl font-bold ${
-                  isSaving ? "opacity-60 cursor-not-allowed" : "hover:shadow-lg"
-                } ${
-                  isDarkMode
-                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-                    : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                className={`inline-flex items-center gap-2 px-5 py-2 rounded-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors ${
+                  isSaving ? "opacity-60 cursor-not-allowed" : ""
                 }`}
                 type="button"
               >
@@ -328,3 +324,6 @@ const BillingRecordModal = ({
 );
 
 export default BillingRecordModal;
+
+
+

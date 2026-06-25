@@ -2,9 +2,9 @@ import React from "react";
 
 const Card = ({ children, isDarkMode }) => (
   <div
-    className={`rounded-3xl border shadow-xl ${
+    className={`rounded-3xl border ${
       isDarkMode
-        ? "bg-gradient-to-b from-gray-900 to-black border-gray-800"
+        ? "bg-[#111] border-white/10"
         : "bg-white border-gray-200"
     }`}
   >

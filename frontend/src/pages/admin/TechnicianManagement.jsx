@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Wrench,
@@ -156,7 +156,7 @@ const TechnicianManagement = () => {
 
           <button
             onClick={() => setShowCreateModal(true)}
-            className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2"
+            className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 text-sm rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2"
           >
             <Wrench className="h-4 w-4" />
             <span>Add Technician</span>
@@ -165,9 +165,9 @@ const TechnicianManagement = () => {
 
         {/* Search and Filters */}
         <div
-          className={`p-6 rounded-2xl shadow-lg border ${
+          className={`p-6 rounded-2xl border ${
             isDarkMode
-              ? "bg-gray-800 border-gray-700"
+              ? "bg-[#111] border-white/10"
               : "bg-white border-gray-200"
           }`}
         >
@@ -183,9 +183,9 @@ const TechnicianManagement = () => {
                 placeholder="Search by name or phone number..."
                 value={searchTerm}
                 onChange={handleSearch}
-                className={`w-full pl-10 pr-4 py-3 rounded-xl border focus:ring-2 focus:ring-primary-500 focus:border-transparent ${
+                className={`w-full pl-10 pr-4 py-2 text-sm rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   isDarkMode
-                    ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                    ? "bg-white/10 border-white/10 text-white placeholder-gray-400"
                     : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                 }`}
               />
@@ -195,9 +195,9 @@ const TechnicianManagement = () => {
 
         {/* Technicians List */}
         <div
-          className={`rounded-2xl shadow-lg border ${
+          className={`rounded-2xl border ${
             isDarkMode
-              ? "bg-gray-800 border-gray-700"
+              ? "bg-[#111] border-white/10"
               : "bg-white border-gray-200"
           }`}
         >
@@ -242,9 +242,9 @@ const TechnicianManagement = () => {
                     transition={{ delay: index * 0.1 }}
                     className={`p-4 rounded-xl border ${
                       isDarkMode
-                        ? "bg-gray-700/50 border-gray-600"
+                        ? "bg-white/5 border-white/10"
                         : "bg-gray-50 border-gray-200"
-                    } hover:shadow-md transition-all duration-200`}
+                    } transition-all duration-200`}
                   >
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
@@ -395,7 +395,7 @@ const TechnicianManagement = () => {
                       pagination.page === i + 1
                         ? "bg-primary-600 text-white"
                         : isDarkMode
-                        ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                        ? "bg-white/10 text-gray-300 hover:bg-white/20"
                         : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
@@ -411,19 +411,13 @@ const TechnicianManagement = () => {
         {showCreateModal && (
           <div
             className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
-            style={{
-              margin: 0,
-              padding: 0,
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
+            onClick={() => { setShowCreateModal(false); setFormData({ name: "", phoneNumber: "" }); }}
           >
             <div
               className={`p-6 rounded-2xl max-w-md w-full mx-4 my-4 max-h-[95vh] overflow-y-auto ${
-                isDarkMode ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-[#111]" : "bg-white"
               }`}
+              onClick={(e) => e.stopPropagation()}
             >
               <h3
                 className={`text-lg font-semibold mb-4 ${
@@ -450,7 +444,7 @@ const TechnicianManagement = () => {
                     }
                     className={`w-full px-4 py-2 border rounded-lg ${
                       isDarkMode
-                        ? "bg-gray-700 border-gray-600 text-white"
+                        ? "bg-[#1a1a1a] border-white/10 text-white"
                         : "bg-white border-gray-300 text-gray-900"
                     }`}
                     required
@@ -473,7 +467,7 @@ const TechnicianManagement = () => {
                     }
                     className={`w-full px-4 py-2 border rounded-lg ${
                       isDarkMode
-                        ? "bg-gray-700 border-gray-600 text-white"
+                        ? "bg-[#1a1a1a] border-white/10 text-white"
                         : "bg-white border-gray-300 text-gray-900"
                     }`}
                     required
@@ -489,7 +483,7 @@ const TechnicianManagement = () => {
                     }}
                     className={`flex-1 px-4 py-2 border rounded-lg ${
                       isDarkMode
-                        ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                        ? "border-blue-600/30 text-blue-400 hover:bg-blue-600/10"
                         : "border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -512,19 +506,13 @@ const TechnicianManagement = () => {
         {showEditModal && (
           <div
             className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
-            style={{
-              margin: 0,
-              padding: 0,
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
+            onClick={() => { setShowEditModal(false); setSelectedTechnician(null); setFormData({ name: "", phoneNumber: "" }); }}
           >
             <div
               className={`p-6 rounded-2xl max-w-md w-full mx-4 my-4 max-h-[95vh] overflow-y-auto ${
-                isDarkMode ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-[#111]" : "bg-white"
               }`}
+              onClick={(e) => e.stopPropagation()}
             >
               <h3
                 className={`text-lg font-semibold mb-4 ${
@@ -551,7 +539,7 @@ const TechnicianManagement = () => {
                     }
                     className={`w-full px-4 py-2 border rounded-lg ${
                       isDarkMode
-                        ? "bg-gray-700 border-gray-600 text-white"
+                        ? "bg-[#1a1a1a] border-white/10 text-white"
                         : "bg-white border-gray-300 text-gray-900"
                     }`}
                     required
@@ -574,7 +562,7 @@ const TechnicianManagement = () => {
                     }
                     className={`w-full px-4 py-2 border rounded-lg ${
                       isDarkMode
-                        ? "bg-gray-700 border-gray-600 text-white"
+                        ? "bg-[#1a1a1a] border-white/10 text-white"
                         : "bg-white border-gray-300 text-gray-900"
                     }`}
                     required
@@ -591,7 +579,7 @@ const TechnicianManagement = () => {
                     }}
                     className={`flex-1 px-4 py-2 border rounded-lg ${
                       isDarkMode
-                        ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                        ? "border-blue-600/30 text-blue-400 hover:bg-blue-600/10"
                         : "border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
@@ -614,19 +602,13 @@ const TechnicianManagement = () => {
         {showDeleteModal && (
           <div
             className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
-            style={{
-              margin: 0,
-              padding: 0,
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
+            onClick={() => setShowDeleteModal(null)}
           >
             <div
               className={`p-6 rounded-2xl max-w-md mx-4 my-4 max-h-[95vh] overflow-y-auto ${
-                isDarkMode ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-[#111]" : "bg-white"
               }`}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center space-x-3 mb-4">
                 <AlertTriangle className="h-6 w-6 text-red-500" />
@@ -654,7 +636,7 @@ const TechnicianManagement = () => {
                   onClick={() => setShowDeleteModal(null)}
                   className={`flex-1 px-4 py-2 rounded-lg border ${
                     isDarkMode
-                      ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                      ? "border-blue-600/30 text-blue-400 hover:bg-blue-600/10"
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
                   }`}
                 >
@@ -679,3 +661,5 @@ const TechnicianManagement = () => {
 };
 
 export default TechnicianManagement;
+
+

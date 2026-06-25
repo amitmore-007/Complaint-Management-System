@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import dayjs from "dayjs";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { MenuItem, TextField } from "@mui/material";
@@ -49,7 +49,7 @@ const DateRangePicker = ({
         <div
           className={`grid grid-cols-1 md:grid-cols-3 gap-4 rounded-2xl p-3 sm:p-4 border ${
             isDarkMode
-              ? "border-gray-800 bg-black/30"
+              ? "border-white/10 bg-black/30"
               : "border-gray-200 bg-gray-50"
           }`}
         >
@@ -211,10 +211,10 @@ const DateRangePicker = ({
             <button
               onClick={onApply}
               disabled={disabled}
-              className={`px-5 py-2.5 rounded-xl font-bold transition-all ${
+              className={`px-3 py-1.5 text-sm rounded-lg font-semibold transition-all ${
                 isDarkMode
-                  ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-500 hover:to-purple-500"
-                  : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500"
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
               } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               Apply

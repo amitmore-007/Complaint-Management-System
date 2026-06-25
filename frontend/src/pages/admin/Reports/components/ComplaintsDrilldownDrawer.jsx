@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import Drawer from "@mui/material/Drawer";
 import { ExternalLink, Loader2, MapPin, User, UserCheck, X } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -50,7 +50,7 @@ const statusTone = (status, isDarkMode) => {
         : "bg-green-50 text-green-700 border-green-200";
     default:
       return isDarkMode
-        ? "bg-gray-800 text-gray-300 border-gray-700"
+        ? "bg-[#111] text-gray-300 border-white/10"
         : "bg-gray-50 text-gray-700 border-gray-200";
   }
 };
@@ -78,7 +78,7 @@ const ComplaintRow = ({ complaint, type, isDarkMode }) => {
     <div
       className={`rounded-2xl border p-4 space-y-3 ${
         isDarkMode
-          ? "bg-gray-900/80 border-gray-800"
+          ? "bg-[#111]/80 border-white/10"
           : "bg-white border-gray-200"
       }`}
     >
@@ -153,7 +153,7 @@ const ComplaintRow = ({ complaint, type, isDarkMode }) => {
           to="/admin/complaints"
           className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition-colors ${
             isDarkMode
-              ? "border-gray-700 bg-gray-950 text-gray-200 hover:bg-gray-900"
+              ? "border-white/10 bg-[#111] text-gray-200 hover:bg-white/5"
               : "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100"
           }`}
         >
@@ -243,7 +243,7 @@ const ComplaintsDrilldownDrawer = ({
       >
         <div
           className={`flex items-start justify-between gap-4 border-b px-5 py-4 sm:px-6 ${
-            isDarkMode ? "border-gray-800" : "border-gray-200"
+            isDarkMode ? "border-white/10" : "border-gray-200"
           }`}
         >
           <div>
@@ -265,7 +265,7 @@ const ComplaintsDrilldownDrawer = ({
             onClick={onClose}
             className={`rounded-xl border p-2 transition-colors ${
               isDarkMode
-                ? "border-gray-700 bg-gray-950 text-gray-200 hover:bg-gray-900"
+                ? "border-white/10 bg-[#111] text-gray-200 hover:bg-white/5"
                 : "border-gray-200 bg-white text-gray-700 hover:bg-gray-100"
             }`}
           >
@@ -275,7 +275,7 @@ const ComplaintsDrilldownDrawer = ({
 
         <div
           className={`flex items-center gap-2 border-b px-5 py-3 sm:px-6 ${
-            isDarkMode ? "border-gray-800" : "border-gray-200"
+            isDarkMode ? "border-white/10" : "border-gray-200"
           }`}
         >
           {tabs.map((tab) => {
@@ -292,7 +292,7 @@ const ComplaintsDrilldownDrawer = ({
                       ? "bg-blue-600 text-white"
                       : "bg-blue-600 text-white"
                     : isDarkMode
-                    ? "bg-gray-900 text-gray-300 hover:bg-gray-800"
+                    ? "bg-[#111] text-gray-300 hover:bg-white/10"
                     : "bg-white text-gray-700 hover:bg-gray-100"
                 }`}
               >
@@ -340,7 +340,7 @@ const ComplaintsDrilldownDrawer = ({
               <div
                 className={`rounded-2xl border border-dashed px-4 py-8 text-center text-sm ${
                   isDarkMode
-                    ? "border-gray-700 bg-gray-950 text-gray-400"
+                    ? "border-white/10 bg-[#111] text-gray-400"
                     : "border-gray-300 bg-white text-gray-600"
                 }`}
               >

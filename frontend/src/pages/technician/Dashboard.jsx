@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -170,7 +170,7 @@ const TechnicianDashboard = () => {
         );
       }
     } catch (error) {
-      console.error("❌ Update status error:", error);
+      console.error("âŒ Update status error:", error);
       const errorMessage =
         error?.response?.data?.message ||
         error?.message ||
@@ -394,28 +394,28 @@ const TechnicianDashboard = () => {
       value: stats.total,
       icon: ClipboardList,
       color: "primary",
-      bgColor: "from-blue-600 to-blue-700",
+      bgColor: "bg-blue-600",
     },
     {
       title: "Assigned",
       value: stats.assigned,
       icon: Clock,
       color: "blue",
-      bgColor: "from-cyan-500 to-cyan-600",
+      bgColor: "bg-cyan-500",
     },
     {
       title: "In Progress",
       value: stats.inProgress,
       icon: AlertCircle,
       color: "orange",
-      bgColor: "from-orange-500 to-orange-600",
+      bgColor: "bg-orange-500",
     },
     {
       title: "Completed",
       value: stats.completed,
       icon: CheckCircle,
       color: "green",
-      bgColor: "from-emerald-500 to-emerald-600",
+      bgColor: "bg-emerald-500",
     },
   ];
 
@@ -460,7 +460,7 @@ const TechnicianDashboard = () => {
               transition={{ delay: index * 0.1 }}
               className={`group relative p-4 sm:p-6 rounded-2xl border transition-all duration-300 hover:shadow-2xl overflow-hidden ${
                 isDarkMode
-                  ? "bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700 hover:border-gray-600 hover:shadow-blue-500/10"
+                  ? "bg-[#111] border-white/10"
                   : "bg-white border-gray-200 hover:border-gray-300 hover:shadow-lg"
               }`}
             >
@@ -488,7 +488,7 @@ const TechnicianDashboard = () => {
                   </p>
                 </div>
                 <div
-                  className={`w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r ${card.bgColor} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0 ml-3`}
+                  className={`w-12 h-12 sm:w-14 sm:h-14 ${card.bgColor} rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0 ml-3`}
                 >
                   <card.icon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
                 </div>
@@ -597,7 +597,7 @@ const TechnicianDashboard = () => {
           >
             <div
               className={`w-full max-w-md mx-4 rounded-2xl shadow-2xl ${
-                isDarkMode ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-[#111]" : "bg-white"
               }`}
               onClick={(e) => e.stopPropagation()}
             >
@@ -615,7 +615,7 @@ const TechnicianDashboard = () => {
                     disabled={isStartingWork}
                     className={`p-2 rounded-lg transition-colors ${
                       isDarkMode
-                        ? "text-gray-400 hover:bg-gray-700"
+                        ? "text-gray-400 hover:bg-white/10"
                         : "text-gray-600 hover:bg-gray-100"
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
@@ -645,7 +645,7 @@ const TechnicianDashboard = () => {
                     disabled={isStartingWork}
                     className={`flex-1 py-3 px-4 border rounded-xl font-semibold transition-all duration-200 ${
                       isDarkMode
-                        ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                        ? "border-white/10 text-gray-300 hover:bg-white/10"
                         : "border-gray-300 text-gray-700 hover:bg-gray-50"
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
@@ -655,7 +655,7 @@ const TechnicianDashboard = () => {
                   <button
                     onClick={confirmStartWork}
                     disabled={isStartingWork}
-                    className="flex-1 bg-gradient-to-r from-orange-600 to-orange-700 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-orange-700 hover:to-orange-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                    className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   >
                     {isStartingWork ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -679,7 +679,7 @@ const TechnicianDashboard = () => {
           transition={{ delay: 0.4 }}
           className={`border rounded-2xl p-4 sm:p-6 shadow-2xl ${
             isDarkMode
-              ? "bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700"
+              ? "bg-[#111] border-white/10"
               : "bg-white border-gray-200"
           }`}
         >
@@ -720,7 +720,7 @@ const TechnicianDashboard = () => {
                   key={complaint._id}
                   className={`group border rounded-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-lg ${
                     isDarkMode
-                      ? "bg-gradient-to-r from-gray-800 to-gray-800/50 border-gray-700 hover:border-gray-600 hover:shadow-blue-500/5"
+                      ? "bg-[#111] border-white/10"
                       : "bg-gray-50 border-gray-200 hover:border-gray-300 hover:shadow-md"
                   }`}
                   whileHover={{ scale: 1.01 }}
@@ -763,7 +763,7 @@ const TechnicianDashboard = () => {
                                 complaint.createdByAdmin?.name ||
                                 complaint.createdByTechnician?.name ||
                                 "N/A"}
-                              <span className="ml-1 text-xs px-1.5 py-0.5 rounded bg-gray-700 text-gray-300">
+                              <span className="ml-1 text-xs px-1.5 py-0.5 rounded bg-white/10 text-gray-300">
                                 {complaint.creatorType || "client"}
                               </span>
                             </span>
@@ -782,7 +782,7 @@ const TechnicianDashboard = () => {
                                 ? complaint.store.managers
                                     .map((m) => `${m.name} (${m.phoneNumber})`)
                                     .join(", ")
-                                : "—"}
+                                : "â€”"}
                             </span>
                           </div>
                         </div>
@@ -821,7 +821,7 @@ const TechnicianDashboard = () => {
                                     <img
                                       src={photo.url}
                                       alt={`Complaint photo ${index + 1}`}
-                                      className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border border-gray-600"
+                                      className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border border-white/10"
                                       onClick={() =>
                                         openPhotoModal(complaint.photos, index)
                                       }
@@ -860,7 +860,7 @@ const TechnicianDashboard = () => {
                                 ))}
                               {complaint.photos.length > 4 && (
                                 <div
-                                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg border-2 border-dashed border-gray-600 flex items-center justify-center text-xs font-medium text-gray-400 cursor-pointer hover:bg-gray-700/50 transition-all"
+                                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg border-2 border-dashed border-white/10 flex items-center justify-center text-xs font-medium text-gray-400 cursor-pointer hover:bg-white/5 transition-all"
                                   onClick={() =>
                                     openPhotoModal(complaint.photos, 4)
                                   }
@@ -959,7 +959,7 @@ const TechnicianDashboard = () => {
                       {complaint.status === "assigned" && (
                         <motion.button
                           onClick={() => openStartWorkConfirm(complaint)}
-                          className="px-3 sm:px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
+                          className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
@@ -971,7 +971,7 @@ const TechnicianDashboard = () => {
                       {complaint.status === "in-progress" && (
                         <motion.button
                           onClick={() => openResolutionModal(complaint)}
-                          className="px-3 sm:px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
+                          className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
@@ -994,7 +994,7 @@ const TechnicianDashboard = () => {
           transition={{ delay: 0.45 }}
           className={`border rounded-2xl p-4 sm:p-6 shadow-2xl ${
             isDarkMode
-              ? "bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700"
+              ? "bg-[#111] border-white/10"
               : "bg-white border-gray-200"
           }`}
         >
@@ -1024,7 +1024,7 @@ const TechnicianDashboard = () => {
             <div
               className={`p-6 rounded-2xl border text-center ${
                 isDarkMode
-                  ? "bg-gray-900 border-gray-800 text-gray-300"
+                  ? "bg-[#111] border-white/10 text-gray-300"
                   : "bg-gray-50 border-gray-200 text-gray-700"
               }`}
             >
@@ -1046,7 +1046,7 @@ const TechnicianDashboard = () => {
                     key={c._id}
                     className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border ${
                       isDarkMode
-                        ? "bg-gray-900 border-gray-800"
+                        ? "bg-[#111] border-white/10"
                         : "bg-white border-gray-200"
                     }`}
                   >
@@ -1071,7 +1071,7 @@ const TechnicianDashboard = () => {
                         <span
                           className={`text-xs font-semibold px-2 py-1 rounded-full ${
                             isDarkMode
-                              ? "bg-gray-800 text-gray-300"
+                              ? "bg-white/10 text-gray-300"
                               : "bg-gray-100 text-gray-700"
                           }`}
                         >
@@ -1095,7 +1095,7 @@ const TechnicianDashboard = () => {
                             )}`
                           )
                         }
-                        className="px-3 sm:px-4 py-2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white rounded-lg hover:from-yellow-700 hover:to-orange-700 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
+                        className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2 font-medium text-sm whitespace-nowrap"
                       >
                         <FileText className="h-4 w-4" />
                         <span>Submit Billing</span>
@@ -1111,8 +1111,8 @@ const TechnicianDashboard = () => {
                     isDarkMode ? "text-gray-400" : "text-gray-600"
                   } text-sm`}
                 >
-                  Showing 5 of {pendingBillingComplaints.length}. Use “View all
-                  resolved” to see everything.
+                  Showing 5 of {pendingBillingComplaints.length}. Use â€œView all
+                  resolvedâ€ to see everything.
                 </div>
               )}
             </div>
@@ -1134,7 +1134,7 @@ const TechnicianDashboard = () => {
           >
             <div
               className={`w-full max-w-2xl max-h-[95vh] overflow-y-auto mx-4 my-4 rounded-2xl shadow-2xl ${
-                isDarkMode ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-[#111] dark-scrollbar" : "bg-white"
               }`}
             >
               <div className="p-6">
@@ -1148,7 +1148,7 @@ const TechnicianDashboard = () => {
                   </h3>
                   <button
                     onClick={closeResolutionModal}
-                    className={`p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${
+                    className={`p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors ${
                       isDarkMode ? "text-gray-400" : "text-gray-600"
                     }`}
                   >
@@ -1195,7 +1195,7 @@ const TechnicianDashboard = () => {
                       placeholder="Describe how the complaint was resolved..."
                       className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 ${
                         isDarkMode
-                          ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       }`}
                       required
@@ -1223,7 +1223,7 @@ const TechnicianDashboard = () => {
                       placeholder="List all materials used to resolve this complaint (e.g., LED bulbs, wires, switches, etc.)"
                       className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 resize-none ${
                         isDarkMode
-                          ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                          ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                           : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                       }`}
                       required
@@ -1243,7 +1243,7 @@ const TechnicianDashboard = () => {
                     <div
                       className={`border-2 border-dashed rounded-xl p-6 text-center ${
                         isDarkMode
-                          ? "border-gray-600 hover:border-gray-500"
+                          ? "border-white/10 hover:border-gray-500"
                           : "border-gray-300 hover:border-gray-400"
                       }`}
                     >
@@ -1310,13 +1310,13 @@ const TechnicianDashboard = () => {
                         isDarkMode ? "text-gray-300" : "text-gray-700"
                       }`}
                     >
-                      Resolution Proof Videos (Optional, max 2 × 100 MB)
+                      Resolution Proof Videos (Optional, max 2 Ã— 100 MB)
                     </label>
 
                     <div
                       className={`border-2 border-dashed rounded-xl p-6 text-center ${
                         isDarkMode
-                          ? "border-gray-600 hover:border-gray-500"
+                          ? "border-white/10 hover:border-gray-500"
                           : "border-gray-300 hover:border-gray-400"
                       }`}
                     >
@@ -1349,7 +1349,7 @@ const TechnicianDashboard = () => {
                             isDarkMode ? "text-gray-500" : "text-gray-500"
                           }`}
                         >
-                          MP4, MOV, WebM — up to 100 MB each, max 2 videos
+                          MP4, MOV, WebM â€” up to 100 MB each, max 2 videos
                         </p>
                       </label>
                     </div>
@@ -1381,7 +1381,7 @@ const TechnicianDashboard = () => {
                       onClick={closeResolutionModal}
                       className={`flex-1 py-3 px-4 border rounded-xl font-semibold transition-all duration-200 ${
                         isDarkMode
-                          ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                          ? "border-white/10 text-gray-300 hover:bg-white/10"
                           : "border-gray-300 text-gray-700 hover:bg-gray-50"
                       }`}
                     >
@@ -1395,7 +1395,7 @@ const TechnicianDashboard = () => {
                         !resolutionData?.materialsUsed?.trim() ||
                         isSubmitting
                       }
-                      className="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                       {isSubmitting ? (
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -1418,3 +1418,4 @@ const TechnicianDashboard = () => {
 };
 
 export default TechnicianDashboard;
+

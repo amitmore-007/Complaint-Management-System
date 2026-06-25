@@ -6,7 +6,7 @@ const ChartLoader = ({ isDarkMode }) => (
       <div className="relative">
         <div
           className={`w-16 h-16 rounded-full border-4 ${
-            isDarkMode ? "border-gray-800" : "border-gray-200"
+            isDarkMode ? "border-white/10" : "border-gray-200"
           }`}
         />
         <div

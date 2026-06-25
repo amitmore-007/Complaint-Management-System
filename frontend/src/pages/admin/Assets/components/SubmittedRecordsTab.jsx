@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Calendar,
@@ -241,9 +241,9 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
             placeholder="Search by store or technician..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-colors ${
+            className={`w-full pl-10 pr-4 py-2 text-sm border rounded-lg transition-colors ${
               isDarkMode
-                ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             }`}
           />
@@ -252,10 +252,10 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
         <button
           onClick={downloadAssetRecordsExcel}
           disabled={exportRecordsMutation.isPending}
-          className={`px-6 py-3 rounded-xl font-medium flex items-center space-x-2 transition-colors ${
+          className={`px-6 py-3 rounded-lg font-medium flex items-center space-x-2 transition-colors ${
             exportRecordsMutation.isPending
               ? isDarkMode
-                ? "bg-gray-700 text-gray-300 cursor-not-allowed"
+                ? "bg-white/10 text-gray-300 cursor-not-allowed"
                 : "bg-gray-200 text-gray-500 cursor-not-allowed"
               : "bg-blue-600 hover:bg-blue-700 text-white"
           }`}
@@ -282,8 +282,8 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
               key={record._id}
               className={`border rounded-xl p-6 transition-colors ${
                 isDarkMode
-                  ? "bg-gray-800/50 border-gray-700 hover:border-gray-600"
-                  : "bg-white border-gray-200 hover:border-gray-300 hover:shadow-md"
+                  ? "bg-white/5 border-white/10"
+                  : "bg-white border-gray-200"
               }`}
               whileHover={{ scale: 1.01 }}
             >
@@ -396,7 +396,7 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className={`rounded-2xl p-6 w-full max-w-4xl max-h-[95vh] overflow-y-auto mx-4 my-4 ${
-                isDarkMode ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-[#111]" : "bg-white"
               }`}
               onClick={(e) => e.stopPropagation()}
             >
@@ -456,7 +456,7 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
                   onClick={() => setShowRecordModal(false)}
                   className={`p-2 rounded-lg transition-colors ${
                     isDarkMode
-                      ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                      ? "text-gray-400 hover:text-white hover:bg-white/10"
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                   }`}
                 >
@@ -472,7 +472,7 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
                       item.isPresent
                         ? "bg-green-500/10 border-green-500/30"
                         : isDarkMode
-                          ? "bg-gray-700/50 border-gray-600"
+                          ? "bg-white/5 border-white/10"
                           : "bg-gray-50 border-gray-200"
                     }`}
                   >
@@ -516,7 +516,7 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
               {selectedRecord.notes && (
                 <div
                   className={`mt-6 p-4 rounded-xl ${
-                    isDarkMode ? "bg-gray-700/50" : "bg-gray-50"
+                    isDarkMode ? "bg-white/5" : "bg-gray-50"
                   }`}
                 >
                   <h4
@@ -559,7 +559,7 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className={`rounded-2xl p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto mx-4 my-4 ${
-                isDarkMode ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-[#111]" : "bg-white"
               }`}
               onClick={(e) => e.stopPropagation()}
             >
@@ -592,9 +592,9 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
                       }))
                     }
                     placeholder="Enter store name"
-                    className={`w-full px-4 py-3 border rounded-xl transition-colors ${
+                    className={`w-full px-4 py-3 border rounded-lg transition-colors ${
                       isDarkMode
-                        ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     }`}
                   />
@@ -615,7 +615,7 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
                       onClick={addStoreManager}
                       className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                         isDarkMode
-                          ? "bg-gray-700 hover:bg-gray-600 text-white"
+                          ? "bg-white/10 hover:bg-white/20 text-white"
                           : "bg-gray-200 hover:bg-gray-300 text-gray-900"
                       }`}
                     >
@@ -647,7 +647,7 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
                           key={index}
                           className={`p-4 border rounded-xl ${
                             isDarkMode
-                              ? "bg-gray-700/50 border-gray-600"
+                              ? "bg-white/5 border-white/10"
                               : "bg-gray-50 border-gray-200"
                           }`}
                         >
@@ -665,7 +665,7 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
                               placeholder="Manager name"
                               className={`w-full px-3 py-2 border rounded-lg transition-colors ${
                                 isDarkMode
-                                  ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                                  ? "bg-white/10 border-white/10 text-white placeholder-gray-400"
                                   : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                               }`}
                             />
@@ -682,7 +682,7 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
                               placeholder="Contact number"
                               className={`w-full px-3 py-2 border rounded-lg transition-colors ${
                                 isDarkMode
-                                  ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                                  ? "bg-white/10 border-white/10 text-white placeholder-gray-400"
                                   : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                               }`}
                             />
@@ -693,7 +693,7 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
                               onClick={() => removeStoreManager(index)}
                               className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                                 isDarkMode
-                                  ? "bg-gray-700 hover:bg-gray-600 text-white"
+                                  ? "bg-white/10 hover:bg-white/20 text-white"
                                   : "bg-gray-200 hover:bg-gray-300 text-gray-900"
                               }`}
                             >
@@ -722,7 +722,7 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
                         key={index}
                         className={`p-4 border rounded-xl ${
                           isDarkMode
-                            ? "bg-gray-700/50 border-gray-600"
+                            ? "bg-white/5 border-white/10"
                             : "bg-gray-50 border-gray-200"
                         }`}
                       >
@@ -771,7 +771,7 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
                             placeholder="Count"
                             className={`w-full px-3 py-2 border rounded-lg transition-colors ${
                               isDarkMode
-                                ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                                ? "bg-white/10 border-white/10 text-white placeholder-gray-400"
                                 : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                             }`}
                           />
@@ -800,9 +800,9 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
                     }
                     rows={3}
                     placeholder="Additional notes..."
-                    className={`w-full px-4 py-3 border rounded-xl transition-colors resize-none ${
+                    className={`w-full px-4 py-3 border rounded-lg transition-colors resize-none ${
                       isDarkMode
-                        ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     }`}
                   />
@@ -823,9 +823,9 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
                       setSelectedStore(null);
                       setStoreManagers([]);
                     }}
-                    className={`flex-1 py-3 px-4 rounded-xl transition-colors ${
+                    className={`flex-1 py-3 px-4 rounded-lg transition-colors ${
                       isDarkMode
-                        ? "bg-gray-700 hover:bg-gray-600 text-white"
+                        ? "bg-white/10 hover:bg-white/20 text-white"
                         : "bg-gray-200 hover:bg-gray-300 text-gray-900"
                     }`}
                   >
@@ -834,7 +834,7 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
                   <button
                     type="submit"
                     disabled={updateRecordMutation.isPending}
-                    className={`flex-1 py-3 px-4 rounded-xl transition-colors inline-flex items-center justify-center gap-2 ${
+                    className={`flex-1 py-3 px-4 rounded-lg transition-colors inline-flex items-center justify-center gap-2 ${
                       updateRecordMutation.isPending
                         ? "bg-blue-600/70 text-white cursor-not-allowed"
                         : "bg-blue-600 hover:bg-blue-700 text-white"
@@ -860,3 +860,5 @@ const SubmittedRecordsTab = ({ isDarkMode }) => {
 };
 
 export default SubmittedRecordsTab;
+
+

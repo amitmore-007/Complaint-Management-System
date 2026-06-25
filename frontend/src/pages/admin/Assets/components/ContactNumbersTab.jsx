@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Edit, Phone, Plus, Search, Trash2, X, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -112,9 +112,9 @@ const ContactNumbersTab = ({ isDarkMode }) => {
             placeholder="Search store or contact..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-colors ${
+            className={`w-full pl-10 pr-4 py-2 text-sm border rounded-lg transition-colors ${
               isDarkMode
-                ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             }`}
           />
@@ -122,9 +122,9 @@ const ContactNumbersTab = ({ isDarkMode }) => {
 
         <button
           onClick={() => refetchStores?.()}
-          className={`px-6 py-3 rounded-xl font-medium transition-colors ${
+          className={`px-6 py-3 rounded-lg font-medium transition-colors ${
             isDarkMode
-              ? "bg-gray-700 hover:bg-gray-600 text-white"
+              ? "bg-white/10 hover:bg-white/20 text-white"
               : "bg-gray-200 hover:bg-gray-300 text-gray-900"
           }`}
         >
@@ -144,8 +144,8 @@ const ContactNumbersTab = ({ isDarkMode }) => {
               key={store._id}
               className={`border rounded-xl p-6 transition-colors ${
                 isDarkMode
-                  ? "bg-gray-800/50 border-gray-700 hover:border-gray-600"
-                  : "bg-white border-gray-200 hover:border-gray-300 hover:shadow-md"
+                  ? "bg-white/5 border-white/10"
+                  : "bg-white border-gray-200"
               }`}
               whileHover={{ scale: 1.01 }}
             >
@@ -256,7 +256,7 @@ const ContactNumbersTab = ({ isDarkMode }) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className={`rounded-2xl p-6 w-full max-w-2xl max-h-[95vh] overflow-y-auto mx-4 my-4 ${
-                isDarkMode ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-[#111]" : "bg-white"
               }`}
               onClick={(e) => e.stopPropagation()}
             >
@@ -292,7 +292,7 @@ const ContactNumbersTab = ({ isDarkMode }) => {
                   onClick={() => setShowEditStoreContactsModal(false)}
                   className={`p-2 rounded-lg transition-colors ${
                     isDarkMode
-                      ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                      ? "text-gray-400 hover:text-white hover:bg-white/10"
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                   }`}
                 >
@@ -315,7 +315,7 @@ const ContactNumbersTab = ({ isDarkMode }) => {
                       onClick={addStoreContactRow}
                       className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                         isDarkMode
-                          ? "bg-gray-700 hover:bg-gray-600 text-white"
+                          ? "bg-white/10 hover:bg-white/20 text-white"
                           : "bg-gray-200 hover:bg-gray-300 text-gray-900"
                       }`}
                     >
@@ -340,7 +340,7 @@ const ContactNumbersTab = ({ isDarkMode }) => {
                         key={index}
                         className={`p-4 border rounded-xl ${
                           isDarkMode
-                            ? "bg-gray-700/50 border-gray-600"
+                            ? "bg-white/5 border-white/10"
                             : "bg-gray-50 border-gray-200"
                         }`}
                       >
@@ -358,7 +358,7 @@ const ContactNumbersTab = ({ isDarkMode }) => {
                             placeholder="Label (e.g. Outlet Manager)"
                             className={`w-full px-3 py-2 border rounded-lg transition-colors ${
                               isDarkMode
-                                ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                                ? "bg-white/10 border-white/10 text-white placeholder-gray-400"
                                 : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                             }`}
                           />
@@ -375,7 +375,7 @@ const ContactNumbersTab = ({ isDarkMode }) => {
                             placeholder="Number"
                             className={`w-full px-3 py-2 border rounded-lg transition-colors ${
                               isDarkMode
-                                ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                                ? "bg-white/10 border-white/10 text-white placeholder-gray-400"
                                 : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
                             }`}
                           />
@@ -386,7 +386,7 @@ const ContactNumbersTab = ({ isDarkMode }) => {
                             onClick={() => removeStoreContactRow(index)}
                             className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                               isDarkMode
-                                ? "bg-gray-700 hover:bg-gray-600 text-white"
+                                ? "bg-white/10 hover:bg-white/20 text-white"
                                 : "bg-gray-200 hover:bg-gray-300 text-gray-900"
                             }`}
                           >
@@ -407,9 +407,9 @@ const ContactNumbersTab = ({ isDarkMode }) => {
                       setSelectedStoreForContacts(null);
                       setStoreManagersForContacts([]);
                     }}
-                    className={`flex-1 py-3 px-4 rounded-xl transition-colors ${
+                    className={`flex-1 py-3 px-4 rounded-lg transition-colors ${
                       isDarkMode
-                        ? "bg-gray-700 hover:bg-gray-600 text-white"
+                        ? "bg-white/10 hover:bg-white/20 text-white"
                         : "bg-gray-200 hover:bg-gray-300 text-gray-900"
                     }`}
                   >
@@ -418,7 +418,7 @@ const ContactNumbersTab = ({ isDarkMode }) => {
                   <button
                     type="submit"
                     disabled={updateStoreManagersMutation.isPending}
-                    className={`flex-1 py-3 px-4 rounded-xl transition-colors inline-flex items-center justify-center gap-2 ${
+                    className={`flex-1 py-3 px-4 rounded-lg transition-colors inline-flex items-center justify-center gap-2 ${
                       updateStoreManagersMutation.isPending
                         ? "bg-blue-600/70 text-white cursor-not-allowed"
                         : "bg-blue-600 hover:bg-blue-700 text-white"
@@ -444,3 +444,5 @@ const ContactNumbersTab = ({ isDarkMode }) => {
 };
 
 export default ContactNumbersTab;
+
+

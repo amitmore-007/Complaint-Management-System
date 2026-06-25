@@ -1,115 +1,14 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
-/* Reset and base styles */
-* {
+
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
 html, body {
   margin: 0;
   padding: 0;
-  height: 100%;
-  width: 100%;
   overflow-x: hidden;
-}
-
-#root {
-  min-height: 100vh;
-  width: 100%;
-  position: relative;
-    height: 100%;
-}
-
-.App {
-  width: 100%;
-  min-height: 100vh;
-}
-
-/* Ensure smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Fix for mobile webkit scrolling */
-body {
-  -webkit-overflow-scrolling: touch;
-  overflow-scrolling: touch;
-}
-
-/* Prevent layout shifts */
-.dashboard-layout {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
-}
-
-/* Custom utility classes for overflow handling */
-.overflow-y-auto {
-  overflow-y: auto !important;
-}
-
-.overflow-hidden {
-  overflow: hidden !important;
-}
-
-/* Ensure proper scrolling in flex containers */
-.flex-1 {
-  flex: 1 1 0%;
-  min-height: 0;
-}
-
-.min-h-0 {
-  min-height: 0px;
-}
-
-/* Prevent content jumping */
-.main-content-wrapper {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Additional custom styles can be added here */
-
-/* Fix for sidebar-content spacing issue */
-.fixed.inset-y-0 {
-  top: 0;
-  bottom: 0;
-}
-
-/* Remove any gap between sidebar and content */
-.min-h-screen.flex {
-  gap: 0 !important;
-}
-
-/* Make sure content starts right after sidebar */
-.lg\:ml-72 {
-  margin-left: 18rem; /* 288px - same as w-72 */
-}
-
-/* Ensure content doesn't have any top spacing */
-.-lg\:mt-0 {
-  margin-top: 0;
-}
-
-/* Fix for mobile view */
-@media (max-width: 1023px) {
-  .lg\:ml-0 {
-    margin-left: 0;
-  }
-}
-
-/* Additional fix for dashboard layout */
-.dashboard-layout .main-content-wrapper {
-  margin-left: 0;
-  padding-left: 0;
-}
-
-/* Ensure sidebar and main content are flush */
-.hidden.lg\:block {
-  margin-right: 0;
 }
 
 @tailwind base;
@@ -289,6 +188,26 @@ body {
   /* Custom focus styles */
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+
+  /* Dark scrollbar — apply to overflow-y-auto containers in dark mode */
+  .dark-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .dark-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .dark-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+  }
+  .dark-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+  /* Firefox */
+  .dark-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
   }
   
   /* Animation utilities */

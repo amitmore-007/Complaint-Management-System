@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+﻿import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useDropzone } from "react-dropzone";
@@ -8,7 +8,7 @@ import {
   X,
   Image as ImageIcon,
   FileText,
-  AlertTriangle,
+  ChevronDown,
   Save,
   ArrowLeft,
 } from "lucide-react";
@@ -142,7 +142,7 @@ const CreateComplaint = () => {
           animate={{ opacity: 1, y: 0 }}
           className={`p-8 rounded-2xl shadow-lg border ${
             isDarkMode
-              ? "bg-gray-800 border-gray-700"
+              ? "bg-[#111] border-white/10"
               : "bg-white border-gray-200"
           }`}
         >
@@ -164,7 +164,7 @@ const CreateComplaint = () => {
                   placeholder="Brief description of the issue"
                   className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-all duration-200 ${
                     isDarkMode
-                      ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   }`}
                 />
@@ -193,7 +193,7 @@ const CreateComplaint = () => {
                 placeholder="Provide detailed information about the issue..."
                 className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 resize-none ${
                   isDarkMode
-                    ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 }`}
               />
@@ -244,13 +244,12 @@ const CreateComplaint = () => {
                 Priority
               </label>
               <div className="relative">
-                <AlertTriangle className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <select
                   {...register("priority")}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-all duration-200 ${
+                  className={`w-full pl-4 pr-10 py-3 border rounded-xl appearance-none cursor-pointer transition-all duration-200 ${
                     isDarkMode
-                      ? "bg-gray-700 border-gray-600 text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                      : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      ? "bg-[#1a1a1a] border-white/10 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   }`}
                 >
                   <option value="low">Low</option>
@@ -258,6 +257,7 @@ const CreateComplaint = () => {
                   <option value="high">High</option>
                   <option value="urgent">Urgent</option>
                 </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
               </div>
             </div>
 
@@ -276,7 +276,7 @@ const CreateComplaint = () => {
                   isDragActive
                     ? "border-primary-500 bg-primary-50 dark:bg-primary-900/20"
                     : isDarkMode
-                    ? "border-gray-600 hover:border-gray-500 bg-gray-700/50"
+                    ? "border-white/10 hover:border-white/20 bg-white/5"
                     : "border-gray-300 hover:border-gray-400 bg-gray-50"
                 }`}
               >
@@ -337,9 +337,9 @@ const CreateComplaint = () => {
               <button
                 type="button"
                 onClick={() => navigate("/client/dashboard")}
-                className={`flex-1 py-3 px-4 border rounded-xl font-semibold transition-all duration-200 ${
+                className={`flex-1 py-2.5 px-4 border rounded-xl text-sm font-semibold transition-all duration-200 ${
                   isDarkMode
-                    ? "border-gray-600 text-gray-300 hover:bg-gray-700"
+                    ? "border-white/10 text-gray-300 hover:bg-white/10"
                     : "border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >
@@ -349,7 +349,7 @@ const CreateComplaint = () => {
               <motion.button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 bg-gradient-to-r from-primary-600 to-primary-700 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:from-primary-700 hover:to-primary-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="flex-1 bg-blue-600 text-white py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center space-x-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
                 whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
               >
@@ -371,3 +371,4 @@ const CreateComplaint = () => {
 };
 
 export default CreateComplaint;
+

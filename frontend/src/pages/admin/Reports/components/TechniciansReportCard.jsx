@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { RefreshCcw } from "lucide-react";
 
@@ -320,9 +320,9 @@ const TechniciansReportCard = () => {
           <button
             onClick={() => statsQuery.refetch()}
             disabled={isFetching}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-semibold transition-colors border ${
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors border ${
               isDarkMode
-                ? "border-gray-800 bg-gray-900 text-gray-200 hover:bg-gray-800"
+                ? "border-white/10 bg-[#111] text-gray-200 hover:bg-white/10"
                 : "border-gray-200 bg-white text-gray-800 hover:bg-gray-50"
             } ${isFetching ? "opacity-60 cursor-not-allowed" : ""}`}
           >
@@ -356,3 +356,4 @@ const TechniciansReportCard = () => {
 };
 
 export default TechniciansReportCard;
+

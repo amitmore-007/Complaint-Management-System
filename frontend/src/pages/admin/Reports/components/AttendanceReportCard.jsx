@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart3, Clock, Coffee, LogIn, LogOut, Users } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -10,7 +10,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { useTheme } from '../../../../context/ThemeContext';
 import { useAllAttendance } from '../../../../hooks/useAttendance';
 
-// ── helpers ─────────────────────────────────────────────────────────────────
+// â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const formatSecondsShort = (totalSeconds = 0) => {
   const h = Math.floor(totalSeconds / 3600);
@@ -19,10 +19,10 @@ const formatSecondsShort = (totalSeconds = 0) => {
 };
 
 const formatTime = (date) =>
-  date ? new Date(date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—';
+  date ? new Date(date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'â€”';
 
 const formatDate = (dateStr) => {
-  if (!dateStr) return '—';
+  if (!dateStr) return 'â€”';
   const [y, m, d] = dateStr.split('-');
   return new Date(y, m - 1, d).toLocaleDateString('en-IN', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
@@ -44,7 +44,7 @@ const statusBadge = (status) => {
   return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600"><span className="w-1.5 h-1.5 rounded-full bg-gray-400" />Checked Out</span>;
 };
 
-// ── component ───────────────────────────────────────────────────────────────
+// â”€â”€ component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const AttendanceReportCard = () => {
   const { isDarkMode } = useTheme();
@@ -76,7 +76,7 @@ const AttendanceReportCard = () => {
 
   const th = `px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`;
   const td = `px-4 py-4 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`;
-  const rowBase = `border-b ${isDarkMode ? 'border-gray-800 hover:bg-gray-800/40' : 'border-gray-100 hover:bg-gray-50'} transition-colors`;
+  const rowBase = `border-b ${isDarkMode ? 'border-white/10 hover:bg-white/10/40' : 'border-gray-100 hover:bg-gray-50'} transition-colors`;
 
   return (
     <div className="space-y-6">
@@ -124,7 +124,7 @@ const AttendanceReportCard = () => {
         {summaryCards.map((card, i) => (
           <motion.div key={card.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}>
             <div className={`group relative p-5 rounded-2xl border transition-all duration-300 overflow-hidden ${
-              isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800 border-gray-700' : 'bg-white border-gray-200 hover:shadow-lg'
+              isDarkMode ? 'bg-[#111] border-white/10' : 'bg-white border-gray-200 hover:shadow-lg'
             }`}>
               <div className="flex items-center justify-between">
                 <div>
@@ -141,7 +141,7 @@ const AttendanceReportCard = () => {
       </div>
 
       {/* table */}
-      <div className={`rounded-2xl border overflow-hidden ${isDarkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'} shadow-sm`}>
+      <div className={`rounded-2xl border overflow-hidden ${isDarkMode ? 'bg-[#111] border-white/10' : 'bg-white border-gray-200'} shadow-sm`}>
         {isLoading ? (
           <div className="flex justify-center py-16">
             <div className="animate-spin w-8 h-8 rounded-full border-2 border-blue-600 border-t-transparent" />
@@ -154,7 +154,7 @@ const AttendanceReportCard = () => {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className={isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}>
+              <thead className={isDarkMode ? 'bg-[#111]' : 'bg-gray-50'}>
                 <tr>
                   <th className={th}>Date</th>
                   <th className={th}>Name</th>
@@ -175,7 +175,7 @@ const AttendanceReportCard = () => {
                     <td className={`${td} font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{r.userName}</td>
                     <td className={td}>{r.userPhone}</td>
                     <td className={td}>
-                      <span className={`capitalize px-2 py-0.5 rounded text-xs font-medium ${isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`capitalize px-2 py-0.5 rounded text-xs font-medium ${isDarkMode ? 'bg-[#111] text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
                         {r.userRole}
                       </span>
                     </td>
@@ -188,8 +188,8 @@ const AttendanceReportCard = () => {
                   </tr>
                 ))}
               </tbody>
-              <tfoot className={isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}>
-                <tr className={`border-t-2 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              <tfoot className={isDarkMode ? 'bg-[#111]' : 'bg-gray-50'}>
+                <tr className={`border-t-2 ${isDarkMode ? 'border-white/10' : 'border-gray-200'}`}>
                   <td colSpan={6} className={`px-4 py-3 text-sm font-bold ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Total ({records.length} records)
                   </td>
@@ -207,3 +207,4 @@ const AttendanceReportCard = () => {
 };
 
 export default AttendanceReportCard;
+

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Eye } from "lucide-react";
 import { useLocation } from "react-router-dom";
@@ -50,7 +50,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
       <div
         className={`p-8 rounded-2xl border text-center ${
           isDarkMode
-            ? "bg-gray-900 border-gray-800 text-gray-300"
+            ? "bg-[#111] border-white/10 text-gray-300"
             : "bg-white border-gray-200 text-gray-700"
         }`}
       >
@@ -73,7 +73,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
               key={record._id}
               className={`p-5 rounded-2xl border shadow-sm ${
                 isDarkMode
-                  ? "bg-gray-900 border-gray-800"
+                  ? "bg-[#111] border-white/10"
                   : "bg-white border-gray-200"
               }`}
             >
@@ -91,7 +91,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                       isDarkMode ? "text-gray-400" : "text-gray-600"
                     }`}
                   >
-                    {record.complaint?.complaintId} •{" "}
+                    {record.complaint?.complaintId} â€¢{" "}
                     {record.complaint?.location}
                   </p>
                 </div>
@@ -100,7 +100,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                   onClick={() => setDetailsModal({ open: true, record })}
                   className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold ${
                     isDarkMode
-                      ? "border-gray-800 text-gray-200 hover:bg-gray-800"
+                      ? "border-white/10 text-gray-200 hover:bg-white/5"
                       : "border-gray-200 text-gray-700 hover:bg-gray-50"
                   }`}
                   type="button"
@@ -114,7 +114,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                 <div
                   className={`p-3 rounded-2xl border ${
                     isDarkMode
-                      ? "bg-gray-950 border-gray-800"
+                      ? "bg-[#111] border-white/10"
                       : "bg-gray-50 border-gray-200"
                   }`}
                 >
@@ -136,7 +136,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                 <div
                   className={`p-3 rounded-2xl border ${
                     isDarkMode
-                      ? "bg-gray-950 border-gray-800"
+                      ? "bg-[#111] border-white/10"
                       : "bg-gray-50 border-gray-200"
                   }`}
                 >
@@ -176,7 +176,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
               exit={{ scale: 0.98, opacity: 0 }}
               className={`w-full max-w-3xl rounded-3xl border shadow-2xl overflow-hidden ${
                 isDarkMode
-                  ? "bg-gray-950 border-gray-800"
+                  ? "bg-[#111] border-white/10"
                   : "bg-white border-gray-200"
               }`}
               onClick={(e) => e.stopPropagation()}
@@ -195,14 +195,14 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                       isDarkMode ? "text-gray-400" : "text-gray-600"
                     } text-sm`}
                   >
-                    {detailsModal.record.complaint?.complaintId} •{" "}
+                    {detailsModal.record.complaint?.complaintId} â€¢{" "}
                     {detailsModal.record.complaint?.title}
                   </p>
                 </div>
                 <button
                   className={`px-3 py-2 rounded-xl border text-sm font-semibold ${
                     isDarkMode
-                      ? "border-gray-800 text-gray-200 hover:bg-gray-900"
+                      ? "border-white/10 text-gray-200 hover:bg-white/5"
                       : "border-gray-200 text-gray-700 hover:bg-gray-50"
                   }`}
                   onClick={() => setDetailsModal({ open: false, record: null })}
@@ -217,7 +217,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                   <div
                     className={`p-4 rounded-2xl border ${
                       isDarkMode
-                        ? "bg-gray-900 border-gray-800"
+                        ? "bg-[#111] border-white/10"
                         : "bg-gray-50 border-gray-200"
                     }`}
                   >
@@ -239,7 +239,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                   <div
                     className={`p-4 rounded-2xl border ${
                       isDarkMode
-                        ? "bg-gray-900 border-gray-800"
+                        ? "bg-[#111] border-white/10"
                         : "bg-gray-50 border-gray-200"
                     }`}
                   >
@@ -275,7 +275,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                           key={idx}
                           className={`p-4 rounded-2xl border flex items-start justify-between gap-4 ${
                             isDarkMode
-                              ? "bg-gray-900 border-gray-800"
+                              ? "bg-[#111] border-white/10"
                               : "bg-white border-gray-200"
                           }`}
                         >
@@ -292,7 +292,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                                 isDarkMode ? "text-gray-400" : "text-gray-600"
                               } text-sm`}
                             >
-                              Qty: {m.quantity} • Price:{" "}
+                              Qty: {m.quantity} â€¢ Price:{" "}
                               {formatMoneyINR(m.price)}
                             </p>
                           </div>
@@ -304,7 +304,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                                 rel="noreferrer"
                                 className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold ${
                                   isDarkMode
-                                    ? "border-gray-800 text-gray-200 hover:bg-gray-800"
+                                    ? "border-white/10 text-gray-200 hover:bg-white/5"
                                     : "border-gray-200 text-gray-700 hover:bg-gray-50"
                                 }`}
                               >

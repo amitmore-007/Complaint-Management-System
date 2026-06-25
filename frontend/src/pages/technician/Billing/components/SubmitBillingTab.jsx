@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ChevronDown,
@@ -283,7 +283,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
       <div
         className={`p-8 rounded-2xl border text-center ${
           isDarkMode
-            ? "bg-gray-900 border-gray-800 text-gray-300"
+            ? "bg-[#111] border-white/10 text-gray-300"
             : "bg-white border-gray-200 text-gray-700"
         }`}
       >
@@ -308,7 +308,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
             key={cid}
             className={`rounded-2xl border shadow-sm overflow-hidden ${
               isDarkMode
-                ? "bg-gray-900 border-gray-800"
+                ? "bg-[#111] border-white/10"
                 : "bg-white border-gray-200"
             }`}
           >
@@ -337,7 +337,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                   <span
                     className={`text-xs font-semibold px-2 py-1 rounded-full ${
                       isDarkMode
-                        ? "bg-gray-800 text-gray-300"
+                        ? "bg-white/10 text-gray-300"
                         : "bg-gray-100 text-gray-700"
                     }`}
                   >
@@ -375,7 +375,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   className={`border-t ${
-                    isDarkMode ? "border-gray-800" : "border-gray-200"
+                    isDarkMode ? "border-white/10" : "border-gray-200"
                   }`}
                 >
                   <div className="p-5 space-y-5">
@@ -383,7 +383,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                       <div
                         className={`p-4 rounded-2xl border ${
                           isDarkMode
-                            ? "bg-gray-950 border-gray-800"
+                            ? "bg-[#111] border-white/10"
                             : "bg-gray-50 border-gray-200"
                         }`}
                       >
@@ -431,7 +431,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                       <div
                         className={`p-4 rounded-2xl border ${
                           isDarkMode
-                            ? "bg-gray-950 border-gray-800"
+                            ? "bg-[#111] border-white/10"
                             : "bg-gray-50 border-gray-200"
                         }`}
                       >
@@ -497,7 +497,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                               onClick={() => addMaterialRow(cid)}
                               className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold border transition-all ${
                                 isDarkMode
-                                  ? "bg-gray-950 border-gray-800 text-gray-200 hover:bg-gray-900"
+                                  ? "bg-[#111] border-white/10 text-gray-200 hover:bg-white/5"
                                   : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
                               }`}
                               type="button"
@@ -511,7 +511,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                             <div
                               className={`min-w-[820px] rounded-2xl border ${
                                 isDarkMode
-                                  ? "bg-gray-950 border-gray-800"
+                                  ? "bg-[#111] border-white/10"
                                   : "bg-gray-50 border-gray-200"
                               }`}
                             >
@@ -533,7 +533,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                                     key={m.rowId}
                                     className={`grid grid-cols-12 gap-3 p-3 rounded-2xl border ${
                                       isDarkMode
-                                        ? "bg-gray-900 border-gray-800"
+                                        ? "bg-[#111] border-white/10"
                                         : "bg-white border-gray-200"
                                     }`}
                                   >
@@ -548,7 +548,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                                         placeholder="Material name"
                                         className={`w-full px-3 py-2 rounded-xl border text-sm ${
                                           isDarkMode
-                                            ? "bg-gray-950 border-gray-800 text-white placeholder:text-gray-600"
+                                            ? "bg-white/10 border-white/10 text-white placeholder:text-gray-600"
                                             : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
                                         }`}
                                       />
@@ -566,7 +566,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                                         placeholder="Qty"
                                         className={`w-full px-3 py-2 rounded-xl border text-sm ${
                                           isDarkMode
-                                            ? "bg-gray-950 border-gray-800 text-white placeholder:text-gray-600"
+                                            ? "bg-white/10 border-white/10 text-white placeholder:text-gray-600"
                                             : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
                                         }`}
                                       />
@@ -584,7 +584,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                                         placeholder="Price"
                                         className={`w-full px-3 py-2 rounded-xl border text-sm ${
                                           isDarkMode
-                                            ? "bg-gray-950 border-gray-800 text-white placeholder:text-gray-600"
+                                            ? "bg-white/10 border-white/10 text-white placeholder:text-gray-600"
                                             : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
                                         }`}
                                       />
@@ -594,7 +594,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                                       <label
                                         className={`w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold cursor-pointer transition-all ${
                                           isDarkMode
-                                            ? "bg-gray-950 border-gray-800 text-gray-200 hover:bg-gray-900"
+                                            ? "bg-[#111] border-white/10 text-gray-200 hover:bg-white/5"
                                             : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
                                         }`}
                                       >
@@ -634,7 +634,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                                         }
                                         className={`p-2 rounded-xl border ${
                                           isDarkMode
-                                            ? "border-gray-800 text-red-300 hover:bg-gray-800"
+                                            ? "border-white/10 text-red-300 hover:bg-white/5"
                                             : "border-gray-200 text-red-600 hover:bg-red-50"
                                         }`}
                                       >
@@ -660,8 +660,8 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                             : "hover:shadow-lg"
                         } ${
                           isDarkMode
-                            ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-                            : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white"
+                            ? "bg-blue-600 text-white"
+                            : "bg-blue-600 text-white"
                         }`}
                         type="button"
                       >
@@ -682,3 +682,4 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
 };
 
 export default SubmitBillingTab;
+

@@ -103,9 +103,9 @@ const ClientAssets = () => {
             placeholder="Search by store or technician..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-colors ${
+            className={`w-full pl-10 pr-4 py-2 text-sm border rounded-xl transition-colors ${
               isDarkMode
-                ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             }`}
           />
@@ -145,7 +145,7 @@ const ClientAssets = () => {
                 key={record._id}
                 className={`border rounded-xl p-6 transition-colors cursor-pointer ${
                   isDarkMode
-                    ? "bg-gray-800/50 border-gray-700 hover:border-gray-600"
+                    ? "bg-[#111] border-white/10 hover:border-white/20"
                     : "bg-white border-gray-200 hover:border-gray-300 hover:shadow-md"
                 }`}
                 onClick={() => openDetailModal(record)}
@@ -226,7 +226,7 @@ const ClientAssets = () => {
                 {record.notes && (
                   <div
                     className={`mt-4 p-3 rounded-lg ${
-                      isDarkMode ? "bg-gray-700/50" : "bg-gray-50"
+                      isDarkMode ? "bg-white/10" : "bg-gray-50"
                     }`}
                   >
                     <p
@@ -266,7 +266,7 @@ const ClientAssets = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 className={`rounded-2xl p-6 w-full max-w-4xl max-h-[95vh] overflow-y-auto mx-4 my-4 ${
-                  isDarkMode ? "bg-gray-800" : "bg-white"
+                  isDarkMode ? "bg-[#111] dark-scrollbar" : "bg-white"
                 }`}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -297,7 +297,7 @@ const ClientAssets = () => {
                     onClick={closeDetailModal}
                     className={`p-2 rounded-lg transition-colors ${
                       isDarkMode
-                        ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                        ? "text-gray-400 hover:text-white hover:bg-white/10"
                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"
                     }`}
                   >
@@ -356,7 +356,7 @@ const ClientAssets = () => {
                 {selectedRecord.notes && (
                   <div
                     className={`mt-6 p-4 rounded-xl ${
-                      isDarkMode ? "bg-gray-700/50" : "bg-gray-50"
+                      isDarkMode ? "bg-white/10" : "bg-gray-50"
                     }`}
                   >
                     <h4
@@ -377,13 +377,13 @@ const ClientAssets = () => {
                 <div
                   className={`mt-6 p-4 rounded-xl border ${
                     isDarkMode
-                      ? "bg-blue-900/20 border-blue-700/50"
+                      ? "bg-white/10 border-white/10"
                       : "bg-blue-50 border-blue-200"
                   }`}
                 >
                   <div className="flex items-center justify-between text-sm">
                     <div
-                      className={isDarkMode ? "text-blue-300" : "text-blue-700"}
+                      className={isDarkMode ? "text-gray-300" : "text-blue-700"}
                     >
                       <span className="font-medium">Total Items:</span>{" "}
                       {selectedRecord.equipment?.length || 0}

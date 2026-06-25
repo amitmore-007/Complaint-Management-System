@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Edit, Package, Plus, Search, Trash2, X, ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
@@ -175,7 +175,7 @@ const ManageListTab = ({ isDarkMode }) => {
 
   const inputCls = `w-full px-3 py-2 border rounded-lg text-sm transition-colors ${
     isDarkMode
-      ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+      ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
       : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
   }`;
 
@@ -200,18 +200,18 @@ const ManageListTab = ({ isDarkMode }) => {
             placeholder="Search equipment..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className={`w-full pl-10 pr-4 py-3 border rounded-xl transition-colors ${
+            className={`w-full pl-10 pr-4 py-2 text-sm border rounded-lg transition-colors ${
               isDarkMode
-                ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             }`}
           />
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium flex items-center space-x-2 transition-colors"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg font-medium flex items-center space-x-2 transition-colors"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-4 w-4" />
           <span>Add Equipment</span>
         </button>
       </div>
@@ -228,8 +228,8 @@ const ManageListTab = ({ isDarkMode }) => {
               key={item._id}
               className={`border rounded-xl p-6 transition-colors ${
                 isDarkMode
-                  ? "bg-gray-800/50 border-gray-700 hover:border-gray-600"
-                  : "bg-white border-gray-200 hover:border-gray-300 hover:shadow-md"
+                  ? "bg-white/5 border-white/10"
+                  : "bg-white border-gray-200"
               }`}
               whileHover={{ scale: 1.02 }}
             >
@@ -289,7 +289,7 @@ const ManageListTab = ({ isDarkMode }) => {
 
               {/* Preview defined fields */}
               {(item.fields || []).length > 0 && (
-                <div className={`mt-2 space-y-1 border-t pt-3 ${isDarkMode ? "border-gray-700" : "border-gray-100"}`}>
+                <div className={`mt-2 space-y-1 border-t pt-3 ${isDarkMode ? "border-white/10" : "border-gray-100"}`}>
                   {item.fields.slice(0, 3).map((f, i) => (
                     <div key={i} className="flex items-start gap-1 text-xs">
                       <span className={`font-medium shrink-0 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
@@ -334,7 +334,7 @@ const ManageListTab = ({ isDarkMode }) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className={`rounded-2xl p-6 w-full max-w-md mx-4 my-4 ${
-                isDarkMode ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-[#111]" : "bg-white"
               }`}
               onClick={(e) => e.stopPropagation()}
             >
@@ -360,9 +360,9 @@ const ManageListTab = ({ isDarkMode }) => {
                     value={formData.name}
                     onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
                     placeholder="Enter equipment name"
-                    className={`w-full px-4 py-3 border rounded-xl transition-colors ${
+                    className={`w-full px-4 py-3 border rounded-lg transition-colors ${
                       isDarkMode
-                        ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     }`}
                   />
@@ -374,9 +374,9 @@ const ManageListTab = ({ isDarkMode }) => {
                       setShowAddModal(false);
                       setFormData({ name: "", fields: [] });
                     }}
-                    className={`flex-1 py-3 px-4 rounded-xl transition-colors ${
+                    className={`flex-1 py-3 px-4 rounded-lg transition-colors ${
                       isDarkMode
-                        ? "bg-gray-700 hover:bg-gray-600 text-white"
+                        ? "bg-white/10 hover:bg-white/20 text-white"
                         : "bg-gray-200 hover:bg-gray-300 text-gray-900"
                     }`}
                   >
@@ -384,7 +384,7 @@ const ManageListTab = ({ isDarkMode }) => {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors"
+                    className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                   >
                     Add Equipment
                   </button>
@@ -411,12 +411,12 @@ const ManageListTab = ({ isDarkMode }) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               className={`rounded-2xl w-full max-w-lg mx-4 my-4 flex flex-col max-h-[90vh] ${
-                isDarkMode ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-[#111]" : "bg-white"
               }`}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal header */}
-              <div className={`px-6 pt-6 pb-4 border-b ${isDarkMode ? "border-gray-700" : "border-gray-100"}`}>
+              <div className={`px-6 pt-6 pb-4 border-b ${isDarkMode ? "border-white/10" : "border-gray-100"}`}>
                 <h2
                   className={`text-xl font-bold ${
                     isDarkMode ? "text-white" : "text-gray-900"
@@ -444,9 +444,9 @@ const ManageListTab = ({ isDarkMode }) => {
                       value={formData.name}
                       onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
                       placeholder="Enter equipment name"
-                      className={`w-full px-4 py-3 border rounded-xl transition-colors ${
+                      className={`w-full px-4 py-3 border rounded-lg transition-colors ${
                         isDarkMode
-                          ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                           : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                       }`}
                     />
@@ -470,7 +470,7 @@ const ManageListTab = ({ isDarkMode }) => {
 
                     {formData.fields.length === 0 && (
                       <p className={`text-xs text-center py-3 rounded-lg border border-dashed ${
-                        isDarkMode ? "text-gray-500 border-gray-700" : "text-gray-400 border-gray-200"
+                        isDarkMode ? "text-gray-500 border-white/10" : "text-gray-400 border-gray-200"
                       }`}>
                         No custom fields yet. Click "Add Field" to define attributes for this equipment.
                       </p>
@@ -482,7 +482,7 @@ const ManageListTab = ({ isDarkMode }) => {
                         <div
                           key={fi}
                           className={`rounded-lg border p-3 space-y-2 ${
-                            isDarkMode ? "bg-gray-700/40 border-gray-600" : "bg-gray-50 border-gray-200"
+                            isDarkMode ? "bg-white/5 border-white/10" : "bg-gray-50 border-gray-200"
                           }`}
                         >
                           {/* Field row */}
@@ -596,7 +596,7 @@ const ManageListTab = ({ isDarkMode }) => {
               </div>
 
               {/* Footer buttons */}
-              <div className={`px-6 pb-6 pt-4 border-t flex space-x-3 ${isDarkMode ? "border-gray-700" : "border-gray-100"}`}>
+              <div className={`px-6 pb-6 pt-4 border-t flex space-x-3 ${isDarkMode ? "border-white/10" : "border-gray-100"}`}>
                 <button
                   type="button"
                   onClick={() => {
@@ -604,9 +604,9 @@ const ManageListTab = ({ isDarkMode }) => {
                     setSelectedEquipment(null);
                     setFormData({ name: "", fields: [] });
                   }}
-                  className={`flex-1 py-3 px-4 rounded-xl transition-colors ${
+                  className={`flex-1 py-3 px-4 rounded-lg transition-colors ${
                     isDarkMode
-                      ? "bg-gray-700 hover:bg-gray-600 text-white"
+                      ? "bg-white/10 hover:bg-white/20 text-white"
                       : "bg-gray-200 hover:bg-gray-300 text-gray-900"
                   }`}
                 >
@@ -615,7 +615,7 @@ const ManageListTab = ({ isDarkMode }) => {
                 <button
                   type="submit"
                   form="editEquipmentForm"
-                  className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors"
+                  className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
                   Update Equipment
                 </button>
@@ -629,3 +629,5 @@ const ManageListTab = ({ isDarkMode }) => {
 };
 
 export default ManageListTab;
+
+

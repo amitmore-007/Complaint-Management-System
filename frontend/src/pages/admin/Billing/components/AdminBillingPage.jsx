@@ -122,7 +122,7 @@ const AdminBillingPage = ({ isDarkMode }) => {
       <div
         className={`p-8 rounded-2xl border text-center ${
           isDarkMode
-            ? "bg-gray-900 border-gray-800 text-gray-300"
+            ? "bg-[#111] border-white/10 text-gray-300"
             : "bg-white border-gray-200 text-gray-700"
         }`}
       >

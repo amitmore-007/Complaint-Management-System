@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ClipboardList,
@@ -133,11 +133,11 @@ const TechnicianMyComplaints = () => {
           </div>
           <motion.button
             onClick={() => navigate("/technician/create-complaint")}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm rounded-lg flex items-center space-x-2 transition-colors"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">New Complaint</span>
           </motion.button>
         </div>
@@ -149,7 +149,7 @@ const TechnicianMyComplaints = () => {
             animate={{ opacity: 1, y: 0 }}
             className={`text-center py-12 rounded-2xl border ${
               isDarkMode
-                ? "bg-gray-800 border-gray-700"
+                ? "bg-[#111] border-white/10"
                 : "bg-white border-gray-200"
             }`}
           >
@@ -174,7 +174,7 @@ const TechnicianMyComplaints = () => {
             </p>
             <button
               onClick={() => navigate("/technician/create-complaint")}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg inline-flex items-center space-x-2 transition-colors"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 text-sm rounded-lg inline-flex items-center space-x-2 transition-colors"
             >
               <Plus className="h-5 w-5" />
               <span>Create Complaint</span>
@@ -190,7 +190,7 @@ const TechnicianMyComplaints = () => {
                 transition={{ delay: index * 0.05 }}
                 className={`p-6 rounded-2xl border ${
                   isDarkMode
-                    ? "bg-gray-800 border-gray-700"
+                    ? "bg-[#111] border-white/10"
                     : "bg-white border-gray-200"
                 } hover:shadow-lg transition-all duration-200`}
               >
@@ -302,7 +302,7 @@ const TechnicianMyComplaints = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
                 className={`rounded-2xl p-6 w-full max-w-3xl max-h-[95vh] overflow-y-auto mx-4 my-4 ${
-                  isDarkMode ? "bg-gray-800" : "bg-white"
+                  isDarkMode ? "bg-[#111]" : "bg-white"
                 }`}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -326,7 +326,7 @@ const TechnicianMyComplaints = () => {
                   <button
                     onClick={closeDetailModal}
                     className={`p-2 rounded-lg transition-colors ${
-                      isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                      isDarkMode ? "hover:bg-white/10" : "hover:bg-gray-100"
                     }`}
                   >
                     <X className="h-6 w-6" />
@@ -405,7 +405,7 @@ const TechnicianMyComplaints = () => {
                         ? selectedComplaint.store.managers
                             .map((m) => `${m.name} (${m.phoneNumber})`)
                             .join(", ")
-                        : "—"}
+                        : "â€”"}
                     </p>
                   </div>
 
