@@ -35,7 +35,7 @@ export const endpoints = {
       byId: (id) => `/admin/billing/${id}`,
     },
     settings: {
-      resolvedNotifyContact: "/admin/settings/resolved-notify-contact",
+      resolvedNotifyContacts: "/admin/settings/resolved-notify-contacts",
     },
   },
 

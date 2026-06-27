@@ -22,8 +22,8 @@ import {
   setComplaintAutoAssignEnabled,
 } from "../utils/complaintAutoAssignSetting.js";
 import {
-  getResolvedNotifyContact,
-  setResolvedNotifyContact,
+  getResolvedNotifyContacts,
+  setResolvedNotifyContacts,
 } from "../utils/resolvedNotifyContactSetting.js";
 
 // ============================================
@@ -700,44 +700,38 @@ export const updateComplaintAutoAssignSetting = async (req, res) => {
   }
 };
 
-export const getResolvedNotifyContactSetting = async (req, res) => {
+export const getResolvedNotifyContactsSetting = async (req, res) => {
   try {
-    const contact = await getResolvedNotifyContact();
-    res.status(200).json({ success: true, setting: contact });
+    const contacts = await getResolvedNotifyContacts();
+    res.status(200).json({ success: true, setting: contacts });
   } catch (error) {
-    console.error("Get resolved notify contact error:", error);
+    console.error("Get resolved notify contacts error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-export const updateResolvedNotifyContactSetting = async (req, res) => {
+export const updateResolvedNotifyContactsSetting = async (req, res) => {
   try {
-    const { phone, name } = req.body;
+    const { contacts } = req.body;
 
-    if (phone !== undefined && typeof phone !== "string") {
+    if (!Array.isArray(contacts)) {
       return res
         .status(400)
-        .json({ success: false, message: "phone must be a string" });
-    }
-    if (name !== undefined && typeof name !== "string") {
-      return res
-        .status(400)
-        .json({ success: false, message: "name must be a string" });
+        .json({ success: false, message: "contacts must be an array" });
     }
 
-    const contact = await setResolvedNotifyContact({
-      phone,
-      name,
+    const saved = await setResolvedNotifyContacts({
+      contacts,
       adminId: req.user.id,
     });
 
     res.status(200).json({
       success: true,
-      message: "Resolved notification contact updated successfully",
-      setting: contact,
+      message: "Resolved notification contacts updated successfully",
+      setting: saved,
     });
   } catch (error) {
-    console.error("Update resolved notify contact error:", error);
+    console.error("Update resolved notify contacts error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

@@ -11,7 +11,7 @@ import { sendStatusUpdateNotification } from "../config/msg91.js";
 import { generateNextComplaintId } from "../utils/complaintId.js";
 import { autoAssignComplaintToDefaultTechnician } from "../utils/autoAssign.js";
 import { getComplaintAutoAssignEnabled } from "../utils/complaintAutoAssignSetting.js";
-import { getResolvedNotifyContact } from "../utils/resolvedNotifyContactSetting.js";
+import { getResolvedNotifyContacts } from "../utils/resolvedNotifyContactSetting.js";
 
 const normalizeIndianPhone10Digits = (phoneNumber) => {
   if (!phoneNumber) return "";
@@ -566,11 +566,12 @@ export const updateComplaintStatus = async (req, res) => {
       recipientName = complaint.createdByAdmin?.name;
     }
 
+    const templateLocation = complaint.location || "";
+    const templateIssueTitle = complaint.title || "";
+
+    // Notify the complaint creator (client or admin who raised it)
     if (recipientPhone) {
       try {
-        const templateLocation = complaint.location || "";
-        const templateIssueTitle = complaint.title || "";
-
         // Disabled per request: do not notify client when work starts (in-progress)
         const notificationResult =
           status === "in-progress"
@@ -584,73 +585,7 @@ export const updateComplaintStatus = async (req, res) => {
                 templateIssueTitle,
               );
 
-        // Also notify a fixed extra recipient when complaint is resolved
-        if (status === "resolved") {
-          const resolvedNotifyContact = await getResolvedNotifyContact();
-          const extraRecipientName = resolvedNotifyContact.name;
-          const extraRecipientPhoneRaw = resolvedNotifyContact.phone;
-          const extraRecipientPhone10 = normalizeIndianPhone10Digits(
-            extraRecipientPhoneRaw,
-          );
-
-          if (extraRecipientPhone10) {
-            try {
-              const extraTemplateName = extraRecipientName || recipientName;
-
-              const extraResult = await sendStatusUpdateNotification(
-                extraRecipientPhone10,
-                complaint.complaintId,
-                status,
-                extraTemplateName,
-                templateLocation,
-                templateIssueTitle,
-              );
-
-              const extraNotification = new Notification({
-                complaint: complaint._id,
-                recipient: `+91${extraRecipientPhone10}`,
-                type: "status_update",
-                message: `Complaint ${
-                  complaint.complaintId
-                } status changed to ${status}${
-                  extraRecipientName ? ` (extra: ${extraRecipientName})` : ""
-                }`,
-                status: extraResult.success ? "sent" : "failed",
-                twilioMessageId: extraResult.messageId,
-                error: extraResult.success ? null : extraResult.error,
-                sentAt: extraResult.success ? new Date() : null,
-              });
-              await extraNotification.save();
-            } catch (extraError) {
-              console.error(
-                "❌ Extra recipient notification sending error:",
-                extraError,
-              );
-
-              const extraNotification = new Notification({
-                complaint: complaint._id,
-                recipient: extraRecipientPhoneRaw || "(missing)",
-                type: "status_update",
-                message: `Complaint ${
-                  complaint.complaintId
-                } status changed to ${status}${
-                  extraRecipientName ? ` (extra: ${extraRecipientName})` : ""
-                }`,
-                status: "failed",
-                error: extraError.message,
-              });
-              await extraNotification.save();
-            }
-          } else if (extraRecipientPhoneRaw) {
-            console.warn(
-              "⚠️ RESOLVED_NOTIFY_PHONE is set but could not be normalized:",
-              extraRecipientPhoneRaw,
-            );
-          }
-        }
-
-        // Save notification record
-        const notification = new Notification({
+        await new Notification({
           complaint: complaint._id,
           recipient: recipientPhone,
           type: "status_update",
@@ -659,28 +594,68 @@ export const updateComplaintStatus = async (req, res) => {
           twilioMessageId: notificationResult.messageId,
           error: notificationResult.success ? null : notificationResult.error,
           sentAt: notificationResult.success ? new Date() : null,
-        });
-
-        await notification.save();
+        }).save();
       } catch (notificationError) {
         console.error("❌ Notification sending error:", notificationError);
-
-        // Save failed notification record
-        const notification = new Notification({
+        await new Notification({
           complaint: complaint._id,
           recipient: recipientPhone,
           type: "status_update",
           message: `Complaint ${complaint.complaintId} status changed to ${status}`,
           status: "failed",
           error: notificationError.message,
-        });
-
-        await notification.save();
+        }).save();
       }
     } else {
       console.log(
-        "⚠️ Skipping notification - recipient not eligible or phone missing",
+        "⚠️ Skipping creator notification - phone missing",
       );
+    }
+
+    // Always notify all configured resolved-notify contacts on resolution
+    if (status === "resolved") {
+      const resolvedContacts = await getResolvedNotifyContacts();
+
+      for (const contact of resolvedContacts) {
+        const contactPhone10 = normalizeIndianPhone10Digits(contact.phone);
+        if (!contactPhone10) continue;
+
+        try {
+          const contactResult = await sendStatusUpdateNotification(
+            contactPhone10,
+            complaint.complaintId,
+            status,
+            contact.name || recipientName,
+            templateLocation,
+            templateIssueTitle,
+          );
+
+          await new Notification({
+            complaint: complaint._id,
+            recipient: `+91${contactPhone10}`,
+            type: "status_update",
+            message: `Complaint ${complaint.complaintId} status changed to ${status}${
+              contact.name ? ` (notify: ${contact.name})` : ""
+            }`,
+            status: contactResult.success ? "sent" : "failed",
+            twilioMessageId: contactResult.messageId,
+            error: contactResult.success ? null : contactResult.error,
+            sentAt: contactResult.success ? new Date() : null,
+          }).save();
+        } catch (contactError) {
+          console.error("❌ Resolved contact notification error:", contactError);
+          await new Notification({
+            complaint: complaint._id,
+            recipient: contact.phone || "(missing)",
+            type: "status_update",
+            message: `Complaint ${complaint.complaintId} status changed to ${status}${
+              contact.name ? ` (notify: ${contact.name})` : ""
+            }`,
+            status: "failed",
+            error: contactError.message,
+          }).save();
+        }
+      }
     }
 
     // Populate the response

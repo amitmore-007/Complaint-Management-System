@@ -84,17 +84,17 @@ export const complaintService = {
       return data;
     },
 
-    getResolvedNotifyContact: async () => {
+    getResolvedNotifyContacts: async () => {
       const { data } = await api.get(
-        endpoints.admin.settings.resolvedNotifyContact,
+        endpoints.admin.settings.resolvedNotifyContacts,
       );
       return data.setting;
     },
 
-    updateResolvedNotifyContact: async ({ phone, name }) => {
+    updateResolvedNotifyContacts: async (contacts) => {
       const { data } = await api.patch(
-        endpoints.admin.settings.resolvedNotifyContact,
-        { phone, name },
+        endpoints.admin.settings.resolvedNotifyContacts,
+        { contacts },
       );
       return data.setting;
     },

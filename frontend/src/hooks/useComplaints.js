@@ -21,7 +21,7 @@ export const complaintKeys = {
   client: () => [...complaintKeys.all, "client"],
   clientList: (filters) => [...complaintKeys.client(), "list", filters],
   autoAssignSetting: () => [...complaintKeys.all, "auto-assign-setting"],
-  resolvedNotifyContact: () => [...complaintKeys.all, "resolved-notify-contact"],
+  resolvedNotifyContacts: () => [...complaintKeys.all, "resolved-notify-contacts"],
 };
 
 // Fetch all complaints (Admin)
@@ -249,25 +249,25 @@ export const useUpdateComplaintAutoAssignSetting = () => {
   });
 };
 
-export const useResolvedNotifyContact = () => {
+export const useResolvedNotifyContacts = () => {
   return useQuery({
-    queryKey: complaintKeys.resolvedNotifyContact(),
-    queryFn: () => complaintService.admin.getResolvedNotifyContact(),
+    queryKey: complaintKeys.resolvedNotifyContacts(),
+    queryFn: () => complaintService.admin.getResolvedNotifyContacts(),
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: "always",
   });
 };
 
-export const useUpdateResolvedNotifyContact = () => {
+export const useUpdateResolvedNotifyContacts = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (contact) =>
-      complaintService.admin.updateResolvedNotifyContact(contact),
+    mutationFn: (contacts) =>
+      complaintService.admin.updateResolvedNotifyContacts(contacts),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: complaintKeys.resolvedNotifyContact(),
+        queryKey: complaintKeys.resolvedNotifyContacts(),
       });
     },
   });

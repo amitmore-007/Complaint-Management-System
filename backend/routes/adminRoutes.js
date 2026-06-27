@@ -20,8 +20,8 @@ import {
   createAdminComplaint,
   getComplaintAutoAssignSetting,
   updateComplaintAutoAssignSetting,
-  getResolvedNotifyContactSetting,
-  updateResolvedNotifyContactSetting,
+  getResolvedNotifyContactsSetting,
+  updateResolvedNotifyContactsSetting,
   logoutAllDevices,
 } from "../controllers/adminController.js";
 import { authenticateAdmin } from "../middleware/roleAuth.js";
@@ -97,14 +97,14 @@ router.delete("/users/:userId", authenticateAdmin, deleteUser);
 
 // settings
 router.get(
-  "/settings/resolved-notify-contact",
+  "/settings/resolved-notify-contacts",
   authenticateAdmin,
-  getResolvedNotifyContactSetting,
+  getResolvedNotifyContactsSetting,
 );
 router.patch(
-  "/settings/resolved-notify-contact",
+  "/settings/resolved-notify-contacts",
   authenticateAdmin,
-  updateResolvedNotifyContactSetting,
+  updateResolvedNotifyContactsSetting,
 );
 
 // billing
