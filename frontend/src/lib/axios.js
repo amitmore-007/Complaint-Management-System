@@ -1,4 +1,5 @@
 import axios from "axios";
+import useAuthStore from "../store/authStore";
 
 // Get API URL from environment variables with fallback
 const API_BASE_URL =
@@ -14,6 +15,18 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Auto-logout on 401 (e.g. tokenVersion mismatch after "logout all devices")
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      useAuthStore.getState().logout();
+      window.location.href = "/";
+    }
+    return Promise.reject(error);
+  },
+);
 
 export const fetchComplaintsCreatedVsResolvedStats = async ({
   interval = "month",

@@ -6,6 +6,7 @@ export const endpoints = {
       me: "/admin/auth/me",
       sendOtp: "/admin/auth/send-otp",
       verifyOtp: "/admin/auth/verify-otp",
+      logoutAllDevices: "/admin/auth/logout-all-devices",
     },
     dashboard: {
       stats: "/admin/dashboard/stats",

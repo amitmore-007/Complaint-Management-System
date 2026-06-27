@@ -36,8 +36,8 @@ const generateOTP = () => {
 };
 
 // generate jwt token for admin (never expires)
-const generateToken = (userId) => {
-  return jwt.sign({ userId, role: "admin" }, process.env.JWT_SECRET, {
+const generateToken = (userId, tokenVersion = 0) => {
+  return jwt.sign({ userId, role: "admin", tokenVersion }, process.env.JWT_SECRET, {
     expiresIn: "999y",
   });
 };
@@ -169,7 +169,7 @@ export const verifyAdminOTP = async (req, res) => {
     }
 
     // generate jwt token
-    const token = generateToken(admin._id);
+    const token = generateToken(admin._id, admin.tokenVersion ?? 0);
 
     res.status(200).json({
       success: true,
@@ -1341,5 +1341,30 @@ export const updateTechnician = async (req, res) => {
       success: false,
       message: "Internal server error",
     });
+  }
+};
+
+// logout from all devices — increments tokenVersion so all existing tokens are invalidated,
+// then returns a fresh token for the current device so the session stays alive
+export const logoutAllDevices = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.user.id);
+    if (!admin) {
+      return res.status(404).json({ success: false, message: "Admin not found" });
+    }
+
+    admin.tokenVersion = (admin.tokenVersion ?? 0) + 1;
+    await admin.save();
+
+    const newToken = generateToken(admin._id, admin.tokenVersion);
+
+    res.status(200).json({
+      success: true,
+      message: "Logged out from all other devices.",
+      token: newToken,
+    });
+  } catch (error) {
+    console.error("Logout all devices error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

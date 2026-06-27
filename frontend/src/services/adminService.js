@@ -7,6 +7,11 @@ export const adminService = {
     return data.stats;
   },
 
+  logoutAllDevices: async () => {
+    const { data } = await api.post(endpoints.admin.auth.logoutAllDevices);
+    return data;
+  },
+
   technicians: {
     list: async (params = {}) => {
       const { data } = await api.get(endpoints.admin.technicians.root, {

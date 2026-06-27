@@ -22,6 +22,7 @@ import {
   updateComplaintAutoAssignSetting,
   getResolvedNotifyContactSetting,
   updateResolvedNotifyContactSetting,
+  logoutAllDevices,
 } from "../controllers/adminController.js";
 import { authenticateAdmin } from "../middleware/roleAuth.js";
 import {
@@ -49,6 +50,7 @@ const upload = multer({
 router.post("/auth/send-otp", sendAdminOTP);
 router.post("/auth/verify-otp", verifyAdminOTP);
 router.get("/auth/me", authenticateAdmin, getCurrentAdmin);
+router.post("/auth/logout-all-devices", authenticateAdmin, logoutAllDevices);
 
 // dashboard
 router.get("/dashboard/stats", authenticateAdmin, getDashboardStats);
