@@ -8,6 +8,7 @@ import { useComplaintsTimeToResolveStats } from "../../../../hooks/useStats";
 import Card from "./Card";
 import DateRangePicker from "./DateRangePicker";
 import ComplaintsChart from "./ComplaintsChart";
+import ReportDrilldownDrawer from "./ReportDrilldownDrawer";
 
 import {
   addDays,
@@ -64,6 +65,7 @@ const ComplaintTimeToResolveReportCard = () => {
   });
 
   const [appliedQuery, setAppliedQuery] = useState(null);
+  const [drilldown, setDrilldown] = useState(null);
 
   const query = useMemo(() => {
     const interval = filters?.interval || "day";
@@ -106,6 +108,23 @@ const ComplaintTimeToResolveReportCard = () => {
   const series = statsQuery.data?.data || [];
   const loading = statsQuery.isLoading;
   const isFetching = statsQuery.isFetching;
+
+  const chartEvents = useMemo(
+    () => ({
+      click: (params) => {
+        if (params?.componentType !== "series") return;
+        const period = params?.name;
+        if (!period || !appliedQuery) return;
+        setDrilldown({
+          type: "timeToResolve",
+          interval: appliedQuery.interval || "day",
+          period,
+          tz: appliedQuery.tz || tz,
+        });
+      },
+    }),
+    [appliedQuery, tz],
+  );
 
   useEffect(() => {
     if (statsQuery.error) {
@@ -268,12 +287,25 @@ const ComplaintTimeToResolveReportCard = () => {
           isDarkMode={isDarkMode}
         />
 
+        <p
+          className={`${isDarkMode ? "text-gray-400" : "text-gray-600"} text-xs`}
+        >
+          Click any data point to view resolved complaints for that period.
+        </p>
+
         <ComplaintsChart
           option={option}
           loading={loading}
           isDarkMode={isDarkMode}
           chartRenderer={chartRenderer}
           heightClassName="h-[340px] sm:h-[420px]"
+          onEvents={chartEvents}
+        />
+
+        <ReportDrilldownDrawer
+          drilldown={drilldown}
+          onClose={() => setDrilldown(null)}
+          isDarkMode={isDarkMode}
         />
       </div>
     </Card>

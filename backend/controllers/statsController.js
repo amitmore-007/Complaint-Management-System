@@ -12,6 +12,10 @@ import {
   getComplaintsTimeToResolve,
   getComplaintsAgingBuckets,
   getTechniciansAssignedVsResolved,
+  getComplaintsAgingDrilldown,
+  getComplaintsTimeToResolveDrilldown,
+  getTechnicianDrilldown,
+  getComplaintsStatusFunnelDrilldown,
 } from "../services/statsService.js";
 
 export const getComplaintCreatedVsResolvedStats = async (req, res) => {
@@ -228,6 +232,57 @@ export const getComplaintTimeToResolveStats = async (req, res) => {
   }
 };
 
+export const getComplaintAgingDrilldownStats = async (req, res) => {
+  try {
+    const { bucket, from, to, tz } = req.query;
+    if (!bucket || String(bucket).trim() === "") {
+      return res.status(400).json({ success: false, message: "bucket is required" });
+    }
+    const range = getStatsRange({ from, to, tz });
+    const data = await getComplaintsAgingDrilldown({
+      bucket: String(bucket).trim(),
+      from: range.from,
+      to: range.to,
+      timezone: range.timezone,
+    });
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Aging drilldown error:", error);
+    res.status(error.status || 500).json({ success: false, message: error.message || "Internal server error" });
+  }
+};
+
+export const getComplaintTimeToResolveDrilldownStats = async (req, res) => {
+  try {
+    const { interval, period, tz } = req.query;
+    const range = getPeriodBucketRange({ interval, period, tz });
+    const data = await getComplaintsTimeToResolveDrilldown({ from: range.from, to: range.to });
+    res.status(200).json({
+      success: true,
+      range: { interval: range.interval, period: range.period, from: range.fromISO, to: range.toISO },
+      data,
+    });
+  } catch (error) {
+    console.error("TTR drilldown error:", error);
+    res.status(error.status || 500).json({ success: false, message: error.message || "Internal server error" });
+  }
+};
+
+export const getTechnicianDrilldownStats = async (req, res) => {
+  try {
+    const { technicianId, from, to, tz } = req.query;
+    if (!technicianId || String(technicianId).trim() === "") {
+      return res.status(400).json({ success: false, message: "technicianId is required" });
+    }
+    const range = getStatsRange({ from, to, tz });
+    const data = await getTechnicianDrilldown({ technicianId, from: range.from, to: range.to });
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Technician drilldown error:", error);
+    res.status(error.status || 500).json({ success: false, message: error.message || "Internal server error" });
+  }
+};
+
 export const getComplaintAgingStats = async (req, res) => {
   try {
     const { from, to, tz } = req.query;
@@ -254,5 +309,27 @@ export const getComplaintAgingStats = async (req, res) => {
       success: false,
       message: error.message || "Internal server error",
     });
+  }
+};
+
+export const getComplaintStatusFunnelDrilldownStats = async (req, res) => {
+  try {
+    const { status, from, to, tz } = req.query;
+
+    if (!status) {
+      return res.status(400).json({ success: false, message: "status is required" });
+    }
+
+    const range = getStatsRange({ from, to, tz });
+    const data = await getComplaintsStatusFunnelDrilldown({
+      status,
+      from: range.from,
+      to: range.to,
+    });
+
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Status funnel drilldown error:", error);
+    res.status(error.status || 500).json({ success: false, message: error.message || "Internal server error" });
   }
 };

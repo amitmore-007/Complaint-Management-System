@@ -8,6 +8,7 @@ import { useComplaintsStatusFunnelStats } from "../../../../hooks/useStats";
 import Card from "./Card";
 import DateRangePicker from "./DateRangePicker";
 import ComplaintsChart from "./ComplaintsChart";
+import ReportDrilldownDrawer from "./ReportDrilldownDrawer";
 
 import {
   addDays,
@@ -63,6 +64,7 @@ const ComplaintStatusFunnelReportCard = () => {
   });
 
   const [appliedQuery, setAppliedQuery] = useState(null);
+  const [drilldown, setDrilldown] = useState(null);
 
   const rangeQuery = useMemo(() => {
     const interval = filters?.interval || "day";
@@ -109,6 +111,36 @@ const ComplaintStatusFunnelReportCard = () => {
 
   const loading = statsQuery.isLoading;
   const isFetching = statsQuery.isFetching;
+
+  const STATUS_MAP = useMemo(
+    () => ({
+      Pending: "pending",
+      Assigned: "assigned",
+      "In Progress": "in-progress",
+      Resolved: "resolved",
+    }),
+    [],
+  );
+
+  const chartEvents = useMemo(
+    () => ({
+      click: (params) => {
+        if (params?.componentType !== "series") return;
+        const statusLabel = params?.name;
+        const status = STATUS_MAP[statusLabel];
+        if (!status || !appliedQuery) return;
+        setDrilldown({
+          type: "statusFunnel",
+          status,
+          statusLabel,
+          from: appliedQuery.from,
+          to: appliedQuery.to,
+          tz: appliedQuery.tz || tz,
+        });
+      },
+    }),
+    [appliedQuery, STATUS_MAP, tz],
+  );
 
   useEffect(() => {
     if (statsQuery.error) {
@@ -258,12 +290,25 @@ const ComplaintStatusFunnelReportCard = () => {
           isDarkMode={isDarkMode}
         />
 
+        <p
+          className={`${isDarkMode ? "text-gray-400" : "text-gray-600"} text-xs`}
+        >
+          Click any segment to view complaints in that status.
+        </p>
+
         <ComplaintsChart
           option={option}
           loading={loading}
           isDarkMode={isDarkMode}
           chartRenderer={chartRenderer}
           heightClassName="h-[320px] sm:h-[380px]"
+          onEvents={chartEvents}
+        />
+
+        <ReportDrilldownDrawer
+          drilldown={drilldown}
+          onClose={() => setDrilldown(null)}
+          isDarkMode={isDarkMode}
         />
       </div>
     </Card>
