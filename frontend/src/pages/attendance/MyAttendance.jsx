@@ -291,9 +291,21 @@ const MyAttendance = () => {
             )}
 
             {status === 'checked_out' && (
-              <div className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border text-sm ${isDarkMode ? 'border-white/10 text-gray-500' : 'border-gray-200 text-gray-400'}`}>
-                <CalendarCheck className="w-4 h-4" />
-                Shift complete
+              <div className="space-y-3">
+                <div className={`flex items-center justify-center gap-2 py-2 rounded-lg border text-xs ${isDarkMode ? 'border-white/10 text-gray-500' : 'border-gray-200 text-gray-400'}`}>
+                  <CalendarCheck className="w-3.5 h-3.5" />
+                  Shift complete
+                </div>
+                <button
+                  onClick={handle(checkInMutation, 'Check-in')}
+                  disabled={isAnyLoading}
+                  className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isAnyLoading
+                    ? <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    : <LogIn className="w-4 h-4" />}
+                  Check In Again
+                </button>
               </div>
             )}
           </div>
