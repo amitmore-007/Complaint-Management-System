@@ -8,7 +8,7 @@ const todayDate = () => DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-MM
 
 const secondsSince = (date) => Math.floor((Date.now() - new Date(date).getTime()) / 1000);
 
-// Bug fix #1: findLast polyfill — DocumentArray on older Node won't have it
+// findLast polyfill — DocumentArray on older Node won't have it
 const findLast = (arr, predicate) => {
   for (let i = arr.length - 1; i >= 0; i--) {
     if (predicate(arr[i])) return arr[i];
@@ -16,24 +16,43 @@ const findLast = (arr, predicate) => {
   return undefined;
 };
 
+// Returns the user's active (not yet checked-out) session regardless of date.
+// This handles night-shift workers who check in before midnight and check out after.
+const findActiveRecord = (userId) =>
+  Attendance.findOne({ userId: String(userId), currentStatus: { $ne: 'checked_out' } });
+
 // POST /api/attendance/check-in
 export const checkIn = async (req, res) => {
   try {
     const { id: userId, role: userRole, name: userName, phoneNumber: userPhone } = req.user;
     const date = todayDate();
 
-    const existing = await Attendance.findOne({ userId: String(userId), date });
-    if (existing) {
+    // Block if an active session already exists (covers same-day and night-shift crossover)
+    const active = await findActiveRecord(userId);
+    if (active) {
       return res.status(400).json({
         success: false,
-        message:
-          existing.currentStatus === 'checked_out'
-            ? 'You have already checked out for today.'
-            : 'You are already checked in.',
+        message: active.date === date
+          ? 'You are already checked in.'
+          : 'You have an active session from a previous shift. Please check out first.',
       });
     }
 
     const now = new Date();
+
+    // If today has a checked-out record, re-open it (split shift / re-check-in)
+    const todayRecord = await Attendance.findOne({ userId: String(userId), date });
+    if (todayRecord) {
+      todayRecord.currentStatus = 'working';
+      todayRecord.currentSessionStart = now;
+      todayRecord.checkOutTime = null;
+      todayRecord.sessions.push({ type: 'work', startTime: now });
+      todayRecord.markModified('sessions');
+      await todayRecord.save();
+      return res.status(200).json({ success: true, attendance: todayRecord });
+    }
+
+    // First check-in of the day
     const record = await Attendance.create({
       userId: String(userId),
       userRole,
@@ -57,20 +76,13 @@ export const checkIn = async (req, res) => {
 export const startBreak = async (req, res) => {
   try {
     const { id: userId } = req.user;
-    const date = todayDate();
 
-    const record = await Attendance.findOne({ userId: String(userId), date });
+    const record = await findActiveRecord(userId);
     if (!record) {
       return res.status(400).json({ success: false, message: 'You have not checked in today.' });
     }
     if (record.currentStatus !== 'working') {
-      return res.status(400).json({
-        success: false,
-        message:
-          record.currentStatus === 'on_break'
-            ? 'You are already on a break.'
-            : 'You have already checked out.',
-      });
+      return res.status(400).json({ success: false, message: 'You are already on a break.' });
     }
 
     const now = new Date();
@@ -101,9 +113,8 @@ export const startBreak = async (req, res) => {
 export const endBreak = async (req, res) => {
   try {
     const { id: userId } = req.user;
-    const date = todayDate();
 
-    const record = await Attendance.findOne({ userId: String(userId), date });
+    const record = await findActiveRecord(userId);
     if (!record || record.currentStatus !== 'on_break') {
       return res.status(400).json({ success: false, message: 'You are not on a break.' });
     }
@@ -136,14 +147,10 @@ export const endBreak = async (req, res) => {
 export const checkOut = async (req, res) => {
   try {
     const { id: userId } = req.user;
-    const date = todayDate();
 
-    const record = await Attendance.findOne({ userId: String(userId), date });
+    const record = await findActiveRecord(userId);
     if (!record) {
       return res.status(400).json({ success: false, message: 'You have not checked in today.' });
-    }
-    if (record.currentStatus === 'checked_out') {
-      return res.status(400).json({ success: false, message: 'You have already checked out.' });
     }
 
     const now = new Date();
@@ -179,7 +186,11 @@ export const getToday = async (req, res) => {
     const { id: userId } = req.user;
     const date = todayDate();
 
-    const record = await Attendance.findOne({ userId: String(userId), date });
+    // Try today's record first; fall back to any active session (night-shift crossover)
+    const record =
+      (await Attendance.findOne({ userId: String(userId), date })) ||
+      (await findActiveRecord(userId));
+
     res.status(200).json({ success: true, attendance: record || null });
   } catch (error) {
     console.error('Get today error:', error);
