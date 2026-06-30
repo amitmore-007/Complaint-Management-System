@@ -1,5 +1,4 @@
 ﻿import React, { useState } from "react";
-import axios from "axios";
 import { motion } from "framer-motion";
 import {
   Wrench,
@@ -165,6 +164,7 @@ const TechnicianManagement = () => {
       const fullUrl = `${PORTAL_ORIGIN}${data.portalPath}`;
       setGeneratedUrl(fullUrl);
       setLinkPin('');
+      techniciansQuery.refetch();
     } catch (err) {
       setLinkError(err?.response?.data?.message || 'Failed to generate link.');
     } finally {
@@ -180,6 +180,7 @@ const TechnicianManagement = () => {
         endpoints.adminUsers.attendanceToken(linkTechnician._id),
         { data: { userRole: 'technician' } }
       );
+      techniciansQuery.refetch();
       closeLinkModal();
     } catch (err) {
       alert(err?.response?.data?.message || 'Failed to revoke link.');
@@ -258,6 +259,7 @@ const TechnicianManagement = () => {
               <input
                 type="text"
                 placeholder="Search by name or phone number..."
+                autoComplete="off"
                 value={searchTerm}
                 onChange={handleSearch}
                 className={`w-full pl-10 pr-4 py-2 text-sm rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
@@ -438,6 +440,7 @@ const TechnicianManagement = () => {
                         </button>
 
                         <button
+                          type="button"
                           onClick={() => openLinkModal(technician)}
                           title="Attendance link"
                           className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
@@ -744,6 +747,7 @@ const TechnicianManagement = () => {
                   inputMode="numeric"
                   maxLength={4}
                   placeholder="4-digit PIN"
+                  autoComplete="new-password"
                   value={linkPin}
                   onChange={(e) => { setLinkPin(e.target.value.replace(/\D/g, '').slice(0, 4)); setLinkError(''); }}
                   className={`w-full px-4 py-2.5 border rounded-xl text-base font-mono tracking-widest ${
