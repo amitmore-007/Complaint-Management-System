@@ -23,7 +23,9 @@ const technicianSchema = new mongoose.Schema({
   lastLogin: {
     type: Date,
     default: Date.now
-  }
+  },
+  attendanceToken: { type: String, unique: true, sparse: true, select: false },
+  attendancePin:   { type: String, select: false },
 }, {
   timestamps: true
 });

@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import Client from "../models/Client.js";
 import Technician from "../models/Technician.js";
@@ -903,7 +904,7 @@ export const getAllTechnicians = async (req, res) => {
     }
 
     const technicians = await Technician.find(filter)
-      .select("name phoneNumber isActive createdAt")
+      .select("name phoneNumber isActive createdAt +attendanceToken")
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -924,8 +925,11 @@ export const getAllTechnicians = async (req, res) => {
         const totalAssignments = await Complaint.countDocuments({
           assignedTechnician: tech._id,
         });
+        const obj = tech.toObject();
         return {
-          ...tech.toObject(),
+          ...obj,
+          hasAttendanceToken: !!obj.attendanceToken,
+          attendanceToken: undefined,
           activeAssignments,
           completedAssignments,
           totalAssignments,
@@ -1335,6 +1339,69 @@ export const updateTechnician = async (req, res) => {
       success: false,
       message: "Internal server error",
     });
+  }
+};
+
+// ── Attendance Token Management ────────────────────────────────────────────
+
+const portalHashPin = (pin, token) =>
+  crypto.createHmac('sha256', token).update(pin).digest('hex');
+
+// POST /api/admin/users/:userId/attendance-token
+// body: { userRole: 'admin' | 'technician', pin: '4-digit string' }
+export const generateAttendanceToken = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { userRole, pin } = req.body;
+
+    if (!userRole || !['admin', 'technician'].includes(userRole)) {
+      return res.status(400).json({ success: false, message: 'userRole must be admin or technician.' });
+    }
+
+    if (!pin || !/^\d{4}$/.test(pin)) {
+      return res.status(400).json({ success: false, message: 'PIN must be exactly 4 digits.' });
+    }
+
+    const Model = userRole === 'admin' ? Admin : Technician;
+    const user = await Model.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const attendanceToken = crypto.randomBytes(16).toString('hex');
+    const attendancePin   = portalHashPin(pin, attendanceToken);
+
+    await Model.findByIdAndUpdate(userId, { attendanceToken, attendancePin });
+
+    res.json({
+      success: true,
+      attendanceToken,
+      portalPath: `/attendance/portal/${attendanceToken}`,
+    });
+  } catch (error) {
+    console.error('Generate attendance token error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+};
+
+// DELETE /api/admin/users/:userId/attendance-token
+// body: { userRole: 'admin' | 'technician' }
+export const revokeAttendanceToken = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { userRole } = req.body;
+
+    if (!userRole || !['admin', 'technician'].includes(userRole)) {
+      return res.status(400).json({ success: false, message: 'userRole must be admin or technician.' });
+    }
+
+    const Model = userRole === 'admin' ? Admin : Technician;
+    await Model.findByIdAndUpdate(userId, { $unset: { attendanceToken: 1, attendancePin: 1 } });
+
+    res.json({ success: true, message: 'Attendance link revoked.' });
+  } catch (error) {
+    console.error('Revoke attendance token error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 };
 

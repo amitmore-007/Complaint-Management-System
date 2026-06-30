@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import { DateTime } from 'luxon';
 import Attendance from '../models/Attendance.js';
 import Admin from '../models/Admin.js';
@@ -272,5 +274,105 @@ export const listAll = async (req, res) => {
   } catch (error) {
     console.error('List attendance error:', error);
     res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// ── Portal (token-based, no login required) ────────────────────────────────
+
+const portalHashPin = (pin, token) =>
+  crypto.createHmac('sha256', token).update(pin).digest('hex');
+
+const findUserByAttendanceToken = async (token) => {
+  const admin = await Admin.findOne({ attendanceToken: token }).select('+attendanceToken +attendancePin');
+  if (admin) return { user: admin, role: 'admin' };
+  const technician = await Technician.findOne({ attendanceToken: token }).select('+attendanceToken +attendancePin');
+  if (technician) return { user: technician, role: 'technician' };
+  return null;
+};
+
+// POST /api/attendance/portal/:token/session
+export const verifyPortalPin = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { pin } = req.body;
+
+    if (!pin || !/^\d{4}$/.test(pin)) {
+      return res.status(400).json({ success: false, message: 'PIN must be exactly 4 digits.' });
+    }
+
+    const result = await findUserByAttendanceToken(token);
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Invalid or expired link.' });
+    }
+
+    const { user, role } = result;
+
+    if (!user.isActive) {
+      return res.status(403).json({ success: false, message: 'Your account is inactive. Contact admin.' });
+    }
+
+    if (!user.attendancePin) {
+      return res.status(400).json({ success: false, message: 'PIN not configured. Contact admin.' });
+    }
+
+    if (portalHashPin(pin, token) !== user.attendancePin) {
+      return res.status(401).json({ success: false, message: 'Incorrect PIN.' });
+    }
+
+    const sessionToken = jwt.sign(
+      { userId: String(user._id), role, scope: 'attendance-portal' },
+      process.env.JWT_SECRET,
+      { expiresIn: '8h' }
+    );
+
+    res.json({ success: true, sessionToken, user: { name: user.name, role } });
+  } catch (error) {
+    console.error('Portal verify PIN error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// GET /api/attendance/portal/:token/status
+export const getPortalStatus = async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+    const date = todayDate();
+
+    const attendance =
+      (await Attendance.findOne({ userId: String(userId), date })) ||
+      (await findActiveRecord(userId));
+
+    res.json({
+      success: true,
+      attendance: attendance || null,
+      user: { name: req.user.name, role: req.user.role },
+    });
+  } catch (error) {
+    console.error('Portal status error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+// POST /api/attendance/portal/:token/record
+// body: { action: 'check_in' | 'check_out' | 'break_start' | 'break_end' }
+export const createPortalRecord = async (req, res) => {
+  const { action } = req.body;
+  const handlers = { check_in: checkIn, check_out: checkOut, break_start: startBreak, break_end: endBreak };
+  const handler = handlers[action];
+
+  if (!handler) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid action. Allowed: check_in, check_out, break_start, break_end',
+    });
+  }
+
+  try {
+    await handler(req, res);
+  } catch (error) {
+    if (!res.headersSent) {
+      console.error('Portal record error:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
   }
 };

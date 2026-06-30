@@ -129,6 +129,50 @@ export const authenticateAny = async (req, res, next) => {
   }
 };
 
+// authenticate portal session (scope: attendance-portal)
+export const authenticatePortal = async (req, res, next) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'Session token required.' });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      return res.status(401).json({ success: false, message: 'Session expired. Please enter your PIN again.' });
+    }
+
+    if (decoded.scope !== 'attendance-portal') {
+      return res.status(403).json({ success: false, message: 'Invalid session scope.' });
+    }
+
+    const { userId, role } = decoded;
+    let user;
+
+    if (role === 'admin') {
+      const Admin = (await import('../models/Admin.js')).default;
+      user = await Admin.findById(userId);
+    } else if (role === 'technician') {
+      const Technician = (await import('../models/Technician.js')).default;
+      user = await Technician.findById(userId);
+    }
+
+    if (!user || !user.isActive) {
+      return res.status(401).json({ success: false, message: 'Account not found or inactive.' });
+    }
+
+    req.user = { id: user._id, role, ...user.toObject() };
+    next();
+  } catch (error) {
+    console.error('Portal auth error:', error);
+    return res.status(403).json({ success: false, message: 'Authentication failed.' });
+  }
+};
+
 // authorize multiple roles
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {

@@ -23,6 +23,8 @@ import {
   getResolvedNotifyContactsSetting,
   updateResolvedNotifyContactsSetting,
   logoutAllDevices,
+  generateAttendanceToken,
+  revokeAttendanceToken,
 } from "../controllers/adminController.js";
 import { authenticateAdmin } from "../middleware/roleAuth.js";
 import {
@@ -94,6 +96,10 @@ router.patch(
   toggleUserStatus,
 );
 router.delete("/users/:userId", authenticateAdmin, deleteUser);
+
+// attendance token management
+router.post("/users/:userId/attendance-token", authenticateAdmin, generateAttendanceToken);
+router.delete("/users/:userId/attendance-token", authenticateAdmin, revokeAttendanceToken);
 
 // settings
 router.get(
