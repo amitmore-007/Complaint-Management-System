@@ -616,9 +616,19 @@ export const updateComplaintStatus = async (req, res) => {
     if (status === "resolved") {
       const resolvedContacts = await getResolvedNotifyContacts();
 
+      console.log(`🔔 Resolution notify: complaint="${complaint.complaintId}" total_contacts=${resolvedContacts.length}`);
+      resolvedContacts.forEach((c, i) => {
+        console.log(`  contact[${i}] name="${c.name || "(none)"}" phone="${c.phone}"`);
+      });
+
       for (const contact of resolvedContacts) {
         const contactPhone10 = normalizeIndianPhone10Digits(contact.phone);
-        if (!contactPhone10) continue;
+        if (!contactPhone10) {
+          console.warn(`⚠️ Skipping contact "${contact.name}" — phone "${contact.phone}" could not be normalized`);
+          continue;
+        }
+
+        console.log(`📲 Sending resolved notification → contact="${contact.name}" normalized="${contactPhone10}"`);
 
         try {
           const contactResult = await sendStatusUpdateNotification(
@@ -629,6 +639,8 @@ export const updateComplaintStatus = async (req, res) => {
             templateLocation,
             templateIssueTitle,
           );
+
+          console.log(`  → result for "${contact.name}" (${contactPhone10}): success=${contactResult.success} messageId="${contactResult.messageId || "-"}" error="${contactResult.error || "-"}"`);
 
           await new Notification({
             complaint: complaint._id,
