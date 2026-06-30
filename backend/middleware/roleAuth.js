@@ -40,6 +40,16 @@ const authenticateRole = (requiredRole) => {
       if (role === "admin") {
         const Admin = (await import("../models/Admin.js")).default;
         user = await Admin.findById(userId);
+        if (user) {
+          const tokenVersion = decoded.tokenVersion ?? 0;
+          const adminVersion = user.tokenVersion ?? 0;
+          if (tokenVersion !== adminVersion) {
+            return res.status(401).json({
+              success: false,
+              message: "Session expired. Please login again.",
+            });
+          }
+        }
       } else if (role === "client") {
         const Client = (await import("../models/Client.js")).default;
         user = await Client.findById(userId);

@@ -8,7 +8,7 @@ import { useComplaintsStoreLeaderboardStats } from "../../../../hooks/useStats";
 import Card from "./Card";
 import DateRangePicker from "./DateRangePicker";
 import ComplaintsChart from "./ComplaintsChart";
-import ComplaintsStoreLeaderboardDrilldownDrawer from "./ComplaintsStoreLeaderboardDrilldownDrawer";
+import ReportDrilldownDrawer from "./ReportDrilldownDrawer";
 
 import {
   addDays,
@@ -135,6 +135,7 @@ const ComplaintStoreLeaderboardReportCard = () => {
         else if (seriesName === "unresolved") defaultTab = "unresolved";
 
         setDrilldown({
+          type: "storeLeaderboard",
           storeName,
           from: appliedQuery.from,
           to: appliedQuery.to,
@@ -433,7 +434,7 @@ const ComplaintStoreLeaderboardReportCard = () => {
           onEvents={chartEvents}
         />
 
-        <ComplaintsStoreLeaderboardDrilldownDrawer
+        <ReportDrilldownDrawer
           drilldown={drilldown}
           onClose={() => setDrilldown(null)}
           isDarkMode={isDarkMode}

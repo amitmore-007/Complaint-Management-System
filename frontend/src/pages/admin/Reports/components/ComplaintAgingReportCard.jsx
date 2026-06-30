@@ -2,6 +2,8 @@
 import toast from "react-hot-toast";
 import { RefreshCcw } from "lucide-react";
 
+import ReportDrilldownDrawer from "./ReportDrilldownDrawer";
+
 import { useTheme } from "../../../../context/ThemeContext";
 import { useComplaintsAgingStats } from "../../../../hooks/useStats";
 
@@ -63,6 +65,7 @@ const ComplaintAgingReportCard = () => {
   });
 
   const [appliedQuery, setAppliedQuery] = useState(null);
+  const [drilldown, setDrilldown] = useState(null);
 
   const rangeQuery = useMemo(() => {
     const interval = filters?.interval || "day";
@@ -102,6 +105,24 @@ const ComplaintAgingReportCard = () => {
   const rows = statsQuery.data?.data || [];
   const loading = statsQuery.isLoading;
   const isFetching = statsQuery.isFetching;
+
+  const chartEvents = useMemo(
+    () => ({
+      click: (params) => {
+        if (params?.componentType !== "series") return;
+        const bucket = params?.name;
+        if (!bucket || !appliedQuery) return;
+        setDrilldown({
+          type: "aging",
+          bucket,
+          from: appliedQuery.from,
+          to: appliedQuery.to,
+          tz: appliedQuery.tz || tz,
+        });
+      },
+    }),
+    [appliedQuery, tz],
+  );
 
   useEffect(() => {
     if (statsQuery.error) {
@@ -233,12 +254,25 @@ const ComplaintAgingReportCard = () => {
           isDarkMode={isDarkMode}
         />
 
+        <p
+          className={`${isDarkMode ? "text-gray-400" : "text-gray-600"} text-xs`}
+        >
+          Click any bar to view open complaints in that age bucket.
+        </p>
+
         <ComplaintsChart
           option={option}
           loading={loading}
           isDarkMode={isDarkMode}
           chartRenderer={chartRenderer}
           heightClassName="h-[300px] sm:h-[360px]"
+          onEvents={chartEvents}
+        />
+
+        <ReportDrilldownDrawer
+          drilldown={drilldown}
+          onClose={() => setDrilldown(null)}
+          isDarkMode={isDarkMode}
         />
       </div>
     </Card>

@@ -9,6 +9,7 @@ import Card from "./Card";
 import DateRangePicker from "./DateRangePicker";
 import TechniciansChart from "./TechniciansChart";
 import TechnicianTable from "./TechnicianTable";
+import ReportDrilldownDrawer from "./ReportDrilldownDrawer";
 
 import {
   addDays,
@@ -65,6 +66,7 @@ const TechniciansReportCard = () => {
   });
 
   const [appliedQuery, setAppliedQuery] = useState(null);
+  const [drilldown, setDrilldown] = useState(null);
 
   // Note: matches previous behavior (endpoint only used from/to/tz)
   const query = useMemo(() => {
@@ -105,6 +107,30 @@ const TechniciansReportCard = () => {
   const rows = statsQuery.data?.data || [];
   const loading = statsQuery.isLoading;
   const isFetching = statsQuery.isFetching;
+
+  const chartEvents = useMemo(
+    () => ({
+      click: (params) => {
+        if (params?.componentType !== "series") return;
+        const technicianName = params?.name;
+        if (!technicianName || !appliedQuery) return;
+        const row = rows.find((r) => r.technicianName === technicianName);
+        if (!row?.technicianId) return;
+        const seriesName = String(params?.seriesName || "").toLowerCase();
+        const defaultTab = seriesName.includes("resolved") ? "resolved" : "assigned";
+        setDrilldown({
+          type: "technician",
+          technicianId: row.technicianId,
+          technicianName,
+          from: appliedQuery.from,
+          to: appliedQuery.to,
+          tz: appliedQuery.tz || tz,
+          defaultTab,
+        });
+      },
+    }),
+    [appliedQuery, rows, tz],
+  );
 
   useEffect(() => {
     if (statsQuery.error) {
@@ -342,14 +368,27 @@ const TechniciansReportCard = () => {
           isDarkMode={isDarkMode}
         />
 
+        <p
+          className={`${isDarkMode ? "text-gray-400" : "text-gray-600"} text-xs`}
+        >
+          Click any bar to view the assigned or resolved complaints for that technician.
+        </p>
+
         <TechniciansChart
           option={chartOption}
           loading={loading}
           isDarkMode={isDarkMode}
           chartRenderer={chartRenderer}
+          onEvents={chartEvents}
         />
 
         <TechnicianTable rows={rows} isDarkMode={isDarkMode} />
+
+        <ReportDrilldownDrawer
+          drilldown={drilldown}
+          onClose={() => setDrilldown(null)}
+          isDarkMode={isDarkMode}
+        />
       </div>
     </Card>
   );

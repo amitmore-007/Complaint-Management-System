@@ -24,6 +24,10 @@ const adminSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  tokenVersion: {
+    type: Number,
+    default: 0,
+  },
   // Add tracking for created users
   createdClients: [{
     type: mongoose.Schema.Types.ObjectId,

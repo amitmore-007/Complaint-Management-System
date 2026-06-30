@@ -39,6 +39,13 @@ export const statsService = {
       return res.data;
     },
 
+    statusFunnelDrilldown: async (params = {}) => {
+      const res = await api.get(endpoints.stats.complaintsStatusFunnelDrilldown, {
+        params: cleanParams(params),
+      });
+      return res.data;
+    },
+
     storeLeaderboard: async (params = {}) => {
       const res = await api.get(endpoints.stats.complaintsStoreLeaderboard, {
         params: cleanParams(params),
@@ -67,11 +74,32 @@ export const statsService = {
       });
       return res.data;
     },
+
+    agingDrilldown: async (params = {}) => {
+      const res = await api.get(endpoints.stats.complaintsAgingDrilldown, {
+        params: cleanParams(params),
+      });
+      return res.data;
+    },
+
+    timeToResolveDrilldown: async (params = {}) => {
+      const res = await api.get(endpoints.stats.complaintsTimeToResolveDrilldown, {
+        params: cleanParams(params),
+      });
+      return res.data;
+    },
   },
 
   technicians: {
     assignedVsResolved: async (params = {}) => {
       const res = await api.get(endpoints.stats.techniciansAssignedVsResolved, {
+        params: cleanParams(params),
+      });
+      return res.data;
+    },
+
+    drilldown: async (params = {}) => {
+      const res = await api.get(endpoints.stats.techniciansDrilldown, {
         params: cleanParams(params),
       });
       return res.data;

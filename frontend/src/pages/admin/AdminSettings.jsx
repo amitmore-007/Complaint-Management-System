@@ -1,16 +1,32 @@
-﻿import React, { useState } from "react";
-import { Zap, Bell, Phone, User, Save, CheckCircle, Settings } from "lucide-react";
+import React, { useState } from "react";
+import {
+  Zap,
+  Bell,
+  Phone,
+  User,
+  CheckCircle,
+  Settings,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import {
   useComplaintAutoAssignSetting,
   useUpdateComplaintAutoAssignSetting,
-  useResolvedNotifyContact,
-  useUpdateResolvedNotifyContact,
+  useResolvedNotifyContacts,
+  useUpdateResolvedNotifyContacts,
 } from "../../hooks/useComplaints";
 
-const SettingCard = ({ icon: Icon, iconBg, iconColor, title, description, children }) => {
+const SettingCard = ({
+  icon: Icon,
+  iconBg,
+  iconColor,
+  title,
+  description,
+  children,
+}) => {
   const { isDarkMode } = useTheme();
   return (
     <div
@@ -58,20 +74,14 @@ const AdminSettings = () => {
     useComplaintAutoAssignSetting();
   const updateAutoAssignMutation = useUpdateComplaintAutoAssignSetting();
 
-  // Notification contact
-  const { data: resolvedNotifyContact, isLoading: isLoadingNotifyContact } =
-    useResolvedNotifyContact();
-  const updateNotifyContactMutation = useUpdateResolvedNotifyContact();
-  const [notifyPhone, setNotifyPhone] = useState("");
-  const [notifyName, setNotifyName] = useState("");
-  const [notifyContactEdited, setNotifyContactEdited] = useState(false);
+  // Notification contacts
+  const { data: savedContacts = [], isLoading: isLoadingContacts } =
+    useResolvedNotifyContacts();
+  const updateContactsMutation = useUpdateResolvedNotifyContacts();
 
-  React.useEffect(() => {
-    if (resolvedNotifyContact && !notifyContactEdited) {
-      setNotifyPhone(resolvedNotifyContact.phone ?? "");
-      setNotifyName(resolvedNotifyContact.name ?? "");
-    }
-  }, [resolvedNotifyContact, notifyContactEdited]);
+  // New contact form state
+  const [newPhone, setNewPhone] = useState("");
+  const [newName, setNewName] = useState("");
 
   const handleToggleAutoAssign = async () => {
     if (updateAutoAssignMutation.isPending || isAutoAssignLoading) return;
@@ -90,18 +100,42 @@ const AdminSettings = () => {
     }
   };
 
-  const handleSaveNotifyContact = async () => {
-    if (updateNotifyContactMutation.isPending) return;
+  const handleAddContact = async () => {
+    const phone = newPhone.trim();
+    const name = newName.trim();
+    if (!phone) return;
+    if (phone.length !== 10 || !/^\d+$/.test(phone)) {
+      toast.error("Enter a valid 10-digit phone number");
+      return;
+    }
+    if (savedContacts.some((c) => c.phone === phone)) {
+      toast.error("This number is already in the list");
+      return;
+    }
     try {
-      await updateNotifyContactMutation.mutateAsync({
-        phone: notifyPhone.trim(),
-        name: notifyName.trim(),
-      });
-      setNotifyContactEdited(false);
-      toast.success("Notification contact saved successfully");
+      await updateContactsMutation.mutateAsync([
+        ...savedContacts,
+        { phone, name },
+      ]);
+      setNewPhone("");
+      setNewName("");
+      toast.success("Contact added");
     } catch (error) {
       toast.error(
-        error?.response?.data?.message || "Failed to save notification contact",
+        error?.response?.data?.message || "Failed to add contact",
+      );
+    }
+  };
+
+  const handleRemoveContact = async (phone) => {
+    try {
+      await updateContactsMutation.mutateAsync(
+        savedContacts.filter((c) => c.phone !== phone),
+      );
+      toast.success("Contact removed");
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message || "Failed to remove contact",
       );
     }
   };
@@ -198,7 +232,6 @@ const AdminSettings = () => {
             </button>
           </div>
 
-          {/* Status indicator */}
           <div
             className={`mt-4 flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${
               autoAssignEnabled
@@ -219,97 +252,25 @@ const AdminSettings = () => {
           </div>
         </SettingCard>
 
-        {/* Resolution Notification Contact */}
+        {/* Resolution Notification Contacts */}
         <SettingCard
           icon={Bell}
           iconBg={isDarkMode ? "bg-amber-900/40" : "bg-amber-50"}
           iconColor={isDarkMode ? "text-amber-400" : "text-amber-600"}
-          title="Resolution Notification Contact"
-          description="This person receives a WhatsApp message every time a complaint is resolved. Update this when the responsible person's role changes."
+          title="Resolution Notification Contacts"
+          description="These people receive a WhatsApp message every time a complaint is resolved. You can add multiple contacts."
         >
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label
-                  className={`flex items-center gap-1.5 text-xs font-medium mb-2 ${
-                    isDarkMode ? "text-gray-300" : "text-gray-600"
-                  }`}
-                >
-                  <Phone className="h-3.5 w-3.5" />
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={notifyPhone}
-                  onChange={(e) => {
-                    setNotifyPhone(e.target.value);
-                    setNotifyContactEdited(true);
-                  }}
-                  placeholder="e.g. 9876543210"
-                  maxLength={10}
-                  disabled={isLoadingNotifyContact}
-                  className={inputClass}
-                />
-                <p
-                  className={`text-xs mt-1.5 ${
-                    isDarkMode ? "text-gray-500" : "text-gray-400"
-                  }`}
-                >
-                  10-digit Indian mobile number
-                </p>
-              </div>
-
-              <div>
-                <label
-                  className={`flex items-center gap-1.5 text-xs font-medium mb-2 ${
-                    isDarkMode ? "text-gray-300" : "text-gray-600"
-                  }`}
-                >
-                  <User className="h-3.5 w-3.5" />
-                  Contact Name
-                </label>
-                <input
-                  type="text"
-                  value={notifyName}
-                  onChange={(e) => {
-                    setNotifyName(e.target.value);
-                    setNotifyContactEdited(true);
-                  }}
-                  placeholder="e.g. Rajesh Kumar"
-                  disabled={isLoadingNotifyContact}
-                  className={inputClass}
-                />
-                <p
-                  className={`text-xs mt-1.5 ${
-                    isDarkMode ? "text-gray-500" : "text-gray-400"
-                  }`}
-                >
-                  Used in the WhatsApp message greeting
-                </p>
-              </div>
-            </div>
-
-            {/* Current saved value preview */}
-            {resolvedNotifyContact?.phone && !notifyContactEdited && (
-              <div
-                className={`flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${
-                  isDarkMode
-                    ? "bg-amber-900/20 text-amber-400"
-                    : "bg-amber-50 text-amber-700"
+          <div className="space-y-3">
+            {/* Saved contacts list */}
+            {isLoadingContacts ? (
+              <p
+                className={`text-sm ${
+                  isDarkMode ? "text-gray-400" : "text-gray-500"
                 }`}
               >
-                <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>
-                  Currently notifying{" "}
-                  <strong>
-                    {resolvedNotifyContact.name || "unnamed contact"}
-                  </strong>{" "}
-                  at <strong>{resolvedNotifyContact.phone}</strong>
-                </span>
-              </div>
-            )}
-
-            {!resolvedNotifyContact?.phone && !notifyContactEdited && (
+                Loading…
+              </p>
+            ) : savedContacts.length === 0 ? (
               <div
                 className={`flex items-center gap-2 text-xs rounded-lg px-3 py-2 ${
                   isDarkMode
@@ -318,33 +279,122 @@ const AdminSettings = () => {
                 }`}
               >
                 <Bell className="h-3.5 w-3.5 flex-shrink-0" />
-                <span>No notification contact set. Add one above.</span>
+                <span>No contacts added yet. Add one below.</span>
               </div>
+            ) : (
+              <ul className="space-y-2">
+                {savedContacts.map((contact) => (
+                  <li
+                    key={contact.phone}
+                    className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 ${
+                      isDarkMode
+                        ? "bg-amber-900/20 text-amber-300"
+                        : "bg-amber-50 text-amber-800"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="text-xs font-medium truncate">
+                        {contact.name ? (
+                          <>
+                            <strong>{contact.name}</strong> · {contact.phone}
+                          </>
+                        ) : (
+                          contact.phone
+                        )}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveContact(contact.phone)}
+                      disabled={updateContactsMutation.isPending}
+                      className={`flex-shrink-0 p-1 rounded-md transition-colors disabled:opacity-50 ${
+                        isDarkMode
+                          ? "hover:bg-red-900/40 text-red-400"
+                          : "hover:bg-red-100 text-red-500"
+                      }`}
+                      aria-label="Remove contact"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
 
-            <div className="flex justify-end pt-1">
-              <button
-                type="button"
-                onClick={handleSaveNotifyContact}
-                disabled={
-                  updateNotifyContactMutation.isPending ||
-                  isLoadingNotifyContact ||
-                  !notifyContactEdited
-                }
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-xl bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            {/* Add new contact form */}
+            <div
+              className={`rounded-lg border p-3 space-y-3 ${
+                isDarkMode ? "border-white/10" : "border-gray-200"
+              }`}
+            >
+              <p
+                className={`text-xs font-medium ${
+                  isDarkMode ? "text-gray-300" : "text-gray-600"
+                }`}
               >
-                {updateNotifyContactMutation.isPending ? (
-                  <>
+                Add contact
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label
+                    className={`flex items-center gap-1.5 text-xs font-medium mb-1.5 ${
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    <Phone className="h-3.5 w-3.5" />
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddContact()}
+                    placeholder="e.g. 9876543210"
+                    maxLength={10}
+                    disabled={isLoadingContacts}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label
+                    className={`flex items-center gap-1.5 text-xs font-medium mb-1.5 ${
+                      isDarkMode ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    <User className="h-3.5 w-3.5" />
+                    Name (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleAddContact()}
+                    placeholder="e.g. Rajesh Kumar"
+                    disabled={isLoadingContacts}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleAddContact}
+                  disabled={
+                    !newPhone.trim() ||
+                    updateContactsMutation.isPending ||
+                    isLoadingContacts
+                  }
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {updateContactsMutation.isPending ? (
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Saving…
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4" />
-                    Save Contact
-                  </>
-                )}
-              </button>
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  Add Contact
+                </button>
+              </div>
             </div>
           </div>
         </SettingCard>
@@ -354,5 +404,3 @@ const AdminSettings = () => {
 };
 
 export default AdminSettings;
-
-

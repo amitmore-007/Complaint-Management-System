@@ -109,6 +109,8 @@ export const sendStatusUpdate = async (
     }
     formattedPhone = formattedPhone.replace("+", "");
 
+    console.log(`📤 MSG91 sendStatusUpdate → phone_raw="${phoneNumber}" phone_formatted="${formattedPhone}" status="${status}" complaintId="${complaintId}" name="${clientName}"`);
+
     let templateName = "";
     let components = {};
 
@@ -206,13 +208,17 @@ export const sendStatusUpdate = async (
       },
     });
 
+    console.log(`📨 MSG91 response for ${formattedPhone} (${status}):`, JSON.stringify(response.data));
+
     if (response.data.status === "success") {
+      console.log(`✅ MSG91 accepted → phone="${formattedPhone}" request_id="${response.data.request_id}"`);
       return {
         success: true,
         messageId: response.data.request_id,
         data: response.data,
       };
     } else {
+      console.warn(`⚠️ MSG91 non-success for ${formattedPhone}:`, JSON.stringify(response.data));
       return {
         success: false,
         error: response.data.errors || "Failed to send status update",
@@ -220,8 +226,9 @@ export const sendStatusUpdate = async (
     }
   } catch (error) {
     console.error(
-      "❌ MSG91 status update error:",
-      error.response?.data || error.message
+      `❌ MSG91 status update error for ${formattedPhone}:`,
+      error.response?.data || error.message,
+      "| HTTP status:", error.response?.status
     );
     return {
       success: false,

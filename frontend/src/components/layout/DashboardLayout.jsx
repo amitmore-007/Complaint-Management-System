@@ -1,8 +1,11 @@
 ﻿import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { LogOut, Menu, Phone, Moon, Sun } from "lucide-react";
+import { LogOut, Menu, Phone, Moon, Sun, MonitorX, Loader2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import useAuthStore from "../../store/authStore";
+import { adminService } from "../../services/adminService";
 import Sidebar from "./Sidebar";
 
 const DashboardLayout = ({ children }) => {
@@ -17,6 +20,17 @@ const DashboardLayout = ({ children }) => {
     logout();
     navigate("/");
   };
+
+  const logoutAllMutation = useMutation({
+    mutationFn: adminService.logoutAllDevices,
+    onSuccess: () => {
+      logout();
+      navigate("/");
+    },
+    onError: () => {
+      toast.error("Failed to logout from all devices.");
+    },
+  });
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -121,6 +135,28 @@ const DashboardLayout = ({ children }) => {
                       )}
                     </div>
                   </button>
+
+                  {/* Logout from all devices */}
+                  <div className={`border-t ${isDarkMode ? "border-white/10" : "border-gray-100"}`}>
+                    <button
+                      onClick={() => logoutAllMutation.mutate()}
+                      disabled={logoutAllMutation.isPending}
+                      className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors disabled:opacity-60 ${
+                        isDarkMode
+                          ? "text-orange-400 hover:bg-orange-950/30"
+                          : "text-orange-600 hover:bg-orange-50"
+                      }`}
+                    >
+                      <span>Logout all devices</span>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        isDarkMode ? "bg-orange-950/40" : "bg-orange-50"
+                      }`}>
+                        {logoutAllMutation.isPending
+                          ? <Loader2 className="h-4 w-4 animate-spin" />
+                          : <MonitorX className="h-4 w-4" />}
+                      </div>
+                    </button>
+                  </div>
 
                   {/* Logout */}
                   <div className={`border-t ${isDarkMode ? "border-white/10" : "border-gray-100"}`}>

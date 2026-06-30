@@ -8,6 +8,7 @@ const TechniciansChart = ({
   isDarkMode,
   chartRenderer,
   heightClassName = "h-[380px] sm:h-[520px]",
+  onEvents,
 }) => {
   return (
     <div
@@ -25,6 +26,7 @@ const TechniciansChart = ({
           <ReactECharts
             option={option}
             style={{ height: "100%", width: "100%" }}
+            onEvents={onEvents}
             opts={{
               renderer: chartRenderer,
               devicePixelRatio:

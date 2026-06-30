@@ -22,8 +22,8 @@ import {
   setComplaintAutoAssignEnabled,
 } from "../utils/complaintAutoAssignSetting.js";
 import {
-  getResolvedNotifyContact,
-  setResolvedNotifyContact,
+  getResolvedNotifyContacts,
+  setResolvedNotifyContacts,
 } from "../utils/resolvedNotifyContactSetting.js";
 
 // ============================================
@@ -36,8 +36,8 @@ const generateOTP = () => {
 };
 
 // generate jwt token for admin (never expires)
-const generateToken = (userId) => {
-  return jwt.sign({ userId, role: "admin" }, process.env.JWT_SECRET, {
+const generateToken = (userId, tokenVersion = 0) => {
+  return jwt.sign({ userId, role: "admin", tokenVersion }, process.env.JWT_SECRET, {
     expiresIn: "999y",
   });
 };
@@ -169,7 +169,7 @@ export const verifyAdminOTP = async (req, res) => {
     }
 
     // generate jwt token
-    const token = generateToken(admin._id);
+    const token = generateToken(admin._id, admin.tokenVersion ?? 0);
 
     res.status(200).json({
       success: true,
@@ -700,44 +700,38 @@ export const updateComplaintAutoAssignSetting = async (req, res) => {
   }
 };
 
-export const getResolvedNotifyContactSetting = async (req, res) => {
+export const getResolvedNotifyContactsSetting = async (req, res) => {
   try {
-    const contact = await getResolvedNotifyContact();
-    res.status(200).json({ success: true, setting: contact });
+    const contacts = await getResolvedNotifyContacts();
+    res.status(200).json({ success: true, setting: contacts });
   } catch (error) {
-    console.error("Get resolved notify contact error:", error);
+    console.error("Get resolved notify contacts error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-export const updateResolvedNotifyContactSetting = async (req, res) => {
+export const updateResolvedNotifyContactsSetting = async (req, res) => {
   try {
-    const { phone, name } = req.body;
+    const { contacts } = req.body;
 
-    if (phone !== undefined && typeof phone !== "string") {
+    if (!Array.isArray(contacts)) {
       return res
         .status(400)
-        .json({ success: false, message: "phone must be a string" });
-    }
-    if (name !== undefined && typeof name !== "string") {
-      return res
-        .status(400)
-        .json({ success: false, message: "name must be a string" });
+        .json({ success: false, message: "contacts must be an array" });
     }
 
-    const contact = await setResolvedNotifyContact({
-      phone,
-      name,
+    const saved = await setResolvedNotifyContacts({
+      contacts,
       adminId: req.user.id,
     });
 
     res.status(200).json({
       success: true,
-      message: "Resolved notification contact updated successfully",
-      setting: contact,
+      message: "Resolved notification contacts updated successfully",
+      setting: saved,
     });
   } catch (error) {
-    console.error("Update resolved notify contact error:", error);
+    console.error("Update resolved notify contacts error:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
@@ -1341,5 +1335,30 @@ export const updateTechnician = async (req, res) => {
       success: false,
       message: "Internal server error",
     });
+  }
+};
+
+// logout from all devices — increments tokenVersion so all existing tokens are invalidated,
+// then returns a fresh token for the current device so the session stays alive
+export const logoutAllDevices = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.user.id);
+    if (!admin) {
+      return res.status(404).json({ success: false, message: "Admin not found" });
+    }
+
+    admin.tokenVersion = (admin.tokenVersion ?? 0) + 1;
+    await admin.save();
+
+    const newToken = generateToken(admin._id, admin.tokenVersion);
+
+    res.status(200).json({
+      success: true,
+      message: "Logged out from all other devices.",
+      token: newToken,
+    });
+  } catch (error) {
+    console.error("Logout all devices error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

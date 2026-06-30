@@ -9,6 +9,10 @@ import {
   getComplaintTimeToResolveStats,
   getComplaintAgingStats,
   getTechnicianAssignedVsResolvedStats,
+  getComplaintAgingDrilldownStats,
+  getComplaintTimeToResolveDrilldownStats,
+  getTechnicianDrilldownStats,
+  getComplaintStatusFunnelDrilldownStats,
 } from "../controllers/statsController.js";
 
 const router = express.Router();
@@ -32,6 +36,12 @@ router.get(
 );
 
 router.get(
+  "/complaints/status-funnel/drilldown",
+  authenticateAdmin,
+  getComplaintStatusFunnelDrilldownStats,
+);
+
+router.get(
   "/complaints/store-leaderboard",
   authenticateAdmin,
   getComplaintStoreLeaderboardStats,
@@ -50,11 +60,14 @@ router.get(
 );
 
 router.get("/complaints/aging", authenticateAdmin, getComplaintAgingStats);
+router.get("/complaints/aging/drilldown", authenticateAdmin, getComplaintAgingDrilldownStats);
+router.get("/complaints/time-to-resolve/drilldown", authenticateAdmin, getComplaintTimeToResolveDrilldownStats);
 
 router.get(
   "/technicians/assigned-vs-resolved",
   authenticateAdmin,
   getTechnicianAssignedVsResolvedStats,
 );
+router.get("/technicians/drilldown", authenticateAdmin, getTechnicianDrilldownStats);
 
 export default router;

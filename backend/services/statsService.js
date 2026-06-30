@@ -1,6 +1,18 @@
 import Complaint from "../models/Complaint.js";
 import Technician from "../models/Technician.js";
 
+const COMPLAINT_FIELDS =
+  "complaintId title description location priority status createdAt completedAt resolvedAt assignedAt startedAt";
+
+const POPULATE_OPTIONS = [
+  { path: "client", select: "name phoneNumber" },
+  { path: "createdByTechnician", select: "name phoneNumber" },
+  { path: "createdByAdmin", select: "name phoneNumber" },
+  { path: "assignedTechnician", select: "name phoneNumber" },
+  { path: "assignedBy", select: "name" },
+  { path: "store", select: "name managers" },
+];
+
 const periodFormatByInterval = (interval) => {
   switch (interval) {
     case "day":
@@ -105,31 +117,21 @@ export const getComplaintsCreatedVsResolved = async ({
 };
 
 export const getComplaintsCreatedVsResolvedDrilldown = async ({ from, to }) => {
-  const complaintFields =
-    "complaintId title description location priority status createdAt completedAt resolvedAt assignedAt startedAt";
-  const populateOptions = [
-    { path: "client", select: "name phoneNumber" },
-    { path: "createdByTechnician", select: "name phoneNumber" },
-    { path: "createdByAdmin", select: "name phoneNumber" },
-    { path: "assignedTechnician", select: "name phoneNumber" },
-    { path: "assignedBy", select: "name" },
-    { path: "store", select: "name managers" },
-  ];
 
   const [created, resolved] = await Promise.all([
     Complaint.find({
       createdAt: { $gte: from, $lt: to },
     })
-      .select(complaintFields)
-      .populate(populateOptions)
+      .select(COMPLAINT_FIELDS)
+      .populate(POPULATE_OPTIONS)
       .sort({ createdAt: -1, complaintId: -1 })
       .lean(),
     Complaint.find({
       status: "resolved",
       completedAt: { $ne: null, $gte: from, $lt: to },
     })
-      .select(complaintFields)
-      .populate(populateOptions)
+      .select(COMPLAINT_FIELDS)
+      .populate(POPULATE_OPTIONS)
       .sort({ completedAt: -1, complaintId: -1 })
       .lean(),
   ]);
@@ -383,17 +385,6 @@ export const getComplaintsStoreLeaderboardDrilldown = async ({
     .trim()
     .toLowerCase();
 
-  const complaintFields =
-    "complaintId title description location priority status createdAt completedAt resolvedAt assignedAt startedAt";
-  const populateOptions = [
-    { path: "client", select: "name phoneNumber" },
-    { path: "createdByTechnician", select: "name phoneNumber" },
-    { path: "createdByAdmin", select: "name phoneNumber" },
-    { path: "assignedTechnician", select: "name phoneNumber" },
-    { path: "assignedBy", select: "name" },
-    { path: "store", select: "name managers" },
-  ];
-
   const complaints = await Complaint.find({
     createdAt: { $gte: from, $lt: to },
     $expr: {
@@ -407,8 +398,8 @@ export const getComplaintsStoreLeaderboardDrilldown = async ({
       ],
     },
   })
-    .select(complaintFields)
-    .populate(populateOptions)
+    .select(COMPLAINT_FIELDS)
+    .populate(POPULATE_OPTIONS)
     .sort({ createdAt: -1 })
     .lean();
 
@@ -502,4 +493,106 @@ export const getTechniciansAssignedVsResolved = async ({ from, to }) => {
   rows.sort((a, b) => b.assigned - a.assigned || b.resolved - a.resolved);
 
   return rows;
+};
+
+// Drilldown: open complaints in a specific aging bucket
+export const getComplaintsAgingDrilldown = async ({ bucket, from, to, timezone }) => {
+  const agg = await Complaint.aggregate([
+    { $match: { createdAt: { $gte: from, $lt: to }, status: { $ne: "resolved" } } },
+    {
+      $addFields: {
+        ageDays: { $dateDiff: { startDate: "$createdAt", endDate: to, unit: "day", timezone } },
+      },
+    },
+    {
+      $addFields: {
+        _bucket: {
+          $switch: {
+            branches: [
+              { case: { $lte: ["$ageDays", 1] }, then: "0-1d" },
+              { case: { $lte: ["$ageDays", 3] }, then: "2-3d" },
+              { case: { $lte: ["$ageDays", 7] }, then: "4-7d" },
+              { case: { $lte: ["$ageDays", 14] }, then: "8-14d" },
+              { case: { $lte: ["$ageDays", 30] }, then: "15-30d" },
+            ],
+            default: "30d+",
+          },
+        },
+      },
+    },
+    { $match: { _bucket: bucket } },
+    { $project: { _id: 1 } },
+  ]);
+
+  const ids = agg.map((d) => d._id);
+  return Complaint.find({ _id: { $in: ids } })
+    .select(COMPLAINT_FIELDS)
+    .populate(POPULATE_OPTIONS)
+    .sort({ createdAt: -1 })
+    .lean();
+};
+
+// Drilldown: resolved complaints in a specific time-to-resolve period
+export const getComplaintsTimeToResolveDrilldown = async ({ from, to }) => {
+  const complaints = await Complaint.find({
+    status: "resolved",
+    createdAt: { $ne: null },
+    $or: [
+      { completedAt: { $ne: null, $gte: from, $lt: to } },
+      { completedAt: null, resolvedAt: { $ne: null, $gte: from, $lt: to } },
+    ],
+  })
+    .select(COMPLAINT_FIELDS)
+    .populate(POPULATE_OPTIONS)
+    .sort({ completedAt: -1, resolvedAt: -1 })
+    .lean();
+
+  return complaints.map((c) => {
+    const resolvedDate = c.completedAt || c.resolvedAt;
+    const hoursToResolve =
+      resolvedDate && c.createdAt
+        ? Math.round(
+            ((new Date(resolvedDate).getTime() - new Date(c.createdAt).getTime()) /
+              (1000 * 60 * 60)) *
+              10,
+          ) / 10
+        : null;
+    return { ...c, hoursToResolve };
+  });
+};
+
+// Drilldown: complaints created in range with a specific status
+export const getComplaintsStatusFunnelDrilldown = async ({ status, from, to }) => {
+  return Complaint.find({
+    createdAt: { $gte: from, $lt: to },
+    status,
+  })
+    .select(COMPLAINT_FIELDS)
+    .populate(POPULATE_OPTIONS)
+    .sort({ createdAt: -1 })
+    .lean();
+};
+
+// Drilldown: complaints for a specific technician (assigned tab vs resolved tab)
+export const getTechnicianDrilldown = async ({ technicianId, from, to }) => {
+  const [assigned, resolved] = await Promise.all([
+    Complaint.find({
+      assignedTechnician: technicianId,
+      assignedAt: { $ne: null, $gte: from, $lt: to },
+    })
+      .select(COMPLAINT_FIELDS)
+      .populate(POPULATE_OPTIONS)
+      .sort({ assignedAt: -1 })
+      .lean(),
+    Complaint.find({
+      assignedTechnician: technicianId,
+      status: "resolved",
+      completedAt: { $ne: null, $gte: from, $lt: to },
+    })
+      .select(COMPLAINT_FIELDS)
+      .populate(POPULATE_OPTIONS)
+      .sort({ completedAt: -1 })
+      .lean(),
+  ]);
+  return { assigned, resolved };
 };

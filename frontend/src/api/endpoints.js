@@ -6,6 +6,7 @@ export const endpoints = {
       me: "/admin/auth/me",
       sendOtp: "/admin/auth/send-otp",
       verifyOtp: "/admin/auth/verify-otp",
+      logoutAllDevices: "/admin/auth/logout-all-devices",
     },
     dashboard: {
       stats: "/admin/dashboard/stats",
@@ -34,7 +35,7 @@ export const endpoints = {
       byId: (id) => `/admin/billing/${id}`,
     },
     settings: {
-      resolvedNotifyContact: "/admin/settings/resolved-notify-contact",
+      resolvedNotifyContacts: "/admin/settings/resolved-notify-contacts",
     },
   },
 
@@ -115,11 +116,15 @@ export const endpoints = {
     complaintsCreatedVsResolvedDrilldown:
       "/stats/complaints/created-vs-resolved/drilldown",
     complaintsStatusFunnel: "/stats/complaints/status-funnel",
+    complaintsStatusFunnelDrilldown: "/stats/complaints/status-funnel/drilldown",
     complaintsStoreLeaderboard: "/stats/complaints/store-leaderboard",
     complaintsStoreLeaderboardDrilldown:
       "/stats/complaints/store-leaderboard/drilldown",
     complaintsTimeToResolve: "/stats/complaints/time-to-resolve",
+    complaintsTimeToResolveDrilldown: "/stats/complaints/time-to-resolve/drilldown",
     complaintsAging: "/stats/complaints/aging",
+    complaintsAgingDrilldown: "/stats/complaints/aging/drilldown",
     techniciansAssignedVsResolved: "/stats/technicians/assigned-vs-resolved",
+    techniciansDrilldown: "/stats/technicians/drilldown",
   },
 };

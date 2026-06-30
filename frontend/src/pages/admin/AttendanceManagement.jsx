@@ -20,7 +20,7 @@ const toShort = (totalSeconds = 0) => {
 };
 
 const fmtTime = (date) =>
-  date ? new Date(date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'â€”';
+  date ? new Date(date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—';
 
 const todayStr = () => {
   const d = new Date();
@@ -37,7 +37,7 @@ const ROLE_CFG = {
   technician: { bg: 'bg-blue-100 text-blue-700',     avatar: 'bg-gradient-to-br from-blue-500 to-cyan-600',    label: 'Technician' },
   client:     { bg: 'bg-teal-100 text-teal-700',     avatar: 'bg-gradient-to-br from-teal-500 to-green-500',   label: 'Client' },
 };
-const defaultRole = { bg: 'bg-gray-100 text-gray-600', avatar: 'bg-gradient-to-br from-gray-400 to-gray-600', label: 'â€”' };
+const defaultRole = { bg: 'bg-gray-100 text-gray-600', avatar: 'bg-gradient-to-br from-gray-400 to-gray-600', label: '—' };
 
 // â”€â”€ status badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 

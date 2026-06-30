@@ -21,6 +21,11 @@ export const statsKeys = {
     "status-funnel",
     params,
   ],
+  complaintsStatusFunnelDrilldown: (params = {}) => [
+    ...statsKeys.complaintsRoot(),
+    "status-funnel-drilldown",
+    params,
+  ],
   complaintsStoreLeaderboard: (params = {}) => [
     ...statsKeys.complaintsRoot(),
     "store-leaderboard",
@@ -41,11 +46,26 @@ export const statsKeys = {
     "aging",
     params,
   ],
+  complaintsAgingDrilldown: (params = {}) => [
+    ...statsKeys.complaintsRoot(),
+    "aging-drilldown",
+    params,
+  ],
+  complaintsTimeToResolveDrilldown: (params = {}) => [
+    ...statsKeys.complaintsRoot(),
+    "ttr-drilldown",
+    params,
+  ],
 
   techniciansRoot: () => [...statsKeys.all, "technicians"],
   techniciansAssignedVsResolved: (params = {}) => [
     ...statsKeys.techniciansRoot(),
     "assigned-vs-resolved",
+    params,
+  ],
+  techniciansDrilldown: (params = {}) => [
+    ...statsKeys.techniciansRoot(),
+    "drilldown",
     params,
   ],
 };
@@ -88,6 +108,16 @@ export const useComplaintsStatusFunnelStats = (params, options = {}) => {
     queryKey: statsKeys.complaintsStatusFunnel(params || {}),
     queryFn: () => statsService.complaints.statusFunnel(params || {}),
     enabled: options.enabled ?? Boolean(params),
+  });
+};
+
+export const useComplaintsStatusFunnelDrilldownStats = (params, options = {}) => {
+  return useQuery({
+    ...reportQueryDefaults,
+    ...options,
+    queryKey: statsKeys.complaintsStatusFunnelDrilldown(params || {}),
+    queryFn: () => statsService.complaints.statusFunnelDrilldown(params || {}),
+    enabled: options.enabled ?? Boolean(params?.status),
   });
 };
 
@@ -142,5 +172,35 @@ export const useTechniciansAssignedVsResolvedStats = (params, options = {}) => {
     queryKey: statsKeys.techniciansAssignedVsResolved(params || {}),
     queryFn: () => statsService.technicians.assignedVsResolved(params || {}),
     enabled: options.enabled ?? Boolean(params),
+  });
+};
+
+export const useComplaintsAgingDrilldownStats = (params, options = {}) => {
+  return useQuery({
+    ...reportQueryDefaults,
+    ...options,
+    queryKey: statsKeys.complaintsAgingDrilldown(params || {}),
+    queryFn: () => statsService.complaints.agingDrilldown(params || {}),
+    enabled: options.enabled ?? Boolean(params?.bucket),
+  });
+};
+
+export const useComplaintsTimeToResolveDrilldownStats = (params, options = {}) => {
+  return useQuery({
+    ...reportQueryDefaults,
+    ...options,
+    queryKey: statsKeys.complaintsTimeToResolveDrilldown(params || {}),
+    queryFn: () => statsService.complaints.timeToResolveDrilldown(params || {}),
+    enabled: options.enabled ?? Boolean(params?.interval && params?.period),
+  });
+};
+
+export const useTechniciansDrilldownStats = (params, options = {}) => {
+  return useQuery({
+    ...reportQueryDefaults,
+    ...options,
+    queryKey: statsKeys.techniciansDrilldown(params || {}),
+    queryFn: () => statsService.technicians.drilldown(params || {}),
+    enabled: options.enabled ?? Boolean(params?.technicianId),
   });
 };

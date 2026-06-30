@@ -9,7 +9,7 @@ import Card from "./Card";
 import DateRangePicker from "./DateRangePicker";
 import ComplaintsChart from "./ComplaintsChart";
 import ComplaintsSeriesTable from "./ComplaintsSeriesTable";
-import ComplaintsDrilldownDrawer from "./ComplaintsDrilldownDrawer";
+import ReportDrilldownDrawer from "./ReportDrilldownDrawer";
 
 import {
   addDays,
@@ -138,8 +138,10 @@ const ComplaintsReportCard = () => {
         if (!period || !seriesName) return;
 
         setDrilldown({
+          type: "createdVsResolved",
           interval: filters?.interval || "day",
           period,
+          tz,
           defaultTab: seriesName.includes("resolved") ? "resolved" : "created",
         });
       },
@@ -495,11 +497,10 @@ const ComplaintsReportCard = () => {
           isDarkMode={isDarkMode}
         />
 
-        <ComplaintsDrilldownDrawer
+        <ReportDrilldownDrawer
           drilldown={drilldown}
           onClose={() => setDrilldown(null)}
           isDarkMode={isDarkMode}
-          timezone={tz}
         />
       </div>
     </Card>
