@@ -8,8 +8,11 @@ import {
   getHistory,
   getSummary,
   listAll,
+  verifyPortalPin,
+  getPortalStatus,
+  createPortalRecord,
 } from '../controllers/attendanceController.js';
-import { authenticateAny, authenticateAdmin } from '../middleware/roleAuth.js';
+import { authenticateAny, authenticateAdmin, authenticatePortal } from '../middleware/roleAuth.js';
 
 const router = express.Router();
 
@@ -24,5 +27,10 @@ router.get('/history', authenticateAny, getHistory);
 // admin only
 router.get('/summary', authenticateAdmin, getSummary);
 router.get('/', authenticateAdmin, listAll);
+
+// portal (token-link based, no login required)
+router.post('/portal/:token/session', verifyPortalPin);
+router.get('/portal/:token/status', authenticatePortal, getPortalStatus);
+router.post('/portal/:token/record', authenticatePortal, createPortalRecord);
 
 export default router;

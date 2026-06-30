@@ -34,6 +34,7 @@ import AdminSettings from "./pages/admin/AdminSettings";
 // Attendance Pages
 import MyAttendance from "./pages/attendance/MyAttendance";
 import AttendanceManagement from "./pages/admin/AttendanceManagement";
+import AttendancePortal from "./pages/attendance/AttendancePortal";
 
 // Technician Pages
 import TechnicianDashboard from "./pages/technician/Dashboard";
@@ -408,6 +409,9 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* Attendance Portal — public, no auth required */}
+            <Route path="/attendance/portal/:token" element={<AttendancePortal />} />
 
             {/* Fallback Route */}
             <Route path="*" element={<Navigate to="/" replace />} />

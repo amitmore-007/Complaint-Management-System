@@ -11,6 +11,10 @@ import {
   Activity,
   AlertTriangle,
   CheckCircle,
+  Link2,
+  Copy,
+  Check,
+  X,
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
@@ -21,6 +25,10 @@ import {
   useToggleUserStatus,
   useUpdateTechnician,
 } from "../../hooks/useAdmin";
+import { endpoints } from "../../api/endpoints";
+import api from "../../lib/axios";
+
+const PORTAL_ORIGIN = window.location.origin;
 
 const TechnicianManagement = () => {
   const { isDarkMode } = useTheme();
@@ -33,6 +41,16 @@ const TechnicianManagement = () => {
   const [selectedTechnician, setSelectedTechnician] = useState(null);
   const [formData, setFormData] = useState({ name: "", phoneNumber: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // attendance link modal
+  const [showLinkModal, setShowLinkModal]         = useState(false);
+  const [linkTechnician, setLinkTechnician]       = useState(null);
+  const [linkPin, setLinkPin]                     = useState('');
+  const [linkError, setLinkError]                 = useState('');
+  const [linkLoading, setLinkLoading]             = useState(false);
+  const [generatedUrl, setGeneratedUrl]           = useState('');
+  const [copied, setCopied]                       = useState(false);
+  const [revokeLoading, setRevokeLoading]         = useState(false);
 
   const techniciansQuery = useAdminTechnicians({
     page: pagination.page,
@@ -117,6 +135,66 @@ const TechnicianManagement = () => {
     setShowEditModal(true);
   };
 
+  const openLinkModal = (technician) => {
+    setLinkTechnician(technician);
+    setLinkPin('');
+    setLinkError('');
+    setGeneratedUrl('');
+    setCopied(false);
+    setShowLinkModal(true);
+  };
+
+  const closeLinkModal = () => {
+    setShowLinkModal(false);
+    setLinkTechnician(null);
+    setLinkPin('');
+    setLinkError('');
+    setGeneratedUrl('');
+  };
+
+  const handleGenerateLink = async () => {
+    if (!/^\d{4}$/.test(linkPin)) { setLinkError('PIN must be exactly 4 digits.'); return; }
+    setLinkError('');
+    setLinkLoading(true);
+    try {
+      const { data } = await api.post(
+        endpoints.adminUsers.attendanceToken(linkTechnician._id),
+        { userRole: 'technician', pin: linkPin }
+      );
+      const fullUrl = `${PORTAL_ORIGIN}${data.portalPath}`;
+      setGeneratedUrl(fullUrl);
+      setLinkPin('');
+      techniciansQuery.refetch();
+    } catch (err) {
+      setLinkError(err?.response?.data?.message || 'Failed to generate link.');
+    } finally {
+      setLinkLoading(false);
+    }
+  };
+
+  const handleRevokeLink = async () => {
+    if (!window.confirm(`Revoke attendance link for ${linkTechnician.name}? Their current link will stop working immediately.`)) return;
+    setRevokeLoading(true);
+    try {
+      await api.delete(
+        endpoints.adminUsers.attendanceToken(linkTechnician._id),
+        { data: { userRole: 'technician' } }
+      );
+      techniciansQuery.refetch();
+      closeLinkModal();
+    } catch (err) {
+      alert(err?.response?.data?.message || 'Failed to revoke link.');
+    } finally {
+      setRevokeLoading(false);
+    }
+  };
+
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(generatedUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
     setPagination((prev) => ({ ...prev, page: 1 }));
@@ -181,6 +259,7 @@ const TechnicianManagement = () => {
               <input
                 type="text"
                 placeholder="Search by name or phone number..."
+                autoComplete="off"
                 value={searchTerm}
                 onChange={handleSearch}
                 className={`w-full pl-10 pr-4 py-2 text-sm rounded-lg border focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
@@ -358,6 +437,19 @@ const TechnicianManagement = () => {
                               )}
                             </>
                           )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => openLinkModal(technician)}
+                          title="Attendance link"
+                          className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                            technician.hasAttendanceToken
+                              ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-white/10 dark:text-gray-400 dark:hover:bg-white/20'
+                          }`}
+                        >
+                          <Link2 className="h-4 w-4" />
                         </button>
 
                         <button
@@ -594,6 +686,94 @@ const TechnicianManagement = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Attendance Link Modal */}
+        {showLinkModal && linkTechnician && (
+          <div
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+            onClick={closeLinkModal}
+          >
+            <div
+              className={`p-6 rounded-2xl max-w-md w-full mx-4 ${isDarkMode ? 'bg-[#111]' : 'bg-white'}`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <Link2 className={`h-5 w-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
+                  <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Attendance Link
+                  </h3>
+                </div>
+                <button onClick={closeLinkModal} className={`p-1 rounded-lg ${isDarkMode ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}>
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <p className={`text-sm mb-5 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <span className="font-semibold">{linkTechnician.name}</span> will use this link to mark attendance without logging in. Set a 4-digit PIN they will use to access it.
+              </p>
+
+              {/* Generated URL display */}
+              {generatedUrl && (
+                <div className={`mb-5 p-3 rounded-xl border ${isDarkMode ? 'bg-green-950/30 border-green-500/30' : 'bg-green-50 border-green-200'}`}>
+                  <p className={`text-xs font-medium mb-2 ${isDarkMode ? 'text-green-400' : 'text-green-700'}`}>
+                    Link generated. Share this with the employee along with their PIN.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-xs font-mono flex-1 truncate ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                      {generatedUrl}
+                    </p>
+                    <button
+                      onClick={handleCopyUrl}
+                      className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${isDarkMode ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}
+                      title="Copy link"
+                    >
+                      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* PIN form */}
+              <div className="space-y-3">
+                <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  {generatedUrl ? 'Set a new PIN (to regenerate link)' : 'Set a 4-digit PIN'}
+                </label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="4-digit PIN"
+                  autoComplete="new-password"
+                  value={linkPin}
+                  onChange={(e) => { setLinkPin(e.target.value.replace(/\D/g, '').slice(0, 4)); setLinkError(''); }}
+                  className={`w-full px-4 py-2.5 border rounded-xl text-base font-mono tracking-widest ${
+                    isDarkMode ? 'bg-[#1a1a1a] border-white/10 text-white placeholder-gray-600' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                  }`}
+                />
+                {linkError && <p className="text-sm text-red-500">{linkError}</p>}
+
+                <button
+                  onClick={handleGenerateLink}
+                  disabled={linkLoading || linkPin.length < 4}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {linkLoading ? 'Generating…' : generatedUrl ? 'Regenerate Link' : 'Generate Link'}
+                </button>
+
+                {linkTechnician.hasAttendanceToken && (
+                  <button
+                    onClick={handleRevokeLink}
+                    disabled={revokeLoading}
+                    className="w-full py-2.5 bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-700 dark:text-red-400 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {revokeLoading ? 'Revoking…' : 'Revoke Link'}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}

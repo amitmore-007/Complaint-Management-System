@@ -28,6 +28,8 @@ const adminSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  attendanceToken: { type: String, unique: true, sparse: true, select: false },
+  attendancePin:   { type: String, select: false },
   // Add tracking for created users
   createdClients: [{
     type: mongoose.Schema.Types.ObjectId,

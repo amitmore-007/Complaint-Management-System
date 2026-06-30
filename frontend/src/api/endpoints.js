@@ -109,6 +109,14 @@ export const endpoints = {
     history: '/attendance/history',
     summary: '/attendance/summary',
     all: '/attendance',
+    portal: {
+      session: (token) => `/attendance/portal/${token}/session`,
+      status:  (token) => `/attendance/portal/${token}/status`,
+      record:  (token) => `/attendance/portal/${token}/record`,
+    },
+  },
+  adminUsers: {
+    attendanceToken: (userId) => `/admin/users/${userId}/attendance-token`,
   },
 
   stats: {
