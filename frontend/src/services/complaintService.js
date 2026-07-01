@@ -84,6 +84,11 @@ export const complaintService = {
       return data;
     },
 
+    createBulk: async (complaints) => {
+      const { data } = await api.post(endpoints.admin.complaints.bulk, { complaints });
+      return data;
+    },
+
     getResolvedNotifyContacts: async () => {
       const { data } = await api.get(
         endpoints.admin.settings.resolvedNotifyContacts,
@@ -123,6 +128,11 @@ export const complaintService = {
           headers: { "Content-Type": "multipart/form-data" },
         },
       );
+      return data;
+    },
+
+    createBulk: async (complaints) => {
+      const { data } = await api.post(endpoints.client.complaints.bulk, { complaints });
       return data;
     },
 
@@ -214,6 +224,11 @@ export const complaintService = {
           headers: { "Content-Type": "multipart/form-data" },
         },
       );
+      return data;
+    },
+
+    createBulk: async (complaints) => {
+      const { data } = await api.post(endpoints.technician.complaints.bulk, { complaints });
       return data;
     },
 

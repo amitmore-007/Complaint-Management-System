@@ -25,6 +25,7 @@ import {
   logoutAllDevices,
 } from "../controllers/adminController.js";
 import { authenticateAdmin } from "../middleware/roleAuth.js";
+import { createBulkComplaints } from "../controllers/complaintController.js";
 import {
   adminGetBillingRecord,
   adminListBillingRecords,
@@ -56,6 +57,7 @@ router.post("/auth/logout-all-devices", authenticateAdmin, logoutAllDevices);
 router.get("/dashboard/stats", authenticateAdmin, getDashboardStats);
 
 // complaint management
+router.post("/complaints/bulk", authenticateAdmin, createBulkComplaints);
 router.get("/complaints", authenticateAdmin, getAllComplaints);
 router.get(
   "/complaints/auto-assign",

@@ -136,6 +136,44 @@ export const useCreateComplaint = () => {
   });
 };
 
+export const useCreateAdminBulkComplaints = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (complaints) => complaintService.admin.createBulk(complaints),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
+    },
+  });
+};
+
+export const useCreateClientBulkComplaints = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (complaints) => complaintService.client.createBulk(complaints),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: complaintKeys.client() });
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
+    },
+  });
+};
+
+export const useCreateTechnicianBulkComplaints = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (complaints) => complaintService.technician.createBulk(complaints),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: complaintKeys.technicianMyComplaints() });
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
+    },
+  });
+};
+
 export const useCreateAdminComplaint = () => {
   const queryClient = useQueryClient();
 

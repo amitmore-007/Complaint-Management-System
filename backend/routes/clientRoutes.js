@@ -9,6 +9,7 @@ import {
   getMyComplaints,
   getComplaintById,
   createComplaint,
+  createBulkComplaints,
   updateComplaint,
   deleteComplaint,
 } from "../controllers/complaintController.js";
@@ -52,6 +53,7 @@ router.post("/auth/verify-otp", verifyClientOTP);
 router.get("/auth/me", authenticateClient, getCurrentClient);
 
 // Complaint routes for clients
+router.post("/complaints/bulk", authenticateClient, createBulkComplaints);
 router.get("/complaints", authenticateClient, getMyComplaints);
 router.get("/complaints/:id", authenticateClient, getComplaintById);
 router.post(

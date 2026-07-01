@@ -12,6 +12,7 @@ import {
   getAssignedComplaints,
   updateComplaintStatus,
   getResolvedComplaints,
+  createBulkComplaints,
 } from "../controllers/complaintController.js";
 import {
   technicianCreateBillingRecord,
@@ -54,6 +55,7 @@ router.post("/auth/verify-otp", verifyTechnicianOTP);
 router.get("/auth/me", authenticateTechnician, getCurrentTechnician);
 
 // Technician complaint creation routes
+router.post("/complaints/bulk", authenticateTechnician, createBulkComplaints);
 router.post(
   "/complaints",
   authenticateTechnician,

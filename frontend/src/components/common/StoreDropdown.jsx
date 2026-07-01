@@ -15,6 +15,11 @@ const StoreDropdown = ({
   const [activeIndex, setActiveIndex] = useState(-1);
   const rootRef = useRef(null);
   const inputRef = useRef(null);
+  const valueRef = useRef(value);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   const sortedOptions = useMemo(() => {
     const safeOptions = Array.isArray(options) ? options : [];
@@ -49,7 +54,7 @@ const StoreDropdown = ({
       if (!rootRef.current) return;
       if (!rootRef.current.contains(e.target)) {
         setOpen(false);
-        setQuery(value || "");
+        setQuery(valueRef.current || "");
         setActiveIndex(-1);
       }
     };

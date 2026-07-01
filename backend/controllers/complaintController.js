@@ -302,6 +302,81 @@ export const deleteComplaint = async (req, res) => {
   }
 };
 
+export const createBulkComplaints = async (req, res) => {
+  try {
+    const { id: userId, role } = req.user;
+    const { complaints } = req.body;
+
+    if (!Array.isArray(complaints) || complaints.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "complaints must be a non-empty array",
+      });
+    }
+
+    const shouldAutoAssign = await getComplaintAutoAssignEnabled();
+    const results = [];
+
+    for (let i = 0; i < complaints.length; i++) {
+      const entry = complaints[i];
+      const { title, description, location, priority } = entry;
+
+      if (!title?.trim() || !description?.trim() || !location?.trim()) {
+        results.push({ index: i, success: false, error: "Title, description, and location are required" });
+        continue;
+      }
+
+      try {
+        const complaintId = await generateNextComplaintId({ storeName: location.trim() });
+
+        const creatorFields =
+          role === "client"
+            ? { client: userId, creatorType: "client" }
+            : role === "admin"
+            ? { createdByAdmin: userId, creatorType: "admin" }
+            : { createdByTechnician: userId, creatorType: "technician" };
+
+        const complaint = new Complaint({
+          complaintId,
+          title: title.trim(),
+          description: description.trim(),
+          location: location.trim(),
+          priority: priority || "medium",
+          ...creatorFields,
+        });
+
+        await complaint.save();
+
+        if (shouldAutoAssign) {
+          const assignOpts = role === "admin"
+            ? { complaint, assignedBy: userId }
+            : { complaint };
+          await autoAssignComplaintToDefaultTechnician(assignOpts);
+        }
+
+        await complaint.populate("assignedTechnician", "name phoneNumber");
+
+        results.push({ index: i, success: true, complaint });
+      } catch (entryError) {
+        console.error(`Bulk complaint [${i}] error:`, entryError);
+        results.push({ index: i, success: false, error: "Failed to create complaint" });
+      }
+    }
+
+    const created = results.filter((r) => r.success).length;
+    const failed = results.filter((r) => !r.success).length;
+
+    res.status(201).json({
+      success: true,
+      summary: { total: complaints.length, created, failed },
+      results,
+    });
+  } catch (error) {
+    console.error("Create bulk complaints error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 // Technician-specific controllers
 export const getAssignedComplaints = async (req, res) => {
   try {

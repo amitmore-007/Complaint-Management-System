@@ -13,6 +13,7 @@ export const endpoints = {
     },
     complaints: {
       root: "/admin/complaints",
+      bulk: "/admin/complaints/bulk",
       byId: (complaintId) => `/admin/complaints/${complaintId}`,
       assign: "/admin/complaints/assign",
       reassign: (complaintId) => `/admin/complaints/${complaintId}/reassign`,
@@ -47,6 +48,7 @@ export const endpoints = {
     },
     complaints: {
       root: "/client/complaints",
+      bulk: "/client/complaints/bulk",
       byId: (complaintId) => `/client/complaints/${complaintId}`,
     },
   },
@@ -59,6 +61,7 @@ export const endpoints = {
     },
     complaints: {
       root: "/technician/complaints",
+      bulk: "/technician/complaints/bulk",
       my: "/technician/complaints/my",
     },
     assignments: {
