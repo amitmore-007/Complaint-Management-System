@@ -27,7 +27,7 @@ import {
   revokeAttendanceToken,
 } from "../controllers/adminController.js";
 import { authenticateAdmin } from "../middleware/roleAuth.js";
-import { createBulkComplaints } from "../controllers/complaintController.js";
+import { createBulkComplaints, duplicateComplaint, updateComplaintAdmin } from "../controllers/complaintController.js";
 import {
   adminGetBillingRecord,
   adminListBillingRecords,
@@ -71,6 +71,8 @@ router.patch(
   authenticateAdmin,
   updateComplaintAutoAssignSetting,
 );
+router.post("/complaints/:id/duplicate", authenticateAdmin, duplicateComplaint);
+router.put("/complaints/:id", authenticateAdmin, upload.array("photos", 5), updateComplaintAdmin);
 router.get("/complaints/:id", authenticateAdmin, getComplaintById);
 router.post(
   "/complaints",

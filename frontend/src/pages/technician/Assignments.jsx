@@ -16,7 +16,11 @@ import {
   Eye,
   Camera,
   Share2,
+  Search,
+  ChevronDown,
 } from "lucide-react";
+import StoreDropdown from "../../components/common/StoreDropdown";
+import STORE_OPTIONS from "../../utils/storeOptions";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
@@ -60,6 +64,72 @@ const TechnicianAssignments = () => {
   const [showStartWorkConfirm, setShowStartWorkConfirm] = useState(false);
   const [pendingStartComplaint, setPendingStartComplaint] = useState(null);
   const [isStartingWork, setIsStartingWork] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [locationFilter, setLocationFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const storeOptions = useMemo(() => {
+    const map = new Map();
+    (Array.isArray(STORE_OPTIONS) ? STORE_OPTIONS : []).forEach((name) => {
+      const cleaned = String(name ?? "").trim();
+      if (!cleaned) return;
+      const key = cleaned.toLowerCase();
+      if (!map.has(key)) map.set(key, cleaned);
+    });
+    return Array.from(map.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  }, []);
+
+  const filteredAssignments = useMemo(() => {
+    let filtered = assignments;
+
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((c) => c.status === statusFilter);
+    }
+
+    if (priorityFilter !== "all") {
+      filtered = filtered.filter((c) => c.priority === priorityFilter);
+    }
+
+    if (locationFilter !== "all") {
+      const sel = String(locationFilter).trim().toLowerCase();
+      filtered = filtered.filter((c) =>
+        String(c?.store?.name ?? c?.location ?? "").trim().toLowerCase() === sel
+      );
+    }
+
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      filtered = filtered.filter(
+        (c) =>
+          c.title.toLowerCase().includes(q) ||
+          c.description.toLowerCase().includes(q) ||
+          String(c.store?.name ?? "").toLowerCase().includes(q) ||
+          c.location.toLowerCase().includes(q) ||
+          c.complaintId.toLowerCase().includes(q),
+      );
+    }
+
+    return filtered;
+  }, [assignments, statusFilter, priorityFilter, locationFilter, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredAssignments.length / itemsPerPage));
+
+  const paginatedAssignments = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredAssignments.slice(start, start + itemsPerPage);
+  }, [filteredAssignments, currentPage, itemsPerPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, priorityFilter, locationFilter]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
 
   useEffect(() => {
     if (!assignmentsQuery.isError) return;
@@ -257,7 +327,7 @@ const TechnicianAssignments = () => {
     const technician = complaint.assignedTechnician?.name;
     const statusLabel = complaint.status.replace("-", " ").toUpperCase();
     const lines = [
-      `*Complaint Update â€” CMS*`,
+      `*Complaint Update — CMS*`,
       ``,
       `*Issue:* ${complaint.title}`,
       `*Status:* ${statusLabel}`,
@@ -413,6 +483,84 @@ const TechnicianAssignments = () => {
           </p>
         </div>
 
+        {/* Filters */}
+        <div className={`p-4 sm:p-6 rounded-2xl shadow-lg border ${isDarkMode ? "bg-[#111] border-white/10" : "bg-white border-gray-200"}`}>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            {/* Search */}
+            <div className="md:col-span-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search assignments..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={`w-full pl-10 pr-4 py-2 border rounded-lg text-sm transition-all duration-200 ${
+                    isDarkMode
+                      ? "bg-white/10 border-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  }`}
+                />
+              </div>
+            </div>
+
+            {/* Status */}
+            <div>
+              <div className="relative">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className={`w-full pl-4 pr-10 py-2 border rounded-lg appearance-none cursor-pointer text-sm transition-all duration-200 ${
+                    isDarkMode
+                      ? "bg-[#1a1a1a] border-white/10 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  }`}
+                >
+                  <option value="all">All Status</option>
+                  <option value="assigned">Assigned</option>
+                  <option value="in-progress">In Progress</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Priority */}
+            <div>
+              <div className="relative">
+                <select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  className={`w-full pl-4 pr-10 py-2 border rounded-lg appearance-none cursor-pointer text-sm transition-all duration-200 ${
+                    isDarkMode
+                      ? "bg-[#1a1a1a] border-white/10 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  }`}
+                >
+                  <option value="all">All Priority</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Store */}
+            <div>
+              <StoreDropdown
+                isDarkMode={isDarkMode}
+                options={["All Stores", ...storeOptions]}
+                value={locationFilter === "all" ? "All Stores" : locationFilter}
+                onChange={(picked) => setLocationFilter(picked === "All Stores" ? "all" : picked)}
+                placeholder="All Stores"
+                compact
+                inputClassName="h-[38px] py-0 text-sm"
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Active Assignments List */}
         {assignments.length === 0 ? (
           <div className="text-center py-12 sm:py-16">
@@ -436,9 +584,15 @@ const TechnicianAssignments = () => {
               New assignments will appear here when they are assigned to you
             </p>
           </div>
+        ) : filteredAssignments.length === 0 ? (
+          <div className={`text-center py-10 rounded-2xl border ${isDarkMode ? "bg-[#111] border-white/10" : "bg-white border-gray-200"}`}>
+            <p className={`text-base font-medium ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+              No assignments match your filters
+            </p>
+          </div>
         ) : (
           <div className="space-y-4">
-            {assignments.map((complaint) => (
+            {paginatedAssignments.map((complaint) => (
               <motion.div
                 key={complaint._id}
                 className={`border rounded-xl p-4 sm:p-6 transition-all duration-300 hover:shadow-lg ${
@@ -534,7 +688,7 @@ const TechnicianAssignments = () => {
                               ? complaint.store.managers
                                   .map((m) => `${m.name} (${m.phoneNumber})`)
                                   .join(", ")
-                              : "â€”"}
+                              : "—"}
                           </span>
                         </div>
                       </div>
@@ -683,6 +837,34 @@ const TechnicianAssignments = () => {
                 </div>
               </motion.div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {filteredAssignments.length > itemsPerPage && (
+          <div className="flex items-center justify-between pt-2">
+            <p className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+              Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredAssignments.length)} of {filteredAssignments.length}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-lg transition-colors disabled:opacity-40 ${isDarkMode ? "hover:bg-white/10 text-gray-300" : "hover:bg-gray-100 text-gray-600"}`}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <span className={`text-sm font-medium ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-lg transition-colors disabled:opacity-40 ${isDarkMode ? "hover:bg-white/10 text-gray-300" : "hover:bg-gray-100 text-gray-600"}`}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         )}
 

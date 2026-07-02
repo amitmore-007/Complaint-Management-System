@@ -89,6 +89,20 @@ export const complaintService = {
       return data;
     },
 
+    update: async (complaintId, payload) => {
+      const { data } = await api.put(
+        endpoints.admin.complaints.update(complaintId),
+        payload,
+        payload instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
+      );
+      return data;
+    },
+
+    duplicate: async (complaintId) => {
+      const { data } = await api.post(endpoints.admin.complaints.duplicate(complaintId));
+      return data;
+    },
+
     getResolvedNotifyContacts: async () => {
       const { data } = await api.get(
         endpoints.admin.settings.resolvedNotifyContacts,
@@ -229,6 +243,20 @@ export const complaintService = {
 
     createBulk: async (complaints) => {
       const { data } = await api.post(endpoints.technician.complaints.bulk, { complaints });
+      return data;
+    },
+
+    update: async (complaintId, payload) => {
+      const { data } = await api.put(
+        endpoints.technician.complaints.update(complaintId),
+        payload,
+        payload instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
+      );
+      return data;
+    },
+
+    duplicate: async (complaintId) => {
+      const { data } = await api.post(endpoints.technician.complaints.duplicate(complaintId));
       return data;
     },
 

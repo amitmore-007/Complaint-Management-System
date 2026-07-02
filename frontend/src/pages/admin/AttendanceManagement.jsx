@@ -133,7 +133,7 @@ const AttendanceManagement = () => {
               </span>
             </div>
             <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-              {records.length} record{records.length !== 1 ? 's' : ''} Â· last refreshed {lastRefresh.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              {records.length} record{records.length !== 1 ? 's' : ''} · last refreshed {lastRefresh.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </p>
           </div>
 
@@ -211,7 +211,7 @@ const AttendanceManagement = () => {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
               <div className="animate-spin w-8 h-8 rounded-full border-2 border-blue-600 border-t-transparent" />
-              <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Loading attendanceâ€¦</p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>Loading attendance...</p>
             </div>
           ) : records.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">

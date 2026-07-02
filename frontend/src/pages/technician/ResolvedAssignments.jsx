@@ -52,7 +52,7 @@ const ResolvedAssignments = () => {
     const technician = complaint.assignedTechnician?.name;
     const statusLabel = complaint.status.replace("-", " ").toUpperCase();
     const lines = [
-      `*Complaint Update â€” CMS*`,
+      `*Complaint Update — CMS*`,
       ``,
       `*Issue:* ${complaint.title}`,
       `*Status:* ${statusLabel}`,
@@ -360,7 +360,7 @@ const ResolvedAssignments = () => {
                               ? complaint.store.managers
                                   .map((m) => `${m.name} (${m.phoneNumber})`)
                                   .join(", ")
-                              : "â€”"}
+                              : "—"}
                           </span>
                         </div>
                       </div>

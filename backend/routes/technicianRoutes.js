@@ -13,6 +13,8 @@ import {
   updateComplaintStatus,
   getResolvedComplaints,
   createBulkComplaints,
+  duplicateComplaint,
+  updateComplaintTechnician,
 } from "../controllers/complaintController.js";
 import {
   technicianCreateBillingRecord,
@@ -56,6 +58,8 @@ router.get("/auth/me", authenticateTechnician, getCurrentTechnician);
 
 // Technician complaint creation routes
 router.post("/complaints/bulk", authenticateTechnician, createBulkComplaints);
+router.post("/complaints/:id/duplicate", authenticateTechnician, duplicateComplaint);
+router.put("/complaints/:id", authenticateTechnician, upload.array("photos", 5), updateComplaintTechnician);
 router.post(
   "/complaints",
   authenticateTechnician,

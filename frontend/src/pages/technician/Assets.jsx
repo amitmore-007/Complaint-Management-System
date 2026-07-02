@@ -418,7 +418,7 @@ const TechnicianAssets = () => {
                             isDarkMode ? "text-gray-500" : "text-gray-400"
                           }
                         >
-                          â€”
+                          —
                         </p>
                       )}
                     </div>
@@ -708,7 +708,7 @@ const TechnicianAssets = () => {
                               ).toLocaleDateString()}
                             </span>
                           </div>
-                          <span className="hidden sm:inline">â€¢</span>
+                          <span className="hidden sm:inline">·</span>
                           <span>
                             {new Date(
                               record.submissionDate

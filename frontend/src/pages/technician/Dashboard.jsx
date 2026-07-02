@@ -782,7 +782,7 @@ const TechnicianDashboard = () => {
                                 ? complaint.store.managers
                                     .map((m) => `${m.name} (${m.phoneNumber})`)
                                     .join(", ")
-                                : "â€”"}
+                                : "—"}
                             </span>
                           </div>
                         </div>
@@ -1111,8 +1111,7 @@ const TechnicianDashboard = () => {
                     isDarkMode ? "text-gray-400" : "text-gray-600"
                   } text-sm`}
                 >
-                  Showing 5 of {pendingBillingComplaints.length}. Use â€œView all
-                  resolvedâ€ to see everything.
+                  Showing 5 of {pendingBillingComplaints.length}. Use "View all resolved" to see everything.
                 </div>
               )}
             </div>
@@ -1349,7 +1348,7 @@ const TechnicianDashboard = () => {
                             isDarkMode ? "text-gray-500" : "text-gray-500"
                           }`}
                         >
-                          MP4, MOV, WebM â€” up to 100 MB each, max 2 videos
+                          MP4, MOV, WebM — up to 100 MB each, max 2 videos
                         </p>
                       </label>
                     </div>

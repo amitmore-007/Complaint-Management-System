@@ -15,6 +15,8 @@ export const endpoints = {
       root: "/admin/complaints",
       bulk: "/admin/complaints/bulk",
       byId: (complaintId) => `/admin/complaints/${complaintId}`,
+      update: (complaintId) => `/admin/complaints/${complaintId}`,
+      duplicate: (complaintId) => `/admin/complaints/${complaintId}/duplicate`,
       assign: "/admin/complaints/assign",
       reassign: (complaintId) => `/admin/complaints/${complaintId}/reassign`,
       autoAssign: "/admin/complaints/auto-assign",
@@ -62,6 +64,8 @@ export const endpoints = {
     complaints: {
       root: "/technician/complaints",
       bulk: "/technician/complaints/bulk",
+      duplicate: (complaintId) => `/technician/complaints/${complaintId}/duplicate`,
+      update: (complaintId) => `/technician/complaints/${complaintId}`,
       my: "/technician/complaints/my",
     },
     assignments: {

@@ -19,10 +19,10 @@ const formatSecondsShort = (totalSeconds = 0) => {
 };
 
 const formatTime = (date) =>
-  date ? new Date(date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'â€”';
+  date ? new Date(date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '—';
 
 const formatDate = (dateStr) => {
-  if (!dateStr) return 'â€”';
+  if (!dateStr) return '—';
   const [y, m, d] = dateStr.split('-');
   return new Date(y, m - 1, d).toLocaleDateString('en-IN', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',

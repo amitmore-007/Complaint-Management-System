@@ -302,6 +302,156 @@ export const deleteComplaint = async (req, res) => {
   }
 };
 
+export const updateComplaintAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, location, priority, store, removedPhotos } = req.body;
+
+    const complaint = await Complaint.findById(id);
+    if (!complaint) {
+      return res.status(404).json({ success: false, message: "Complaint not found" });
+    }
+
+    if (title) complaint.title = title;
+    if (description) complaint.description = description;
+    if (location) complaint.location = location;
+    if (priority) complaint.priority = priority;
+    if (store !== undefined) complaint.store = store || null;
+
+    if (removedPhotos && removedPhotos.length > 0) {
+      const ids = Array.isArray(removedPhotos) ? removedPhotos : [removedPhotos];
+      for (const publicId of ids) {
+        try { await deleteFromCloudinary(publicId); } catch (e) { console.error(e); }
+      }
+      complaint.photos = complaint.photos.filter((p) => !ids.includes(p.publicId));
+    }
+
+    if (req.files && req.files.length > 0) {
+      if (complaint.photos.length + req.files.length > 5) {
+        return res.status(400).json({ success: false, message: "Maximum 5 photos allowed" });
+      }
+      const uploaded = await Promise.all(req.files.map((f) => uploadToCloudinary(f)));
+      complaint.photos.push(...uploaded);
+    }
+
+    await complaint.save();
+    await complaint.populate("assignedTechnician", "name phoneNumber");
+    await complaint.populate("store", "name managers");
+
+    res.status(200).json({ success: true, message: "Complaint updated successfully", complaint });
+  } catch (error) {
+    console.error("Admin update complaint error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const updateComplaintTechnician = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id: userId } = req.user;
+    const { title, description, location, priority, store, removedPhotos } = req.body;
+
+    const complaint = await Complaint.findOne({ _id: id, createdByTechnician: userId });
+    if (!complaint) {
+      return res.status(404).json({ success: false, message: "Complaint not found or unauthorized" });
+    }
+
+    if (complaint.status !== "pending") {
+      return res.status(400).json({ success: false, message: "Cannot update complaint after it has been assigned" });
+    }
+
+    if (title) complaint.title = title;
+    if (description) complaint.description = description;
+    if (location) complaint.location = location;
+    if (priority) complaint.priority = priority;
+    if (store !== undefined) complaint.store = store || null;
+
+    if (removedPhotos && removedPhotos.length > 0) {
+      const ids = Array.isArray(removedPhotos) ? removedPhotos : [removedPhotos];
+      for (const publicId of ids) {
+        try { await deleteFromCloudinary(publicId); } catch (e) { console.error(e); }
+      }
+      complaint.photos = complaint.photos.filter((p) => !ids.includes(p.publicId));
+    }
+
+    if (req.files && req.files.length > 0) {
+      if (complaint.photos.length + req.files.length > 5) {
+        return res.status(400).json({ success: false, message: "Maximum 5 photos allowed" });
+      }
+      const uploaded = await Promise.all(req.files.map((f) => uploadToCloudinary(f)));
+      complaint.photos.push(...uploaded);
+    }
+
+    await complaint.save();
+
+    res.status(200).json({ success: true, message: "Complaint updated successfully", complaint });
+  } catch (error) {
+    console.error("Technician update complaint error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const duplicateComplaint = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id: userId, role } = req.user;
+
+    // Technicians can only duplicate complaints they created
+    const filter = { _id: id };
+    if (role === "technician") {
+      filter.createdByTechnician = userId;
+    }
+
+    const source = await Complaint.findOne(filter);
+    if (!source) {
+      return res.status(404).json({
+        success: false,
+        message: "Complaint not found",
+      });
+    }
+
+    const complaintId = await generateNextComplaintId({ storeName: source.location });
+
+    const creatorFields =
+      role === "admin"
+        ? { createdByAdmin: userId, creatorType: "admin" }
+        : { createdByTechnician: userId, creatorType: "technician" };
+
+    const duplicate = new Complaint({
+      complaintId,
+      title: source.title,
+      description: source.description,
+      location: source.location,
+      store: source.store,
+      priority: source.priority,
+      ...creatorFields,
+    });
+
+    await duplicate.save();
+
+    const shouldAutoAssign = await getComplaintAutoAssignEnabled();
+    if (shouldAutoAssign) {
+      const assignOpts =
+        role === "admin"
+          ? { complaint: duplicate, assignedBy: userId }
+          : { complaint: duplicate };
+      await autoAssignComplaintToDefaultTechnician(assignOpts);
+    }
+
+    await duplicate.populate("assignedTechnician", "name phoneNumber");
+    await duplicate.populate("store", "name managers");
+
+    res.status(201).json({
+      success: true,
+      message: "Complaint duplicated successfully",
+      complaint: duplicate,
+    });
+  } catch (error) {
+    console.error("Duplicate complaint error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 export const createBulkComplaints = async (req, res) => {
   try {
     const { id: userId, role } = req.user;

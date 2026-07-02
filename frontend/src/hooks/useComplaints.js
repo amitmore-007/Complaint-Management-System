@@ -174,6 +174,55 @@ export const useCreateTechnicianBulkComplaints = () => {
   });
 };
 
+export const useUpdateAdminComplaint = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ complaintId, payload }) => complaintService.admin.update(complaintId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
+    },
+  });
+};
+
+export const useUpdateTechnicianComplaint = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ complaintId, payload }) => complaintService.technician.update(complaintId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: complaintKeys.technicianMyComplaints() });
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
+    },
+  });
+};
+
+export const useAdminDuplicateComplaint = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (complaintId) => complaintService.admin.duplicate(complaintId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
+    },
+  });
+};
+
+export const useTechnicianDuplicateComplaint = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (complaintId) => complaintService.technician.duplicate(complaintId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: complaintKeys.technicianMyComplaints() });
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
+    },
+  });
+};
+
 export const useCreateAdminComplaint = () => {
   const queryClient = useQueryClient();
 

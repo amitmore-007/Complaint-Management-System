@@ -91,7 +91,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                       isDarkMode ? "text-gray-400" : "text-gray-600"
                     }`}
                   >
-                    {record.complaint?.complaintId} â€¢{" "}
+                    {record.complaint?.complaintId} ·{" "}
                     {record.complaint?.location}
                   </p>
                 </div>
@@ -195,7 +195,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                       isDarkMode ? "text-gray-400" : "text-gray-600"
                     } text-sm`}
                   >
-                    {detailsModal.record.complaint?.complaintId} â€¢{" "}
+                    {detailsModal.record.complaint?.complaintId} ·{" "}
                     {detailsModal.record.complaint?.title}
                   </p>
                 </div>
@@ -292,7 +292,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                                 isDarkMode ? "text-gray-400" : "text-gray-600"
                               } text-sm`}
                             >
-                              Qty: {m.quantity} â€¢ Price:{" "}
+                              Qty: {m.quantity} · Price:{" "}
                               {formatMoneyINR(m.price)}
                             </p>
                           </div>
