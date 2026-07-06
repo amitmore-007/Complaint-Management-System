@@ -198,6 +198,18 @@ export const useUpdateTechnicianComplaint = () => {
   });
 };
 
+export const useAdminDeleteComplaint = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (complaintId) => complaintService.admin.remove(complaintId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
+      queryClient.invalidateQueries({ queryKey: statsKeys.all });
+    },
+  });
+};
+
 export const useAdminDuplicateComplaint = () => {
   const queryClient = useQueryClient();
   return useMutation({

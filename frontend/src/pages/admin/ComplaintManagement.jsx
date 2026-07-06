@@ -24,6 +24,7 @@ import {
   Upload,
   Plus,
   MoreHorizontal,
+  Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
@@ -36,6 +37,7 @@ import {
   useAssignComplaint,
   useReassignComplaint,
   useAdminDuplicateComplaint,
+  useAdminDeleteComplaint,
   useUpdateAdminComplaint,
 } from "../../hooks/useComplaints";
 import { useAdminTechnicians } from "../../hooks/useAdmin";
@@ -69,8 +71,10 @@ const ComplaintManagement = () => {
   const assignComplaintMutation = useAssignComplaint();
   const reassignComplaintMutation = useReassignComplaint();
   const duplicateMutation = useAdminDuplicateComplaint();
+  const deleteMutation = useAdminDeleteComplaint();
   const updateMutation = useUpdateAdminComplaint();
   const [editComplaint, setEditComplaint] = useState(null);
+  const [deleteComplaint, setDeleteComplaint] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
 
   useEffect(() => {
@@ -86,6 +90,19 @@ const ComplaintManagement = () => {
       },
       onError: (err) => {
         toast.error(err?.response?.data?.message ?? "Failed to duplicate complaint");
+      },
+    });
+  };
+
+  const handleDelete = () => {
+    if (!deleteComplaint) return;
+    deleteMutation.mutate(deleteComplaint._id, {
+      onSuccess: () => {
+        toast.success("Complaint deleted");
+        setDeleteComplaint(null);
+      },
+      onError: (err) => {
+        toast.error(err?.response?.data?.message ?? "Failed to delete complaint");
       },
     });
   };
@@ -781,6 +798,13 @@ const ComplaintManagement = () => {
                           >
                             <Copy className="h-4 w-4 text-orange-500" />
                             Duplicate
+                          </button>
+                          <button
+                            onClick={() => { setDeleteComplaint(complaint); setOpenMenuId(null); }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${isDarkMode ? "text-red-400 hover:bg-red-500/10" : "text-red-600 hover:bg-red-50"}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
                           </button>
                         </div>
                       )}
@@ -1598,6 +1622,63 @@ const ComplaintManagement = () => {
             />
           )}
         </AnimatePresence>
+
+        {/* Delete Confirmation Modal */}
+        <AnimatePresence>
+          {deleteComplaint && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+              style={{ margin: 0, top: 0, left: 0, right: 0, bottom: 0 }}
+              onClick={() => setDeleteComplaint(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className={`w-full max-w-md mx-4 rounded-2xl shadow-2xl p-6 ${isDarkMode ? "bg-[#111]" : "bg-white"}`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center shrink-0">
+                    <Trash2 className="h-5 w-5 text-red-500" />
+                  </div>
+                  <div>
+                    <h2 className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-gray-900"}`}>Delete Complaint</h2>
+                    <p className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>{deleteComplaint.complaintId}</p>
+                  </div>
+                </div>
+                <p className={`text-sm mb-6 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+                  Are you sure you want to delete <span className="font-medium">"{deleteComplaint.title}"</span>? This will permanently remove the complaint and all associated photos. This action cannot be undone.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setDeleteComplaint(null)}
+                    className={`flex-1 py-2.5 px-4 border rounded-xl text-sm font-semibold transition-all duration-200 ${isDarkMode ? "border-white/10 text-gray-300 hover:bg-white/10" : "border-gray-300 text-gray-700 hover:bg-gray-50"}`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleteMutation.isPending}
+                    className="flex-1 bg-red-600 text-white py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  >
+                    {deleteMutation.isPending ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </>
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </DashboardLayout>
   );
@@ -1609,7 +1690,6 @@ const EditComplaintModal = ({ complaint, isDarkMode, updateMutation, onClose }) 
     description: complaint.description || "",
     location: complaint.location || "",
     priority: complaint.priority || "medium",
-    store: complaint.store?._id || complaint.store || "",
   });
   const [existingPhotos, setExistingPhotos] = useState(complaint.photos || []);
   const [newPhotos, setNewPhotos] = useState([]);
@@ -1653,7 +1733,6 @@ const EditComplaintModal = ({ complaint, isDarkMode, updateMutation, onClose }) 
       removedPhotoIds.forEach((id) => payload.append("removedPhotos", id));
     } else {
       payload = { ...formData };
-      if (!payload.store) delete payload.store;
     }
     updateMutation.mutate(
       { complaintId: complaint._id, payload },
@@ -1712,18 +1791,13 @@ const EditComplaintModal = ({ complaint, isDarkMode, updateMutation, onClose }) 
             <textarea name="description" value={formData.description} onChange={handleChange} required rows={4} className={`${inputCls} resize-none`} />
           </div>
 
-          {/* Location */}
+          {/* Store Name */}
           <div>
-            <label className={labelCls}>Location *</label>
-            <input type="text" name="location" value={formData.location} onChange={handleChange} required className={inputCls} />
-          </div>
-
-          {/* Store */}
-          <div>
-            <label className={labelCls}>Store</label>
+            <label className={labelCls}>Store Name *</label>
             <StoreDropdown
-              value={formData.store}
-              onChange={(val) => setFormData((prev) => ({ ...prev, store: val }))}
+              options={STORE_OPTIONS}
+              value={formData.location}
+              onChange={(val) => setFormData((prev) => ({ ...prev, location: val }))}
               isDarkMode={isDarkMode}
             />
           </div>

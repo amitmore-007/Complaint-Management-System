@@ -302,6 +302,35 @@ export const deleteComplaint = async (req, res) => {
   }
 };
 
+export const deleteComplaintAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const complaint = await Complaint.findById(id);
+    if (!complaint) {
+      return res.status(404).json({ success: false, message: "Complaint not found" });
+    }
+
+    // Clean up Cloudinary assets
+    for (const photo of complaint.photos || []) {
+      if (photo.publicId) await deleteFromCloudinary(photo.publicId).catch(() => {});
+    }
+    for (const photo of complaint.resolutionPhotos || []) {
+      if (photo.publicId) await deleteFromCloudinary(photo.publicId).catch(() => {});
+    }
+    for (const video of complaint.resolutionVideos || []) {
+      if (video.publicId) await deleteFromCloudinary(video.publicId).catch(() => {});
+    }
+
+    await Complaint.findByIdAndDelete(id);
+
+    res.status(200).json({ success: true, message: "Complaint deleted successfully" });
+  } catch (error) {
+    console.error("Admin delete complaint error:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 export const updateComplaintAdmin = async (req, res) => {
   try {
     const { id } = req.params;

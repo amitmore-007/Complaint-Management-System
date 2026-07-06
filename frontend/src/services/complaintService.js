@@ -103,6 +103,11 @@ export const complaintService = {
       return data;
     },
 
+    remove: async (complaintId) => {
+      const { data } = await api.delete(endpoints.admin.complaints.byId(complaintId));
+      return data;
+    },
+
     getResolvedNotifyContacts: async () => {
       const { data } = await api.get(
         endpoints.admin.settings.resolvedNotifyContacts,
