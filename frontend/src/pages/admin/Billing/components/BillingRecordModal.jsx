@@ -201,6 +201,17 @@ const BillingRecordModal = ({
                                   : "bg-white border-gray-200 text-gray-900"
                               }`}
                             />
+                            {record.materials?.[idx]?.gstType ? (
+                              <p
+                                className={`mt-1 text-xs ${
+                                  isDarkMode ? "text-gray-500" : "text-gray-500"
+                                }`}
+                              >
+                                {record.materials[idx].gstType === "gst"
+                                  ? `GST ${record.materials[idx].gstPercent}%`
+                                  : "Non-GST"}
+                              </p>
+                            ) : null}
                           </div>
 
                           <div className="col-span-4 flex items-center">
@@ -283,11 +294,16 @@ const BillingRecordModal = ({
               >
                 Total:{" "}
                 {formatMoney(
-                  (editState.materials ?? []).reduce(
-                    (sum, m) =>
-                      sum + Number(m.quantity || 0) * Number(m.price || 0),
-                    0
-                  )
+                  (editState.materials ?? []).reduce((sum, m, idx) => {
+                    const subtotal =
+                      Number(m.quantity || 0) * Number(m.price || 0);
+                    const original = record.materials?.[idx];
+                    const gstPercent =
+                      original?.gstType === "gst"
+                        ? Number(original.gstPercent) || 0
+                        : 0;
+                    return sum + subtotal + subtotal * (gstPercent / 100);
+                  }, 0)
                 )}
               </div>
 

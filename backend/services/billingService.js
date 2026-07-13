@@ -1,5 +1,6 @@
 import BillingRecord from "../models/BillingRecord.js";
 import Complaint from "../models/Complaint.js";
+import InventoryItem from "../models/InventoryItem.js";
 import { uploadToCloudinary } from "../config/cloudinary.js";
 
 const createHttpError = (statusCode, message) => {
@@ -53,6 +54,32 @@ const normalizeMaterialInput = (materials) => {
     .filter(
       (m) => m.name || m.quantity != null || m.price != null || m.billPhotoField
     );
+};
+
+const resolveMaterialAgainstCatalog = async (name) => {
+  const itemNameKey = String(name || "").trim().toLowerCase();
+  if (!itemNameKey) return null;
+
+  const catalogItem = await InventoryItem.findOne({ itemNameKey }).sort({
+    purchaseDate: -1,
+  });
+  if (!catalogItem) return null;
+
+  return { gstType: catalogItem.gstType, gstPercent: catalogItem.gstPercent };
+};
+
+const computeMaterialTotals = ({ quantity, price, gst }) => {
+  const subtotal = Number(quantity || 0) * Number(price || 0);
+  const gstPercent = gst?.gstType === "gst" ? Number(gst.gstPercent) || 0 : 0;
+  const gstAmount = gst?.gstType === "gst" ? subtotal * (gstPercent / 100) : 0;
+
+  return {
+    subtotal,
+    gstType: gst?.gstType,
+    gstPercent,
+    gstAmount,
+    totalAmount: subtotal + gstAmount,
+  };
 };
 
 const indexFilesByFieldName = (files) => {
@@ -126,10 +153,23 @@ export const billingService = {
 
         storedMaterials = await Promise.all(
           normalizedMaterials.map(async (m) => {
+            const catalogGst = await resolveMaterialAgainstCatalog(m.name);
+            if (!catalogGst) {
+              throw createHttpError(
+                400,
+                `"${m.name}" is not a valid inventory item`
+              );
+            }
+
             const stored = {
               name: m.name,
               quantity: m.quantity ?? 0,
               price: m.price ?? 0,
+              ...computeMaterialTotals({
+                quantity: m.quantity,
+                price: m.price,
+                gst: catalogGst,
+              }),
               billPhoto: undefined,
             };
 
@@ -259,12 +299,23 @@ export const billingService = {
           ? materials
           : parseMaterials(materials);
 
-        const normalized = normalizeMaterialInput(incomingMaterials).map(
-          (m) => ({
-            name: m.name,
-            quantity: m.quantity ?? 0,
-            price: m.price ?? 0,
-            billPhoto: undefined,
+        const normalized = await Promise.all(
+          normalizeMaterialInput(incomingMaterials).map(async (m) => {
+            // Legacy billing records may reference material names that
+            // predate the inventory catalog — fall back to plain totals
+            // (no GST) instead of hard-blocking the admin's save.
+            const catalogGst = await resolveMaterialAgainstCatalog(m.name);
+            return {
+              name: m.name,
+              quantity: m.quantity ?? 0,
+              price: m.price ?? 0,
+              ...computeMaterialTotals({
+                quantity: m.quantity,
+                price: m.price,
+                gst: catalogGst,
+              }),
+              billPhoto: undefined,
+            };
           })
         );
 

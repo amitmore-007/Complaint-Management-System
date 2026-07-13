@@ -29,6 +29,7 @@ import AdminAssets from "./pages/admin/Assets";
 import AdminCreateComplaint from "./pages/admin/CreateComplaint";
 import AdminReports from "./pages/admin/Reports";
 import AdminBilling from "./pages/admin/Billing";
+import AdminInventory from "./pages/admin/Inventory";
 import AdminSettings from "./pages/admin/AdminSettings";
 
 // Attendance Pages
@@ -306,6 +307,15 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
                   <AdminBilling />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/inventory"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminInventory />
                 </ProtectedRoute>
               }
             />

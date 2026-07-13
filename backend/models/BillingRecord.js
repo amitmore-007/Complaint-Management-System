@@ -27,6 +27,26 @@ const materialSchema = new mongoose.Schema(
       type: Number,
       min: 0,
     },
+    subtotal: {
+      type: Number,
+      min: 0,
+    },
+    gstType: {
+      type: String,
+      enum: ["gst", "non-gst"],
+    },
+    gstPercent: {
+      type: Number,
+      min: 0,
+    },
+    gstAmount: {
+      type: Number,
+      min: 0,
+    },
+    totalAmount: {
+      type: Number,
+      min: 0,
+    },
     billPhoto: billPhotoSchema,
   },
   { _id: false }

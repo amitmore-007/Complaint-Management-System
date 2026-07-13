@@ -37,6 +37,10 @@ export const endpoints = {
       root: "/admin/billing",
       byId: (id) => `/admin/billing/${id}`,
     },
+    inventory: {
+      root: "/admin/inventory",
+      byId: (id) => `/admin/inventory/${id}`,
+    },
     settings: {
       resolvedNotifyContacts: "/admin/settings/resolved-notify-contacts",
     },
@@ -77,6 +81,9 @@ export const endpoints = {
     billing: {
       root: "/technician/billing",
       byId: (id) => `/technician/billing/${id}`,
+    },
+    inventory: {
+      items: "/technician/inventory/items",
     },
   },
 

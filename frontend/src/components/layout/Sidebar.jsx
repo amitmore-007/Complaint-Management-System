@@ -17,6 +17,7 @@ import {
   Clock,
   CalendarCheck,
   Menu,
+  Boxes,
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import useAuthStore from "../../store/authStore";
@@ -60,6 +61,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           { icon: LayoutDashboard, label: "Dashboard", path: "/admin/dashboard" },
           { icon: BarChart3, label: "Reports", path: "/admin/reports" },
           { icon: Receipt, label: "Billing", path: "/admin/billing" },
+          { icon: Boxes, label: "Inventory Dashboard", path: "/admin/inventory" },
           { icon: Plus, label: "Create Complaint", path: "/admin/create-complaint" },
           { icon: FileText, label: "All Complaints", path: "/admin/complaints" },
           { icon: Users, label: "Manage Clients", path: "/admin/clients" },

@@ -33,6 +33,12 @@ import {
   adminListBillingRecords,
   adminUpdateBillingRecord,
 } from "../controllers/billingController.js";
+import {
+  adminCreateInventoryItem,
+  adminListInventoryItems,
+  adminUpdateInventoryItem,
+  adminDeleteInventoryItem,
+} from "../controllers/inventoryController.js";
 
 const router = express.Router();
 
@@ -122,5 +128,11 @@ router.patch(
 router.get("/billing", authenticateAdmin, adminListBillingRecords);
 router.get("/billing/:id", authenticateAdmin, adminGetBillingRecord);
 router.put("/billing/:id", authenticateAdmin, adminUpdateBillingRecord);
+
+// inventory
+router.get("/inventory", authenticateAdmin, adminListInventoryItems);
+router.post("/inventory", authenticateAdmin, adminCreateInventoryItem);
+router.put("/inventory/:id", authenticateAdmin, adminUpdateInventoryItem);
+router.delete("/inventory/:id", authenticateAdmin, adminDeleteInventoryItem);
 
 export default router;

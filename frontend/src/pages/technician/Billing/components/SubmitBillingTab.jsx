@@ -11,12 +11,13 @@ import {
 import toast from "react-hot-toast";
 import { useLocation } from "react-router-dom";
 
-import { makeRowId } from "../../../../utils/helpers";
+import { makeRowId, formatMoneyINR } from "../../../../utils/helpers";
 import {
   useAssignedComplaints,
   useResolvedComplaints,
 } from "../../../../hooks/useComplaints";
 import { useCreateBillingRecord } from "../../../../hooks/useBilling";
+import { useTechnicianInventoryItemNames } from "../../../../hooks/useInventory";
 
 const emptyMaterialRow = () => ({
   rowId: makeRowId(),
@@ -53,6 +54,8 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
   const assignmentsQuery = useAssignedComplaints();
   const resolvedQuery = useResolvedComplaints();
   const createBillingMutation = useCreateBillingRecord();
+  const inventoryItemsQuery = useTechnicianInventoryItemNames();
+  const inventoryItems = inventoryItemsQuery.data ?? [];
 
   const requestedComplaintId = useMemo(() => {
     const stateId =
@@ -478,7 +481,23 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                     </div>
 
                     <AnimatePresence initial={false}>
-                      {materialsUsed ? (
+                      {materialsUsed && inventoryItems.length === 0 ? (
+                        <motion.div
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 6 }}
+                          className={`p-4 rounded-2xl border text-sm ${
+                            isDarkMode
+                              ? "bg-[#111] border-white/10 text-gray-300"
+                              : "bg-gray-50 border-gray-200 text-gray-700"
+                          }`}
+                        >
+                          No inventory items available yet — contact admin to
+                          add items before billing materials.
+                        </motion.div>
+                      ) : null}
+
+                      {materialsUsed && inventoryItems.length > 0 ? (
                         <motion.div
                           initial={{ opacity: 0, y: 6 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -538,20 +557,36 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                                     }`}
                                   >
                                     <div className="col-span-4">
-                                      <input
+                                      <select
                                         value={m.name}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
+                                          const selected = inventoryItems.find(
+                                            (item) =>
+                                              item.itemName === e.target.value
+                                          );
                                           updateMaterial(cid, m.rowId, {
                                             name: e.target.value,
-                                          })
-                                        }
-                                        placeholder="Material name"
+                                            price:
+                                              selected?.latestUnitRate ??
+                                              m.price,
+                                          });
+                                        }}
                                         className={`w-full px-3 py-2 rounded-xl border text-sm ${
                                           isDarkMode
-                                            ? "bg-white/10 border-white/10 text-white placeholder:text-gray-600"
-                                            : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
+                                            ? "bg-white/10 border-white/10 text-white"
+                                            : "bg-white border-gray-200 text-gray-900"
                                         }`}
-                                      />
+                                      >
+                                        <option value="">Select item</option>
+                                        {inventoryItems.map((item) => (
+                                          <option
+                                            key={item.itemName}
+                                            value={item.itemName}
+                                          >
+                                            {item.itemName}
+                                          </option>
+                                        ))}
+                                      </select>
                                     </div>
 
                                     <div className="col-span-2">
@@ -588,6 +623,22 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                                             : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
                                         }`}
                                       />
+                                      {m.name ? (
+                                        <p
+                                          className={`mt-1 text-xs truncate ${
+                                            isDarkMode
+                                              ? "text-gray-500"
+                                              : "text-gray-500"
+                                          }`}
+                                        >
+                                          Catalog rate:{" "}
+                                          {formatMoneyINR(
+                                            inventoryItems.find(
+                                              (item) => item.itemName === m.name
+                                            )?.latestUnitRate
+                                          )}
+                                        </p>
+                                      ) : null}
                                     </div>
 
                                     <div className="col-span-3">

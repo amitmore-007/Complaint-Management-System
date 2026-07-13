@@ -7,7 +7,11 @@ const BillingRecordCard = ({ record, isDarkMode, onView }) => {
   const total = useMemo(
     () =>
       (record.materials ?? []).reduce(
-        (sum, m) => sum + Number(m.quantity || 0) * Number(m.price || 0),
+        (sum, m) =>
+          sum +
+          Number(
+            m.totalAmount ?? Number(m.quantity || 0) * Number(m.price || 0)
+          ),
         0
       ),
     [record.materials]

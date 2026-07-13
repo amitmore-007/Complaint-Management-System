@@ -20,6 +20,7 @@ import {
   technicianCreateBillingRecord,
   technicianListBillingRecords,
 } from "../controllers/billingController.js";
+import { listInventoryItemNames } from "../controllers/inventoryController.js";
 
 const router = express.Router();
 
@@ -92,5 +93,7 @@ router.post(
   upload.any(),
   technicianCreateBillingRecord
 );
+
+router.get("/inventory/items", authenticateTechnician, listInventoryItemNames);
 
 export default router;
