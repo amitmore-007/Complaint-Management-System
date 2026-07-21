@@ -9,8 +9,6 @@ export const technicianCreateBillingRecord = async (req, res) => {
       technicianId: req.user.id,
       complaintId: req.body.complaintId,
       isComplaintResolved: req.body.isComplaintResolved,
-      materialsUsed: req.body.materialsUsed,
-      materials: req.body.materials,
       files: req.files,
     });
 

@@ -113,8 +113,23 @@ const complaintSchema = new mongoose.Schema(
       trim: true,
     },
     materialsUsed: {
-      type: String,
-      trim: true,
+      type: Boolean,
+      default: false,
+    },
+    materials: {
+      type: [
+        new mongoose.Schema(
+          {
+            item: {
+              type: mongoose.Schema.Types.ObjectId,
+              ref: "InventoryItem",
+            },
+            quantity: { type: Number, min: 0 },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
     },
     resolvedAt: {
       type: Date,

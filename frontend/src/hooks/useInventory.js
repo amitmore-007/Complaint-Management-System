@@ -6,6 +6,7 @@ export const inventoryKeys = {
 
   adminRoot: () => [...inventoryKeys.all, "admin"],
   adminList: (params = {}) => [...inventoryKeys.adminRoot(), params],
+  adminStockBalance: () => [...inventoryKeys.adminRoot(), "stock-balance"],
 
   technicianRoot: () => [...inventoryKeys.all, "technician"],
   technicianItemNames: () => [...inventoryKeys.technicianRoot(), "item-names"],
@@ -60,6 +61,15 @@ export const useDeleteInventoryItem = () => {
         queryKey: inventoryKeys.technicianRoot(),
       });
     },
+  });
+};
+
+export const useAdminStockBalance = () => {
+  return useQuery({
+    queryKey: inventoryKeys.adminStockBalance(),
+    queryFn: () => inventoryService.admin.getStockBalance(),
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 };
 

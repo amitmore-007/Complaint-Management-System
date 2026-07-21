@@ -1069,6 +1069,38 @@ const AdminDashboard = () => {
                             </div>
                           )}
 
+                          {selectedComplaint.materialsUsed &&
+                            selectedComplaint.materials?.length > 0 && (
+                              <div className="mb-4">
+                                <h5
+                                  className={`font-medium mb-2 ${
+                                    isDarkMode
+                                      ? "text-green-200"
+                                      : "text-green-800"
+                                  }`}
+                                >
+                                  Materials Used
+                                </h5>
+                                <ul
+                                  className={`space-y-1 text-sm ${
+                                    isDarkMode
+                                      ? "text-green-100"
+                                      : "text-green-700"
+                                  }`}
+                                >
+                                  {selectedComplaint.materials.map((m, idx) => (
+                                    <li key={idx} className="flex items-center gap-2">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
+                                      <span>
+                                        {m.item?.itemName ?? "Unknown item"} · Qty:{" "}
+                                        {m.quantity}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
                           {selectedComplaint.resolvedAt && (
                             <div className="mb-4">
                               <p

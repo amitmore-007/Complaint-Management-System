@@ -40,6 +40,7 @@ export const endpoints = {
     inventory: {
       root: "/admin/inventory",
       byId: (id) => `/admin/inventory/${id}`,
+      stockBalance: "/admin/inventory/stock-balance",
     },
     settings: {
       resolvedNotifyContacts: "/admin/settings/resolved-notify-contacts",

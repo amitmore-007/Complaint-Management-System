@@ -38,6 +38,7 @@ import {
   adminListInventoryItems,
   adminUpdateInventoryItem,
   adminDeleteInventoryItem,
+  adminGetStockBalance,
 } from "../controllers/inventoryController.js";
 
 const router = express.Router();
@@ -131,6 +132,7 @@ router.put("/billing/:id", authenticateAdmin, adminUpdateBillingRecord);
 
 // inventory
 router.get("/inventory", authenticateAdmin, adminListInventoryItems);
+router.get("/inventory/stock-balance", authenticateAdmin, adminGetStockBalance);
 router.post("/inventory", authenticateAdmin, adminCreateInventoryItem);
 router.put("/inventory/:id", authenticateAdmin, adminUpdateInventoryItem);
 router.delete("/inventory/:id", authenticateAdmin, adminDeleteInventoryItem);

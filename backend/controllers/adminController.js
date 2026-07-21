@@ -812,7 +812,8 @@ export const getComplaintById = async (req, res) => {
       .populate("createdByAdmin", "name phoneNumber")
       .populate("assignedTechnician", "name phoneNumber")
       .populate("assignedBy", "name")
-      .populate("store", "name managers");
+      .populate("store", "name managers")
+      .populate("materials.item", "itemName");
 
     if (!complaint) {
       return res.status(404).json({

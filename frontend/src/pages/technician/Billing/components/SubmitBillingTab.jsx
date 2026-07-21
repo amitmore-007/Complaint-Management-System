@@ -1,32 +1,14 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  ChevronDown,
-  ClipboardList,
-  FileText,
-  Plus,
-  Trash2,
-  Upload,
-} from "lucide-react";
+import { ChevronDown, ClipboardList, FileText, Upload } from "lucide-react";
 import toast from "react-hot-toast";
 import { useLocation } from "react-router-dom";
 
-import { makeRowId, formatMoneyINR } from "../../../../utils/helpers";
 import {
   useAssignedComplaints,
   useResolvedComplaints,
 } from "../../../../hooks/useComplaints";
 import { useCreateBillingRecord } from "../../../../hooks/useBilling";
-import { useTechnicianInventoryItemNames } from "../../../../hooks/useInventory";
-
-const emptyMaterialRow = () => ({
-  rowId: makeRowId(),
-  name: "",
-  quantity: "",
-  price: "",
-  billFile: null,
-  billPhotoField: null,
-});
 
 const buildBillingComplaints = (assigned, resolved) => {
   const active = Array.isArray(assigned) ? assigned : [];
@@ -54,8 +36,6 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
   const assignmentsQuery = useAssignedComplaints();
   const resolvedQuery = useResolvedComplaints();
   const createBillingMutation = useCreateBillingRecord();
-  const inventoryItemsQuery = useTechnicianInventoryItemNames();
-  const inventoryItems = inventoryItemsQuery.data ?? [];
 
   const requestedComplaintId = useMemo(() => {
     const stateId =
@@ -96,8 +76,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
         ...prev,
         [complaintId]: {
           isComplaintResolved: false,
-          materialsUsed: false,
-          materials: [emptyMaterialRow()],
+          billFiles: {},
         },
       };
     });
@@ -130,7 +109,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
     }));
   };
 
-  const updateMaterial = (complaintId, rowId, patch) => {
+  const setBillFile = (complaintId, index, file) => {
     setFormByComplaintId((prev) => {
       const current = prev[complaintId];
       if (!current) return prev;
@@ -138,40 +117,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
         ...prev,
         [complaintId]: {
           ...current,
-          materials: (current.materials ?? []).map((m) =>
-            m.rowId === rowId ? { ...m, ...patch } : m
-          ),
-        },
-      };
-    });
-  };
-
-  const addMaterialRow = (complaintId) => {
-    ensureForm(complaintId);
-    setFormByComplaintId((prev) => {
-      const current = prev[complaintId];
-      const nextMaterials = [...(current?.materials ?? []), emptyMaterialRow()];
-      return {
-        ...prev,
-        [complaintId]: { ...current, materials: nextMaterials },
-      };
-    });
-  };
-
-  const removeMaterialRow = (complaintId, rowId) => {
-    setFormByComplaintId((prev) => {
-      const current = prev[complaintId];
-      if (!current) return prev;
-      const nextMaterials = (current.materials ?? []).filter(
-        (m) => m.rowId !== rowId
-      );
-      return {
-        ...prev,
-        [complaintId]: {
-          ...current,
-          materials: nextMaterials.length
-            ? nextMaterials
-            : [emptyMaterialRow()],
+          billFiles: { ...current.billFiles, [index]: file },
         },
       };
     });
@@ -183,52 +129,13 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
 
     ensureForm(complaintId);
     const form = formByComplaintId[complaintId];
-    const safeForm = form || {
-      isComplaintResolved: false,
-      materialsUsed: false,
-      materials: [],
-    };
+    const safeForm = form || { isComplaintResolved: false, billFiles: {} };
 
     if (createBillingMutation.isPending) return;
 
-    const materialsUsed = !!safeForm.materialsUsed;
-
-    const materials = (safeForm.materials ?? [])
-      .map((m) => {
-        const name = String(m.name || "").trim();
-        const quantity = m.quantity === "" ? null : Number(m.quantity);
-        const price = m.price === "" ? null : Number(m.price);
-
-        const hasFile = !!m.billFile;
-        const billPhotoField = hasFile
-          ? `bill_${complaintId}_${m.rowId}`
-          : null;
-
-        return {
-          name,
-          quantity: Number.isFinite(quantity) ? quantity : "",
-          price: Number.isFinite(price) ? price : "",
-          billPhotoField,
-          billFile: m.billFile,
-          rowId: m.rowId,
-        };
-      })
-      .filter(
-        (m) => m.name || m.quantity !== "" || m.price !== "" || m.billFile
-      );
-
-    if (materialsUsed && materials.length === 0) {
-      toast.error("Please add at least one material");
-      return;
-    }
-
-    if (materialsUsed) {
-      const invalid = materials.find((m) => !m.name);
-      if (invalid) {
-        toast.error("Material name is required");
-        return;
-      }
-    }
+    const materials = complaint.materialsUsed
+      ? complaint.materials ?? []
+      : [];
 
     const formData = new FormData();
     formData.append("complaintId", complaintId);
@@ -236,21 +143,13 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
       "isComplaintResolved",
       String(!!safeForm.isComplaintResolved)
     );
-    formData.append("materialsUsed", String(!!materialsUsed));
 
-    const materialsPayload = materials.map((m) => ({
-      name: m.name,
-      quantity: m.quantity === "" ? 0 : Number(m.quantity),
-      price: m.price === "" ? 0 : Number(m.price),
-      billPhotoField: m.billPhotoField,
-    }));
-    formData.append("materials", JSON.stringify(materialsPayload));
-
-    for (const m of materials) {
-      if (m.billPhotoField && m.billFile) {
-        formData.append(m.billPhotoField, m.billFile);
+    materials.forEach((_, index) => {
+      const file = safeForm.billFiles?.[index];
+      if (file) {
+        formData.append(`billPhoto_${index}`, file);
       }
-    }
+    });
 
     try {
       await createBillingMutation.mutateAsync(formData);
@@ -304,7 +203,9 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
 
         const form = formByComplaintId[cid];
         const resolved = !!form?.isComplaintResolved;
-        const materialsUsed = !!form?.materialsUsed;
+        const materials = complaint.materialsUsed
+          ? complaint.materials ?? []
+          : [];
 
         return (
           <div
@@ -382,324 +283,130 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                   }`}
                 >
                   <div className="p-5 space-y-5">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div
-                        className={`p-4 rounded-2xl border ${
-                          isDarkMode
-                            ? "bg-[#111] border-white/10"
-                            : "bg-gray-50 border-gray-200"
+                    <div
+                      className={`p-4 rounded-2xl border ${
+                        isDarkMode
+                          ? "bg-[#111] border-white/10"
+                          : "bg-gray-50 border-gray-200"
+                      }`}
+                    >
+                      <p
+                        className={`font-semibold mb-3 ${
+                          isDarkMode ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        <p
-                          className={`font-semibold mb-3 ${
-                            isDarkMode ? "text-white" : "text-gray-900"
+                        Is the complaint resolved?
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <label
+                          className={`flex items-center gap-2 text-sm font-medium ${
+                            isDarkMode ? "text-gray-300" : "text-gray-700"
                           }`}
                         >
-                          Is the complaint resolved?
-                        </p>
-                        <div className="flex items-center gap-3">
-                          <label
-                            className={`flex items-center gap-2 text-sm font-medium ${
-                              isDarkMode ? "text-gray-300" : "text-gray-700"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name={`resolved_${cid}`}
-                              checked={resolved === true}
-                              onChange={() =>
-                                updateForm(cid, { isComplaintResolved: true })
-                              }
-                            />
-                            Yes
-                          </label>
-                          <label
-                            className={`flex items-center gap-2 text-sm font-medium ${
-                              isDarkMode ? "text-gray-300" : "text-gray-700"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name={`resolved_${cid}`}
-                              checked={resolved === false}
-                              onChange={() =>
-                                updateForm(cid, { isComplaintResolved: false })
-                              }
-                            />
-                            No
-                          </label>
-                        </div>
-                      </div>
-
-                      <div
-                        className={`p-4 rounded-2xl border ${
-                          isDarkMode
-                            ? "bg-[#111] border-white/10"
-                            : "bg-gray-50 border-gray-200"
-                        }`}
-                      >
-                        <p
-                          className={`font-semibold mb-3 ${
-                            isDarkMode ? "text-white" : "text-gray-900"
+                          <input
+                            type="radio"
+                            name={`resolved_${cid}`}
+                            checked={resolved === true}
+                            onChange={() =>
+                              updateForm(cid, { isComplaintResolved: true })
+                            }
+                          />
+                          Yes
+                        </label>
+                        <label
+                          className={`flex items-center gap-2 text-sm font-medium ${
+                            isDarkMode ? "text-gray-300" : "text-gray-700"
                           }`}
                         >
-                          Was material used?
-                        </p>
-                        <div className="flex items-center gap-3">
-                          <label
-                            className={`flex items-center gap-2 text-sm font-medium ${
-                              isDarkMode ? "text-gray-300" : "text-gray-700"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name={`materials_${cid}`}
-                              checked={materialsUsed === true}
-                              onChange={() =>
-                                updateForm(cid, { materialsUsed: true })
-                              }
-                            />
-                            Yes
-                          </label>
-                          <label
-                            className={`flex items-center gap-2 text-sm font-medium ${
-                              isDarkMode ? "text-gray-300" : "text-gray-700"
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name={`materials_${cid}`}
-                              checked={materialsUsed === false}
-                              onChange={() =>
-                                updateForm(cid, { materialsUsed: false })
-                              }
-                            />
-                            No
-                          </label>
-                        </div>
+                          <input
+                            type="radio"
+                            name={`resolved_${cid}`}
+                            checked={resolved === false}
+                            onChange={() =>
+                              updateForm(cid, { isComplaintResolved: false })
+                            }
+                          />
+                          No
+                        </label>
                       </div>
                     </div>
 
-                    <AnimatePresence initial={false}>
-                      {materialsUsed && inventoryItems.length === 0 ? (
-                        <motion.div
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 6 }}
+                    <div className="space-y-3">
+                      <h4
+                        className={`font-bold ${
+                          isDarkMode ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        Materials Used
+                      </h4>
+
+                      {materials.length === 0 ? (
+                        <div
                           className={`p-4 rounded-2xl border text-sm ${
                             isDarkMode
                               ? "bg-[#111] border-white/10 text-gray-300"
                               : "bg-gray-50 border-gray-200 text-gray-700"
                           }`}
                         >
-                          No inventory items available yet — contact admin to
-                          add items before billing materials.
-                        </motion.div>
-                      ) : null}
-
-                      {materialsUsed && inventoryItems.length > 0 ? (
-                        <motion.div
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 6 }}
-                          className="space-y-3"
-                        >
-                          <div className="flex items-center justify-between">
-                            <h4
-                              className={`font-bold ${
-                                isDarkMode ? "text-white" : "text-gray-900"
-                              }`}
-                            >
-                              Materials Used
-                            </h4>
-                            <button
-                              onClick={() => addMaterialRow(cid)}
-                              className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold border transition-all ${
-                                isDarkMode
-                                  ? "bg-[#111] border-white/10 text-gray-200 hover:bg-white/5"
-                                  : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                              }`}
-                              type="button"
-                            >
-                              <Plus className="h-4 w-4" />
-                              Add material
-                            </button>
-                          </div>
-
-                          <div className="overflow-x-auto">
+                          No materials were recorded when this complaint was
+                          resolved.
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {materials.map((m, index) => (
                             <div
-                              className={`min-w-[820px] rounded-2xl border ${
+                              key={index}
+                              className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${
                                 isDarkMode
                                   ? "bg-[#111] border-white/10"
-                                  : "bg-gray-50 border-gray-200"
+                                  : "bg-white border-gray-200"
                               }`}
                             >
-                              <div
-                                className={`grid grid-cols-12 gap-3 px-4 py-3 text-xs font-bold uppercase ${
-                                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                              <div>
+                                <p
+                                  className={`font-semibold ${
+                                    isDarkMode ? "text-white" : "text-gray-900"
+                                  }`}
+                                >
+                                  {m.item?.itemName ?? "Unknown item"}
+                                </p>
+                                <p
+                                  className={`text-sm ${
+                                    isDarkMode
+                                      ? "text-gray-400"
+                                      : "text-gray-600"
+                                  }`}
+                                >
+                                  Qty: {m.quantity}
+                                </p>
+                              </div>
+
+                              <label
+                                className={`inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold cursor-pointer transition-all ${
+                                  isDarkMode
+                                    ? "bg-[#111] border-white/10 text-gray-200 hover:bg-white/5"
+                                    : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
                                 }`}
                               >
-                                <div className="col-span-4">Name</div>
-                                <div className="col-span-2">Quantity</div>
-                                <div className="col-span-2">Price</div>
-                                <div className="col-span-3">Upload Bill</div>
-                                <div className="col-span-1" />
-                              </div>
-
-                              <div className="space-y-2 px-4 pb-4">
-                                {(form?.materials ?? []).map((m) => (
-                                  <div
-                                    key={m.rowId}
-                                    className={`grid grid-cols-12 gap-3 p-3 rounded-2xl border ${
-                                      isDarkMode
-                                        ? "bg-[#111] border-white/10"
-                                        : "bg-white border-gray-200"
-                                    }`}
-                                  >
-                                    <div className="col-span-4">
-                                      <select
-                                        value={m.name}
-                                        onChange={(e) => {
-                                          const selected = inventoryItems.find(
-                                            (item) =>
-                                              item.itemName === e.target.value
-                                          );
-                                          updateMaterial(cid, m.rowId, {
-                                            name: e.target.value,
-                                            price:
-                                              selected?.latestUnitRate ??
-                                              m.price,
-                                          });
-                                        }}
-                                        className={`w-full px-3 py-2 rounded-xl border text-sm ${
-                                          isDarkMode
-                                            ? "bg-white/10 border-white/10 text-white"
-                                            : "bg-white border-gray-200 text-gray-900"
-                                        }`}
-                                      >
-                                        <option value="">Select item</option>
-                                        {inventoryItems.map((item) => (
-                                          <option
-                                            key={item.itemName}
-                                            value={item.itemName}
-                                          >
-                                            {item.itemName}
-                                          </option>
-                                        ))}
-                                      </select>
-                                    </div>
-
-                                    <div className="col-span-2">
-                                      <input
-                                        type="number"
-                                        value={m.quantity}
-                                        onChange={(e) =>
-                                          updateMaterial(cid, m.rowId, {
-                                            quantity: e.target.value,
-                                          })
-                                        }
-                                        placeholder="Qty"
-                                        className={`w-full px-3 py-2 rounded-xl border text-sm ${
-                                          isDarkMode
-                                            ? "bg-white/10 border-white/10 text-white placeholder:text-gray-600"
-                                            : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
-                                        }`}
-                                      />
-                                    </div>
-
-                                    <div className="col-span-2">
-                                      <input
-                                        type="number"
-                                        value={m.price}
-                                        onChange={(e) =>
-                                          updateMaterial(cid, m.rowId, {
-                                            price: e.target.value,
-                                          })
-                                        }
-                                        placeholder="Price"
-                                        className={`w-full px-3 py-2 rounded-xl border text-sm ${
-                                          isDarkMode
-                                            ? "bg-white/10 border-white/10 text-white placeholder:text-gray-600"
-                                            : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
-                                        }`}
-                                      />
-                                      {m.name ? (
-                                        <p
-                                          className={`mt-1 text-xs truncate ${
-                                            isDarkMode
-                                              ? "text-gray-500"
-                                              : "text-gray-500"
-                                          }`}
-                                        >
-                                          Catalog rate:{" "}
-                                          {formatMoneyINR(
-                                            inventoryItems.find(
-                                              (item) => item.itemName === m.name
-                                            )?.latestUnitRate
-                                          )}
-                                        </p>
-                                      ) : null}
-                                    </div>
-
-                                    <div className="col-span-3">
-                                      <label
-                                        className={`w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold cursor-pointer transition-all ${
-                                          isDarkMode
-                                            ? "bg-[#111] border-white/10 text-gray-200 hover:bg-white/5"
-                                            : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                                        }`}
-                                      >
-                                        <Upload className="h-4 w-4" />
-                                        {m.billFile ? "Change" : "Upload"}
-                                        <input
-                                          type="file"
-                                          accept="image/*"
-                                          className="hidden"
-                                          onChange={(e) => {
-                                            const file =
-                                              e.target.files?.[0] ?? null;
-                                            updateMaterial(cid, m.rowId, {
-                                              billFile: file,
-                                            });
-                                          }}
-                                        />
-                                      </label>
-                                      {m.billFile ? (
-                                        <p
-                                          className={`mt-1 text-xs truncate ${
-                                            isDarkMode
-                                              ? "text-gray-400"
-                                              : "text-gray-600"
-                                          }`}
-                                        >
-                                          {m.billFile.name}
-                                        </p>
-                                      ) : null}
-                                    </div>
-
-                                    <div className="col-span-1 flex items-center justify-end">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          removeMaterialRow(cid, m.rowId)
-                                        }
-                                        className={`p-2 rounded-xl border ${
-                                          isDarkMode
-                                            ? "border-white/10 text-red-300 hover:bg-white/5"
-                                            : "border-gray-200 text-red-600 hover:bg-red-50"
-                                        }`}
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
+                                <Upload className="h-4 w-4" />
+                                {form?.billFiles?.[index]
+                                  ? "Change bill"
+                                  : "Upload bill"}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0] ?? null;
+                                    setBillFile(cid, index, file);
+                                  }}
+                                />
+                              </label>
                             </div>
-                          </div>
-                        </motion.div>
-                      ) : null}
-                    </AnimatePresence>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
                     <div className="flex items-center justify-end">
                       <button
@@ -733,4 +440,3 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
 };
 
 export default SubmitBillingTab;
-

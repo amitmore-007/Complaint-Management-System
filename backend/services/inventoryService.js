@@ -1,4 +1,63 @@
 import InventoryItem from "../models/InventoryItem.js";
+import Complaint from "../models/Complaint.js";
+
+// Purchased qty (summed across every purchase entry for that item name) minus
+// used qty (summed across every complaint's recorded materials for that item
+// name) — computed fresh each call rather than stored, so it's always
+// consistent with the underlying purchase/complaint records.
+const computeStockBalances = async () => {
+  const purchased = await InventoryItem.aggregate([
+    { $sort: { purchaseDate: -1, createdAt: -1 } },
+    {
+      $group: {
+        _id: "$itemNameKey",
+        itemId: { $first: "$_id" },
+        itemName: { $first: "$itemName" },
+        gstType: { $first: "$gstType" },
+        gstPercent: { $first: "$gstPercent" },
+        latestUnitRate: { $first: "$unitRate" },
+        purchasedQty: { $sum: "$quantity" },
+      },
+    },
+    { $sort: { itemName: 1 } },
+  ]);
+
+  const usedRows = await Complaint.aggregate([
+    { $match: { materialsUsed: true, "materials.0": { $exists: true } } },
+    { $unwind: "$materials" },
+    {
+      $lookup: {
+        from: InventoryItem.collection.name,
+        localField: "materials.item",
+        foreignField: "_id",
+        as: "invItem",
+      },
+    },
+    { $unwind: "$invItem" },
+    {
+      $group: {
+        _id: "$invItem.itemNameKey",
+        usedQty: { $sum: "$materials.quantity" },
+      },
+    },
+  ]);
+
+  const usedByKey = new Map(usedRows.map((r) => [r._id, r.usedQty]));
+
+  return purchased.map((row) => {
+    const usedQty = usedByKey.get(row._id) ?? 0;
+    return {
+      itemId: row.itemId,
+      itemName: row.itemName,
+      gstType: row.gstType,
+      gstPercent: row.gstPercent,
+      latestUnitRate: row.latestUnitRate,
+      purchasedQty: row.purchasedQty,
+      usedQty,
+      remainingQty: row.purchasedQty - usedQty,
+    };
+  });
+};
 
 const createHttpError = (statusCode, message) => {
   const err = new Error(message);
@@ -177,29 +236,23 @@ export const inventoryService = {
       }
       return item;
     },
+
+    getStockBalance: async () => {
+      return computeStockBalances();
+    },
   },
 
   shared: {
     listItemNames: async () => {
-      const rows = await InventoryItem.aggregate([
-        { $sort: { purchaseDate: -1, createdAt: -1 } },
-        {
-          $group: {
-            _id: "$itemNameKey",
-            itemName: { $first: "$itemName" },
-            gstType: { $first: "$gstType" },
-            gstPercent: { $first: "$gstPercent" },
-            latestUnitRate: { $first: "$unitRate" },
-          },
-        },
-        { $sort: { itemName: 1 } },
-      ]);
+      const balances = await computeStockBalances();
 
-      return rows.map((row) => ({
+      return balances.map((row) => ({
+        itemId: row.itemId,
         itemName: row.itemName,
         gstType: row.gstType,
         gstPercent: row.gstPercent,
         latestUnitRate: row.latestUnitRate,
+        remainingQty: row.remainingQty,
       }));
     },
   },

@@ -97,17 +97,17 @@ export const billingService = {
       technicianId,
       complaintId,
       isComplaintResolved,
-      materialsUsed,
-      materials,
       files,
     }) => {
       if (!complaintId) {
         throw createHttpError(400, "complaintId is required");
       }
 
-      const complaint = await Complaint.findById(complaintId).select(
-        "assignedTechnician status title description location complaintId"
-      );
+      const complaint = await Complaint.findById(complaintId)
+        .select(
+          "assignedTechnician status title description location complaintId materialsUsed materials"
+        )
+        .populate("materials.item", "itemName unitRate gstType gstPercent");
 
       if (!complaint) {
         throw createHttpError(404, "Complaint not found");
@@ -138,52 +138,54 @@ export const billingService = {
       }
 
       const safeIsResolved = parseBoolean(isComplaintResolved, false);
-      const safeMaterialsUsed = parseBoolean(materialsUsed, false);
-
-      const rawMaterials = parseMaterials(materials);
-      const normalizedMaterials = normalizeMaterialInput(rawMaterials);
+      const safeMaterialsUsed = !!complaint.materialsUsed;
 
       const fileByField = indexFilesByFieldName(files);
 
       let storedMaterials = [];
       if (safeMaterialsUsed) {
-        if (normalizedMaterials.length === 0) {
-          throw createHttpError(400, "Please add at least one material");
+        const rows = complaint.materials || [];
+        if (rows.length === 0) {
+          throw createHttpError(
+            400,
+            "No materials were recorded when this complaint was resolved"
+          );
         }
 
         storedMaterials = await Promise.all(
-          normalizedMaterials.map(async (m) => {
-            const catalogGst = await resolveMaterialAgainstCatalog(m.name);
-            if (!catalogGst) {
+          rows.map(async (row, index) => {
+            const catalogItem = row.item;
+            if (!catalogItem) {
               throw createHttpError(
                 400,
-                `"${m.name}" is not a valid inventory item`
+                "One of the recorded materials is no longer available"
               );
             }
 
             const stored = {
-              name: m.name,
-              quantity: m.quantity ?? 0,
-              price: m.price ?? 0,
+              name: catalogItem.itemName,
+              quantity: row.quantity ?? 0,
+              price: catalogItem.unitRate ?? 0,
               ...computeMaterialTotals({
-                quantity: m.quantity,
-                price: m.price,
-                gst: catalogGst,
+                quantity: row.quantity,
+                price: catalogItem.unitRate,
+                gst: {
+                  gstType: catalogItem.gstType,
+                  gstPercent: catalogItem.gstPercent,
+                },
               }),
               billPhoto: undefined,
             };
 
-            if (m.billPhotoField) {
-              const file = fileByField.get(m.billPhotoField);
-              if (file) {
-                const uploaded = await uploadToCloudinary(file, "cms-billing");
-                stored.billPhoto = {
-                  url: uploaded.url,
-                  publicId: uploaded.publicId,
-                  originalName: uploaded.originalName,
-                  uploadedAt: new Date(),
-                };
-              }
+            const file = fileByField.get(`billPhoto_${index}`);
+            if (file) {
+              const uploaded = await uploadToCloudinary(file, "cms-billing");
+              stored.billPhoto = {
+                url: uploaded.url,
+                publicId: uploaded.publicId,
+                originalName: uploaded.originalName,
+                uploadedAt: new Date(),
+              };
             }
 
             return stored;

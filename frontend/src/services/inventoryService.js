@@ -31,6 +31,11 @@ export const inventoryService = {
       const { data } = await api.delete(endpoints.admin.inventory.byId(id));
       return data;
     },
+
+    getStockBalance: async () => {
+      const { data } = await api.get(endpoints.admin.inventory.stockBalance);
+      return data.balances ?? [];
+    },
   },
 
   technician: {

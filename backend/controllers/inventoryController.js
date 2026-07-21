@@ -114,3 +114,20 @@ export const listInventoryItemNames = async (req, res) => {
     });
   }
 };
+
+export const adminGetStockBalance = async (req, res) => {
+  try {
+    const balances = await inventoryService.admin.getStockBalance();
+
+    return res.status(200).json({
+      success: true,
+      balances,
+    });
+  } catch (error) {
+    console.error("Get stock balance error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};

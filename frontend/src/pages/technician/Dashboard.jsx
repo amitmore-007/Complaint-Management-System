@@ -31,7 +31,16 @@ import {
 } from "../../hooks/useComplaints";
 import { useResolvedComplaints } from "../../hooks/useComplaints";
 import { useTechnicianBillingRecords } from "../../hooks/useBilling";
+import { useTechnicianInventoryItemNames } from "../../hooks/useInventory";
+import { makeRowId } from "../../utils/helpers";
 import VideoPlayer from "../../components/player/VideoPlayer";
+import MaterialsUsedFields from "./components/MaterialsUsedFields";
+
+const emptyMaterialRow = () => ({
+  rowId: makeRowId(),
+  itemId: "",
+  quantity: "",
+});
 
 const TechnicianDashboard = () => {
   const { isDarkMode } = useTheme();
@@ -93,10 +102,13 @@ const TechnicianDashboard = () => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [resolutionData, setResolutionData] = useState({
     notes: "",
-    materialsUsed: "",
+    materialsUsed: false,
+    materials: [emptyMaterialRow()],
     photos: [],
     videos: [],
   });
+  const inventoryItemsQuery = useTechnicianInventoryItemNames();
+  const inventoryItems = inventoryItemsQuery.data ?? [];
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showStartWorkConfirm, setShowStartWorkConfirm] = useState(false);
   const [pendingStartComplaint, setPendingStartComplaint] = useState(null);
@@ -122,8 +134,12 @@ const TechnicianDashboard = () => {
         if (resolutionData.notes) {
           formData.append("resolutionNotes", resolutionData.notes);
         }
+        formData.append("materialsUsed", String(!!resolutionData.materialsUsed));
         if (resolutionData.materialsUsed) {
-          formData.append("materialsUsed", resolutionData.materialsUsed);
+          const materials = (resolutionData.materials ?? [])
+            .filter((m) => m.itemId && m.quantity !== "")
+            .map((m) => ({ item: m.itemId, quantity: Number(m.quantity) }));
+          formData.append("materials", JSON.stringify(materials));
         }
         if (resolutionData.photos && resolutionData.photos.length > 0) {
           resolutionData.photos.forEach((photo) => {
@@ -140,12 +156,10 @@ const TechnicianDashboard = () => {
       // Validate required fields for resolved status
       if (
         newStatus === "resolved" &&
-        (!resolutionData ||
-          !resolutionData.notes?.trim() ||
-          !resolutionData.materialsUsed?.trim())
+        (!resolutionData || !resolutionData.notes?.trim())
       ) {
         toast.error(
-          "Resolution notes and materials used are required when completing a complaint"
+          "Resolution notes are required when completing a complaint"
         );
         return;
       }
@@ -276,13 +290,56 @@ const TechnicianDashboard = () => {
   const openResolutionModal = (complaint) => {
     setSelectedComplaint(complaint);
     setShowResolutionModal(true);
-    setResolutionData({ notes: "", materialsUsed: "", photos: [], videos: [] });
+    setResolutionData({
+      notes: "",
+      materialsUsed: false,
+      materials: [emptyMaterialRow()],
+      photos: [],
+      videos: [],
+    });
   };
 
   const closeResolutionModal = () => {
     setShowResolutionModal(false);
     setSelectedComplaint(null);
-    setResolutionData({ notes: "", materialsUsed: "", photos: [], videos: [] });
+    setResolutionData({
+      notes: "",
+      materialsUsed: false,
+      materials: [emptyMaterialRow()],
+      photos: [],
+      videos: [],
+    });
+  };
+
+  const toggleResolutionMaterialsUsed = (used) =>
+    setResolutionData((prev) => ({ ...prev, materialsUsed: used }));
+
+  const addResolutionMaterialRow = () =>
+    setResolutionData((prev) => ({
+      ...prev,
+      materials: [...(prev.materials ?? []), emptyMaterialRow()],
+    }));
+
+  const removeResolutionMaterialRow = (rowId) =>
+    setResolutionData((prev) => {
+      const next = (prev.materials ?? []).filter((m) => m.rowId !== rowId);
+      return { ...prev, materials: next.length ? next : [emptyMaterialRow()] };
+    });
+
+  const updateResolutionMaterialRow = (rowId, patch) =>
+    setResolutionData((prev) => ({
+      ...prev,
+      materials: (prev.materials ?? []).map((m) =>
+        m.rowId === rowId ? { ...m, ...patch } : m
+      ),
+    }));
+
+  const isResolutionSubmittable = () => {
+    if (!resolutionData.notes.trim()) return false;
+    if (!resolutionData.materialsUsed) return true;
+    return (resolutionData.materials ?? []).some(
+      (m) => m.itemId && Number(m.quantity) > 0
+    );
   };
 
   const handleResolutionSubmit = async () => {
@@ -294,8 +351,11 @@ const TechnicianDashboard = () => {
       return;
     }
 
-    if (!resolutionData.materialsUsed?.trim()) {
-      toast.error("Materials used is required");
+    if (
+      resolutionData.materialsUsed &&
+      !isResolutionSubmittable()
+    ) {
+      toast.error("Please select at least one material with a quantity");
       return;
     }
 
@@ -1201,33 +1261,17 @@ const TechnicianDashboard = () => {
                     />
                   </div>
 
-                  {/* Materials Used Input */}
-                  <div>
-                    <label
-                      className={`block text-sm font-medium mb-2 ${
-                        isDarkMode ? "text-gray-300" : "text-gray-700"
-                      }`}
-                    >
-                      Materials Used *
-                    </label>
-                    <textarea
-                      value={resolutionData.materialsUsed}
-                      onChange={(e) =>
-                        setResolutionData((prev) => ({
-                          ...prev,
-                          materialsUsed: e.target.value,
-                        }))
-                      }
-                      rows={3}
-                      placeholder="List all materials used to resolve this complaint (e.g., LED bulbs, wires, switches, etc.)"
-                      className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 resize-none ${
-                        isDarkMode
-                          ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      }`}
-                      required
-                    />
-                  </div>
+                  {/* Materials Used */}
+                  <MaterialsUsedFields
+                    isDarkMode={isDarkMode}
+                    materialsUsed={resolutionData.materialsUsed}
+                    materials={resolutionData.materials ?? []}
+                    inventoryItems={inventoryItems}
+                    onToggleUsed={toggleResolutionMaterialsUsed}
+                    onAddRow={addResolutionMaterialRow}
+                    onRemoveRow={removeResolutionMaterialRow}
+                    onUpdateRow={updateResolutionMaterialRow}
+                  />
 
                   {/* Resolution Photos */}
                   <div>
@@ -1389,11 +1433,7 @@ const TechnicianDashboard = () => {
 
                     <button
                       onClick={handleResolutionSubmit}
-                      disabled={
-                        !resolutionData?.notes?.trim() ||
-                        !resolutionData?.materialsUsed?.trim() ||
-                        isSubmitting
-                      }
+                      disabled={!isResolutionSubmittable() || isSubmitting}
                       className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                       {isSubmitting ? (

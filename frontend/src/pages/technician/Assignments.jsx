@@ -29,6 +29,15 @@ import {
   useAssignedComplaints,
   useUpdateComplaintStatus,
 } from "../../hooks/useComplaints";
+import { useTechnicianInventoryItemNames } from "../../hooks/useInventory";
+import { makeRowId } from "../../utils/helpers";
+import MaterialsUsedFields from "./components/MaterialsUsedFields";
+
+const emptyMaterialRow = () => ({
+  rowId: makeRowId(),
+  itemId: "",
+  quantity: "",
+});
 
 const TechnicianAssignments = () => {
   const { isDarkMode } = useTheme();
@@ -37,6 +46,8 @@ const TechnicianAssignments = () => {
 
   const assignmentsQuery = useAssignedComplaints();
   const updateStatusMutation = useUpdateComplaintStatus();
+  const inventoryItemsQuery = useTechnicianInventoryItemNames();
+  const inventoryItems = inventoryItemsQuery.data ?? [];
 
   const isLoading = assignmentsQuery.isLoading;
 
@@ -57,7 +68,8 @@ const TechnicianAssignments = () => {
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [resolutionData, setResolutionData] = useState({
     notes: "",
-    materialsUsed: "",
+    materialsUsed: false,
+    materials: [emptyMaterialRow()],
     photos: [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -162,8 +174,12 @@ const TechnicianAssignments = () => {
         if (resolutionData.notes) {
           formData.append("resolutionNotes", resolutionData.notes);
         }
+        formData.append("materialsUsed", String(!!resolutionData.materialsUsed));
         if (resolutionData.materialsUsed) {
-          formData.append("materialsUsed", resolutionData.materialsUsed);
+          const materials = (resolutionData.materials ?? [])
+            .filter((m) => m.itemId && m.quantity !== "")
+            .map((m) => ({ item: m.itemId, quantity: Number(m.quantity) }));
+          formData.append("materials", JSON.stringify(materials));
         }
         if (resolutionData.photos && resolutionData.photos.length > 0) {
           resolutionData.photos.forEach((photo, index) => {
@@ -253,8 +269,36 @@ const TechnicianAssignments = () => {
   const openResolutionModal = (complaint) => {
     setSelectedComplaint(complaint);
     setShowResolutionModal(true);
-    setResolutionData({ notes: "", materialsUsed: "", photos: [] });
+    setResolutionData({
+      notes: "",
+      materialsUsed: false,
+      materials: [emptyMaterialRow()],
+      photos: [],
+    });
   };
+
+  const toggleResolutionMaterialsUsed = (used) =>
+    setResolutionData((prev) => ({ ...prev, materialsUsed: used }));
+
+  const addResolutionMaterialRow = () =>
+    setResolutionData((prev) => ({
+      ...prev,
+      materials: [...(prev.materials ?? []), emptyMaterialRow()],
+    }));
+
+  const removeResolutionMaterialRow = (rowId) =>
+    setResolutionData((prev) => {
+      const next = (prev.materials ?? []).filter((m) => m.rowId !== rowId);
+      return { ...prev, materials: next.length ? next : [emptyMaterialRow()] };
+    });
+
+  const updateResolutionMaterialRow = (rowId, patch) =>
+    setResolutionData((prev) => ({
+      ...prev,
+      materials: (prev.materials ?? []).map((m) =>
+        m.rowId === rowId ? { ...m, ...patch } : m
+      ),
+    }));
 
   const openStartWorkConfirm = (complaint) => {
     setPendingStartComplaint(complaint);
@@ -282,11 +326,32 @@ const TechnicianAssignments = () => {
   const closeResolutionModal = () => {
     setShowResolutionModal(false);
     setSelectedComplaint(null);
-    setResolutionData({ notes: "", materialsUsed: "", photos: [] });
+    setResolutionData({
+      notes: "",
+      materialsUsed: false,
+      materials: [emptyMaterialRow()],
+      photos: [],
+    });
+  };
+
+  const isResolutionSubmittable = () => {
+    if (!resolutionData.notes.trim()) return false;
+    if (!resolutionData.materialsUsed) return true;
+    return (resolutionData.materials ?? []).some(
+      (m) => m.itemId && Number(m.quantity) > 0
+    );
   };
 
   const handleResolutionSubmit = async () => {
     if (!selectedComplaint) return;
+    if (!isResolutionSubmittable()) {
+      toast.error(
+        resolutionData.materialsUsed
+          ? "Please select at least one material with a quantity"
+          : "Resolution notes are required"
+      );
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -951,32 +1016,17 @@ const TechnicianAssignments = () => {
                     />
                   </div>
 
-                  {/* Materials Used Input */}
-                  <div>
-                    <label
-                      className={`block text-sm font-medium mb-2 ${
-                        isDarkMode ? "text-gray-300" : "text-gray-700"
-                      }`}
-                    >
-                      Materials Used *
-                    </label>
-                    <textarea
-                      value={resolutionData.materialsUsed}
-                      onChange={(e) =>
-                        setResolutionData((prev) => ({
-                          ...prev,
-                          materialsUsed: e.target.value,
-                        }))
-                      }
-                      rows={3}
-                      placeholder="List all materials used to resolve this complaint (e.g., LED bulbs, wires, switches, etc.)"
-                      className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 resize-none ${
-                        isDarkMode
-                          ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      }`}
-                    />
-                  </div>
+                  {/* Materials Used */}
+                  <MaterialsUsedFields
+                    isDarkMode={isDarkMode}
+                    materialsUsed={resolutionData.materialsUsed}
+                    materials={resolutionData.materials ?? []}
+                    inventoryItems={inventoryItems}
+                    onToggleUsed={toggleResolutionMaterialsUsed}
+                    onAddRow={addResolutionMaterialRow}
+                    onRemoveRow={removeResolutionMaterialRow}
+                    onUpdateRow={updateResolutionMaterialRow}
+                  />
 
                   {/* Resolution Photos */}
                   <div>
@@ -1066,11 +1116,7 @@ const TechnicianAssignments = () => {
 
                     <button
                       onClick={handleResolutionSubmit}
-                      disabled={
-                        !resolutionData.notes.trim() ||
-                        !resolutionData.materialsUsed.trim() ||
-                        isSubmitting
-                      }
+                      disabled={!isResolutionSubmittable() || isSubmitting}
                       className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                       {isSubmitting ? (

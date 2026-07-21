@@ -1,5 +1,6 @@
 import Complaint from "../models/Complaint.js";
 import Client from "../models/Client.js";
+import InventoryItem from "../models/InventoryItem.js";
 import Notification from "../models/Notification.js";
 import Store from "../models/Store.js";
 import {
@@ -571,6 +572,7 @@ export const getAssignedComplaints = async (req, res) => {
       .populate("createdByTechnician", "name phoneNumber")
       .populate("createdByAdmin", "name")
       .populate("store", "name managers")
+      .populate("materials.item", "itemName")
       .sort({ assignedAt: -1 });
 
     // Backfill store contacts for older complaints (store missing, location contains store name)
@@ -700,6 +702,8 @@ export const updateComplaintStatus = async (req, res) => {
     // Handle resolution photos + videos if complaint is being resolved
     let resolutionPhotos = [];
     let resolutionVideos = [];
+    let safeMaterialsUsed = false;
+    let validatedMaterials = [];
     if (status === "resolved") {
       // Validate resolution notes are required for resolved status
       if (!resolutionNotes || resolutionNotes.trim() === "") {
@@ -711,15 +715,45 @@ export const updateComplaintStatus = async (req, res) => {
         });
       }
 
-      // Validate materials used is required for resolved status
-      const materialsUsed = req.body.materialsUsed;
-      if (!materialsUsed || materialsUsed.trim() === "") {
-        console.log("❌ Materials used is required for resolved status");
-        return res.status(400).json({
-          success: false,
-          message:
-            "Materials used is required when marking complaint as resolved",
-        });
+      // Parse + validate materials used against the inventory catalog
+      safeMaterialsUsed = ["true", true, "1"].includes(req.body.materialsUsed);
+
+      if (safeMaterialsUsed) {
+        let rawMaterials = [];
+        try {
+          rawMaterials = JSON.parse(req.body.materials || "[]");
+        } catch {
+          rawMaterials = [];
+        }
+        if (!Array.isArray(rawMaterials)) rawMaterials = [];
+
+        const rows = rawMaterials.filter((m) => m?.item && m?.quantity);
+        if (rows.length === 0) {
+          return res.status(400).json({
+            success: false,
+            message: "Please select at least one material",
+          });
+        }
+
+        for (const row of rows) {
+          const quantity = Number(row.quantity);
+          if (!Number.isFinite(quantity) || quantity <= 0) {
+            return res.status(400).json({
+              success: false,
+              message: "Each material must have a valid quantity",
+            });
+          }
+
+          const catalogItem = await InventoryItem.findById(row.item);
+          if (!catalogItem) {
+            return res.status(400).json({
+              success: false,
+              message: "One of the selected materials is no longer available",
+            });
+          }
+
+          validatedMaterials.push({ item: catalogItem._id, quantity });
+        }
       }
 
       // req.files is now an object keyed by field name (from .fields())
@@ -790,9 +824,8 @@ export const updateComplaintStatus = async (req, res) => {
       if (resolutionNotes) {
         complaint.resolutionNotes = resolutionNotes;
       }
-      if (req.body.materialsUsed) {
-        complaint.materialsUsed = req.body.materialsUsed;
-      }
+      complaint.materialsUsed = safeMaterialsUsed;
+      complaint.materials = validatedMaterials;
       if (resolutionPhotos.length > 0) {
         complaint.resolutionPhotos = resolutionPhotos;
       }
@@ -808,6 +841,7 @@ export const updateComplaintStatus = async (req, res) => {
     await complaint.populate("createdByTechnician", "name phoneNumber");
     await complaint.populate("createdByAdmin", "name phoneNumber");
     await complaint.populate("assignedTechnician", "name phoneNumber");
+    await complaint.populate("materials.item", "itemName");
 
     let recipientPhone;
     let recipientName;
@@ -967,7 +1001,8 @@ export const getComplaintById = async (req, res) => {
       .populate("assignedBy", "name")
       .populate("createdByTechnician", "name phoneNumber")
       .populate("createdByAdmin", "name")
-      .populate("store", "name managers");
+      .populate("store", "name managers")
+      .populate("materials.item", "itemName");
 
     if (!complaint) {
       return res.status(404).json({
@@ -1004,6 +1039,7 @@ export const getResolvedComplaints = async (req, res) => {
       .populate("createdByTechnician", "name phoneNumber")
       .populate("createdByAdmin", "name")
       .populate("store", "name managers")
+      .populate("materials.item", "itemName")
       .sort({ completedAt: -1, updatedAt: -1 });
 
     // Backfill store contacts for older complaints

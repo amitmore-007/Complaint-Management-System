@@ -3,8 +3,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Eye } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
-import { formatMoneyINR } from "../../../../utils/helpers";
-
 const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
   const location = useLocation();
   const [detailsModal, setDetailsModal] = useState({
@@ -63,15 +61,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
     <>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {submittedRecords.map((record) => {
-          const total = (record.materials ?? []).reduce(
-            (sum, m) =>
-              sum +
-              Number(
-                m.totalAmount ??
-                  Number(m.quantity || 0) * Number(m.price || 0)
-              ),
-            0
-          );
+          const materialCount = (record.materials ?? []).length;
 
           return (
             <div
@@ -150,14 +140,14 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                       isDarkMode ? "text-gray-400" : "text-gray-600"
                     } text-xs`}
                   >
-                    Total
+                    Items
                   </p>
                   <p
                     className={`${
                       isDarkMode ? "text-white" : "text-gray-900"
                     } font-bold`}
                   >
-                    {formatMoneyINR(total)}
+                    {materialCount}
                   </p>
                 </div>
               </div>
@@ -297,25 +287,8 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                                 isDarkMode ? "text-gray-400" : "text-gray-600"
                               } text-sm`}
                             >
-                              Qty: {m.quantity} · Price:{" "}
-                              {formatMoneyINR(m.price)}
-                              {m.gstType
-                                ? ` · ${
-                                    m.gstType === "gst"
-                                      ? `GST ${m.gstPercent}%`
-                                      : "Non-GST"
-                                  }`
-                                : ""}
+                              Qty: {m.quantity}
                             </p>
-                            {m.totalAmount != null ? (
-                              <p
-                                className={`${
-                                  isDarkMode ? "text-white" : "text-gray-900"
-                                } text-sm font-bold`}
-                              >
-                                Total: {formatMoneyINR(m.totalAmount)}
-                              </p>
-                            ) : null}
                           </div>
                           <div>
                             {m.billPhoto?.url ? (
