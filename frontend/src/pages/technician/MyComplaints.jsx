@@ -34,6 +34,7 @@ const TechnicianMyComplaints = () => {
   const duplicateMutation = useTechnicianDuplicateComplaint();
   const updateMutation = useUpdateTechnicianComplaint();
   const [editComplaint, setEditComplaint] = useState(null);
+  const [duplicateComplaint, setDuplicateComplaint] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -49,14 +50,7 @@ const TechnicianMyComplaints = () => {
   }, []);
 
   const handleDuplicate = (complaint) => {
-    duplicateMutation.mutate(complaint._id, {
-      onSuccess: (data) => {
-        toast.success(`Complaint duplicated — new ID: ${data.complaint?.complaintId ?? "created"}`);
-      },
-      onError: (err) => {
-        toast.error(err?.response?.data?.message ?? "Failed to duplicate complaint");
-      },
-    });
+    setDuplicateComplaint(complaint);
   };
   const complaints = Array.isArray(myComplaintsQuery.data)
     ? myComplaintsQuery.data
@@ -789,8 +783,157 @@ const TechnicianMyComplaints = () => {
             />
           )}
         </AnimatePresence>
+
+        {/* Duplicate Complaint Modal */}
+        <AnimatePresence>
+          {duplicateComplaint && (
+            <DuplicateComplaintModal
+              complaint={duplicateComplaint}
+              isDarkMode={isDarkMode}
+              duplicateMutation={duplicateMutation}
+              onClose={() => setDuplicateComplaint(null)}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </DashboardLayout>
+  );
+};
+
+const DuplicateComplaintModal = ({ complaint, isDarkMode, duplicateMutation, onClose }) => {
+  const [formData, setFormData] = useState({
+    title: complaint.title || "",
+    description: complaint.description || "",
+    location: complaint.location || "",
+    priority: complaint.priority || "medium",
+  });
+
+  const handleChange = (e) => setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    duplicateMutation.mutate(
+      { complaintId: complaint._id, payload: formData },
+      {
+        onSuccess: (data) => {
+          toast.success(`Complaint duplicated — new ID: ${data.complaint?.complaintId ?? "created"}`);
+          onClose();
+        },
+        onError: (err) => {
+          toast.error(err?.response?.data?.message ?? "Failed to duplicate complaint");
+        },
+      },
+    );
+  };
+
+  const inputCls = `w-full px-4 py-3 border rounded-xl transition-all duration-200 ${
+    isDarkMode
+      ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+  }`;
+  const labelCls = `block text-sm font-medium mb-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+      style={{ margin: 0, top: 0, left: 0, right: 0, bottom: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className={`w-full max-w-2xl max-h-[95vh] overflow-y-auto mx-4 my-4 rounded-2xl shadow-2xl ${
+          isDarkMode ? "bg-[#111] dark-scrollbar" : "bg-white"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className={`sticky top-0 p-6 border-b z-10 ${isDarkMode ? "border-white/10 bg-[#111]" : "border-gray-200 bg-white"}`}>
+          <div className="flex justify-between items-center">
+            <h2 className={`text-2xl font-bold ${isDarkMode ? "text-white" : "text-gray-900"}`}>Duplicate Complaint</h2>
+            <button onClick={onClose} className={`p-2 rounded-lg transition-colors ${isDarkMode ? "hover:bg-white/10" : "hover:bg-gray-100"}`}>
+              <X className={`h-6 w-6 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`} />
+            </button>
+          </div>
+          <p className={`text-sm mt-1 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+            Review or edit the details before creating the copy.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Title */}
+          <div>
+            <label className={labelCls}>Title *</label>
+            <input type="text" name="title" value={formData.title} onChange={handleChange} required className={inputCls} />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className={labelCls}>Description *</label>
+            <textarea name="description" value={formData.description} onChange={handleChange} required rows={4} className={`${inputCls} resize-none`} />
+          </div>
+
+          {/* Store Name */}
+          <div>
+            <label className={labelCls}>Store Name *</label>
+            <StoreDropdown
+              options={STORE_OPTIONS}
+              value={formData.location}
+              onChange={(val) => setFormData((prev) => ({ ...prev, location: val }))}
+              isDarkMode={isDarkMode}
+            />
+          </div>
+
+          {/* Priority */}
+          <div>
+            <label className={labelCls}>Priority</label>
+            <div className="relative">
+              <select
+                name="priority"
+                value={formData.priority}
+                onChange={handleChange}
+                className={`w-full pl-4 pr-10 py-3 border rounded-xl text-sm appearance-none cursor-pointer transition-all duration-200 ${
+                  isDarkMode
+                    ? "bg-[#1a1a1a] border-white/10 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    : "bg-white border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                }`}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className={`flex-1 py-3 rounded-xl font-medium transition-colors ${
+                isDarkMode ? "bg-white/10 text-white hover:bg-white/20" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={duplicateMutation.isPending}
+              className="flex-1 py-3 rounded-xl font-medium bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+            >
+              {duplicateMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {duplicateMutation.isPending ? "Duplicating..." : "Confirm Duplicate"}
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </motion.div>
   );
 };
 

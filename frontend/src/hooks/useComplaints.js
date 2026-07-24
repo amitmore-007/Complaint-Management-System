@@ -213,7 +213,7 @@ export const useAdminDeleteComplaint = () => {
 export const useAdminDuplicateComplaint = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (complaintId) => complaintService.admin.duplicate(complaintId),
+    mutationFn: ({ complaintId, payload }) => complaintService.admin.duplicate(complaintId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
@@ -225,7 +225,7 @@ export const useAdminDuplicateComplaint = () => {
 export const useTechnicianDuplicateComplaint = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (complaintId) => complaintService.technician.duplicate(complaintId),
+    mutationFn: ({ complaintId, payload }) => complaintService.technician.duplicate(complaintId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.technicianMyComplaints() });
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });

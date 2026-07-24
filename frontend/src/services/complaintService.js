@@ -98,8 +98,8 @@ export const complaintService = {
       return data;
     },
 
-    duplicate: async (complaintId) => {
-      const { data } = await api.post(endpoints.admin.complaints.duplicate(complaintId));
+    duplicate: async (complaintId, payload) => {
+      const { data } = await api.post(endpoints.admin.complaints.duplicate(complaintId), payload);
       return data;
     },
 
@@ -260,8 +260,8 @@ export const complaintService = {
       return data;
     },
 
-    duplicate: async (complaintId) => {
-      const { data } = await api.post(endpoints.technician.complaints.duplicate(complaintId));
+    duplicate: async (complaintId, payload) => {
+      const { data } = await api.post(endpoints.technician.complaints.duplicate(complaintId), payload);
       return data;
     },
 

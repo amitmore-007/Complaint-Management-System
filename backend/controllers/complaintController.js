@@ -425,6 +425,7 @@ export const duplicateComplaint = async (req, res) => {
   try {
     const { id } = req.params;
     const { id: userId, role } = req.user;
+    const { title, description, location, priority } = req.body;
 
     // Technicians can only duplicate complaints they created
     const filter = { _id: id };
@@ -440,7 +441,8 @@ export const duplicateComplaint = async (req, res) => {
       });
     }
 
-    const complaintId = await generateNextComplaintId({ storeName: source.location });
+    const finalLocation = location || source.location;
+    const complaintId = await generateNextComplaintId({ storeName: finalLocation });
 
     const creatorFields =
       role === "admin"
@@ -449,11 +451,11 @@ export const duplicateComplaint = async (req, res) => {
 
     const duplicate = new Complaint({
       complaintId,
-      title: source.title,
-      description: source.description,
-      location: source.location,
-      store: source.store,
-      priority: source.priority,
+      title: title || source.title,
+      description: description || source.description,
+      location: finalLocation,
+      store: finalLocation === source.location ? source.store : null,
+      priority: priority || source.priority,
       ...creatorFields,
     });
 
