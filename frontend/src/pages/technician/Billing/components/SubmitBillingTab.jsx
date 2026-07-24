@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ClipboardList, FileText, Upload } from "lucide-react";
+import { ChevronDown, ClipboardList, FileText } from "lucide-react";
 import toast from "react-hot-toast";
 import { useLocation } from "react-router-dom";
 
@@ -76,7 +76,6 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
         ...prev,
         [complaintId]: {
           isComplaintResolved: false,
-          billFiles: {},
         },
       };
     });
@@ -109,33 +108,15 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
     }));
   };
 
-  const setBillFile = (complaintId, index, file) => {
-    setFormByComplaintId((prev) => {
-      const current = prev[complaintId];
-      if (!current) return prev;
-      return {
-        ...prev,
-        [complaintId]: {
-          ...current,
-          billFiles: { ...current.billFiles, [index]: file },
-        },
-      };
-    });
-  };
-
   const submitBilling = async (complaint) => {
     const complaintId = complaint?._id;
     if (!complaintId) return;
 
     ensureForm(complaintId);
     const form = formByComplaintId[complaintId];
-    const safeForm = form || { isComplaintResolved: false, billFiles: {} };
+    const safeForm = form || { isComplaintResolved: false };
 
     if (createBillingMutation.isPending) return;
-
-    const materials = complaint.materialsUsed
-      ? complaint.materials ?? []
-      : [];
 
     const formData = new FormData();
     formData.append("complaintId", complaintId);
@@ -143,13 +124,6 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
       "isComplaintResolved",
       String(!!safeForm.isComplaintResolved)
     );
-
-    materials.forEach((_, index) => {
-      const file = safeForm.billFiles?.[index];
-      if (file) {
-        formData.append(`billPhoto_${index}`, file);
-      }
-    });
 
     try {
       await createBillingMutation.mutateAsync(formData);
@@ -356,52 +330,26 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                           {materials.map((m, index) => (
                             <div
                               key={index}
-                              className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${
+                              className={`p-4 rounded-2xl border ${
                                 isDarkMode
                                   ? "bg-[#111] border-white/10"
                                   : "bg-white border-gray-200"
                               }`}
                             >
-                              <div>
-                                <p
-                                  className={`font-semibold ${
-                                    isDarkMode ? "text-white" : "text-gray-900"
-                                  }`}
-                                >
-                                  {m.item?.itemName ?? "Unknown item"}
-                                </p>
-                                <p
-                                  className={`text-sm ${
-                                    isDarkMode
-                                      ? "text-gray-400"
-                                      : "text-gray-600"
-                                  }`}
-                                >
-                                  Qty: {m.quantity}
-                                </p>
-                              </div>
-
-                              <label
-                                className={`inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-sm font-semibold cursor-pointer transition-all ${
-                                  isDarkMode
-                                    ? "bg-[#111] border-white/10 text-gray-200 hover:bg-white/5"
-                                    : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                              <p
+                                className={`font-semibold ${
+                                  isDarkMode ? "text-white" : "text-gray-900"
                                 }`}
                               >
-                                <Upload className="h-4 w-4" />
-                                {form?.billFiles?.[index]
-                                  ? "Change bill"
-                                  : "Upload bill"}
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0] ?? null;
-                                    setBillFile(cid, index, file);
-                                  }}
-                                />
-                              </label>
+                                {m.item?.itemName ?? "Unknown item"}
+                              </p>
+                              <p
+                                className={`text-sm ${
+                                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                                }`}
+                              >
+                                Qty: {m.quantity}
+                              </p>
                             </div>
                           ))}
                         </div>
