@@ -1,0 +1,14 @@
+[project]
+name = "cms-mcp-server"
+version = "0.1.0"
+description = "Complaint Management System MCP server"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp==1.9.1",
+    "starlette==0.46.2",
+    "python-dotenv==1.1.0",
+    "uvicorn==0.34.2",
+    "httpx==0.28.1",
+    "requests==2.32.4",
+]

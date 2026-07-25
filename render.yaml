@@ -21,10 +21,37 @@ services:
           type: web
           name: cms-frontend
           property: url
+      - key: SERVER_URL
+        fromService:
+          type: web
+          name: cms-backend
+          property: url
+      - key: MCP_INTERNAL_SECRET
+        generateValue: true
     disk:
       name: uploads
       mountPath: /opt/render/project/src/backend/uploads
       sizeGB: 1
+
+  - type: web
+    name: cms-mcp-server
+    env: docker
+    dockerfilePath: ./cms-mcp-server/Dockerfile
+    dockerContext: ./cms-mcp-server
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: SERVER_URL
+        fromService:
+          type: web
+          name: cms-backend
+          property: url
+      - key: MCP_INTERNAL_SECRET
+        fromService:
+          type: web
+          name: cms-backend
+          envVarKey: MCP_INTERNAL_SECRET
 
   - type: web
     name: cms-frontend

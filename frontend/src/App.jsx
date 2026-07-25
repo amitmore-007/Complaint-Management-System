@@ -13,6 +13,7 @@ import useAuthStore from "./store/authStore";
 import Landing from "./pages/Landing";
 import RoleSelection from "./pages/RoleSelection";
 import Login from "./pages/auth/Login";
+import AuthorizeConsent from "./pages/oauth/AuthorizeConsent";
 
 // Client Pages
 import ClientDashboard from "./pages/client/Dashboard";
@@ -200,6 +201,10 @@ function App() {
                 </PublicRoute>
               }
             />
+
+            {/* MCP OAuth consent — intentionally not wrapped in Public/ProtectedRoute:
+                must stay reachable even when this tab already has a normal CMS session. */}
+            <Route path="/oauth/authorize" element={<AuthorizeConsent />} />
 
             {/* Client Routes */}
             <Route

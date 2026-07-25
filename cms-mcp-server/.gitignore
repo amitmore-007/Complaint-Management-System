@@ -1,0 +1,26 @@
+# bytecode
+__pycache__/
+*.py[cod]
+
+# virtual environments
+venv/
+.env
+.venv/
+
+# editor settings
+.vscode/
+.idea/
+.claude/
+
+# test and cache files
+.pytest_cache/
+.mypy_cache/
+.coverage
+
+# system files
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+logs/

@@ -16,6 +16,7 @@ import equipmentRoutes from "./routes/equipmentRoutes.js";
 import statsRoutes from "./routes/statsRoutes.js";
 import storeRoutes from "./routes/storeRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
+import mcpOAuthRoutes from "./routes/mcpOAuthRoutes.js";
 
 // For ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -104,6 +105,20 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "OK", message: "Server is running" });
 });
 
+// OAuth discovery for the CMS MCP server (RFC 8414)
+app.get("/.well-known/oauth-authorization-server", (req, res) => {
+  res.json({
+    issuer: process.env.SERVER_URL,
+    authorization_endpoint: `${process.env.SERVER_URL}/mcp-oauth/authorize`,
+    token_endpoint: `${process.env.SERVER_URL}/mcp-oauth/token`,
+    registration_endpoint: `${process.env.SERVER_URL}/mcp-oauth/register`,
+    response_types_supported: ["code"],
+    grant_types_supported: ["authorization_code", "refresh_token"],
+    code_challenge_methods_supported: ["S256"],
+    token_endpoint_auth_methods_supported: ["none"],
+  });
+});
+
 // API Routes
 app.use("/api/client", clientRoutes);
 app.use("/api/technician", technicianRoutes);
@@ -113,6 +128,7 @@ app.use("/api/equipment", equipmentRoutes);
 app.use("/api/stores", storeRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/mcp-oauth", mcpOAuthRoutes);
 
 // 404 handler
 app.use("*", (req, res) => {

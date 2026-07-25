@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { resolveAuthUser } from "../utils/resolveAuthUser.js";
 
 // authenticate user with specific role requirement
 const authenticateRole = (requiredRole) => {
@@ -33,39 +34,22 @@ const authenticateRole = (requiredRole) => {
         });
       }
 
-      // find user based on role
-      let user;
-      const { userId, role } = decoded;
+      const result = await resolveAuthUser(decoded);
 
-      if (role === "admin") {
-        const Admin = (await import("../models/Admin.js")).default;
-        user = await Admin.findById(userId);
-        if (user) {
-          const tokenVersion = decoded.tokenVersion ?? 0;
-          const adminVersion = user.tokenVersion ?? 0;
-          if (tokenVersion !== adminVersion) {
-            return res.status(401).json({
-              success: false,
-              message: "Session expired. Please login again.",
-            });
-          }
+      if (!result.ok) {
+        if (result.reason === "stale_token") {
+          return res.status(401).json({
+            success: false,
+            message: "Session expired. Please login again.",
+          });
         }
-      } else if (role === "client") {
-        const Client = (await import("../models/Client.js")).default;
-        user = await Client.findById(userId);
-      } else if (role === "technician") {
-        const Technician = (await import("../models/Technician.js")).default;
-        user = await Technician.findById(userId);
-      }
-
-      if (!user || !user.isActive) {
         return res.status(401).json({
           success: false,
           message: "Invalid or inactive user",
         });
       }
 
-      req.user = { id: user._id, role, ...user.toObject() };
+      req.user = { id: result.user._id, role: decoded.role, ...result.user.toObject() };
       next();
     } catch (error) {
       console.error("Role auth middleware error:", error);
