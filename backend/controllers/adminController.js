@@ -343,13 +343,49 @@ export const createAdminComplaint = async (req, res) => {
 };
 
 // get all complaints with filters
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 export const getAllComplaints = async (req, res) => {
   try {
-    const { status, priority, page = 1, limit = 10 } = req.query;
+    const { status, priority, location, search, page = 1, limit = 10 } =
+      req.query;
 
     const filter = {};
-    if (status) filter.status = status;
-    if (priority) filter.priority = priority;
+
+    if (status && status !== "all") {
+      filter.status = status === "unresolved" ? { $ne: "resolved" } : status;
+    }
+
+    if (priority && priority !== "all") filter.priority = priority;
+
+    if (location && location !== "all") {
+      filter.location = new RegExp(`^${escapeRegex(location)}$`, "i");
+    }
+
+    if (search && search.trim()) {
+      const regex = new RegExp(escapeRegex(search.trim()), "i");
+
+      const [matchingClients, matchingTechnicians, matchingAdmins] =
+        await Promise.all([
+          Client.find({ name: regex }).select("_id"),
+          Technician.find({ name: regex }).select("_id"),
+          Admin.find({ name: regex }).select("_id"),
+        ]);
+
+      filter.$or = [
+        { title: regex },
+        { description: regex },
+        { location: regex },
+        { complaintId: regex },
+        { client: { $in: matchingClients.map((c) => c._id) } },
+        {
+          createdByTechnician: {
+            $in: matchingTechnicians.map((t) => t._id),
+          },
+        },
+        { createdByAdmin: { $in: matchingAdmins.map((a) => a._id) } },
+      ];
+    }
 
     const complaints = await Complaint.find(filter)
       .populate("client", "name phoneNumber")
@@ -1069,25 +1105,43 @@ export const deleteUser = async (req, res) => {
 // get dashboard statistics
 export const getDashboardStats = async (req, res) => {
   try {
-    const totalComplaints = await Complaint.countDocuments();
+    // month filter, expects "YYYY-MM"; scopes complaint/client/technician
+    // counts to that calendar month instead of all-time totals
+    const monthMatch = /^(\d{4})-(\d{2})$/.exec(req.query.month || "");
+    let dateRange = null;
+    if (monthMatch) {
+      const year = Number(monthMatch[1]);
+      const month = Number(monthMatch[2]);
+      dateRange = {
+        $gte: new Date(year, month - 1, 1),
+        $lt: new Date(year, month, 1),
+      };
+    }
+    const createdAtFilter = dateRange ? { createdAt: dateRange } : {};
+
+    const totalComplaints = await Complaint.countDocuments(createdAtFilter);
     const pendingComplaints = await Complaint.countDocuments({
       status: "pending",
+      ...createdAtFilter,
     });
     const inProgressComplaints = await Complaint.countDocuments({
       status: "in-progress",
+      ...createdAtFilter,
     });
     const resolvedComplaints = await Complaint.countDocuments({
       status: "resolved",
+      ...createdAtFilter,
     });
 
-    const totalClients = await Client.countDocuments();
-    const totalTechnicians = await Technician.countDocuments();
+    const totalClients = await Client.countDocuments(createdAtFilter);
+    const totalTechnicians = await Technician.countDocuments(createdAtFilter);
     const activeTechnicians = await Technician.countDocuments({
       isActive: true,
+      ...createdAtFilter,
     });
 
     // Recent complaints
-    const recentComplaints = await Complaint.find()
+    const recentComplaints = await Complaint.find(createdAtFilter)
       .populate("client", "name phoneNumber")
       .populate("createdByAdmin", "name phoneNumber")
       .populate("createdByTechnician", "name phoneNumber")

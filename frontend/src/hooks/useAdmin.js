@@ -3,7 +3,12 @@ import { adminService } from "../services/adminService";
 
 export const adminKeys = {
   all: ["admin"],
-  dashboardStats: () => [...adminKeys.all, "dashboard", "stats"],
+  dashboardStats: (params = {}) => [
+    ...adminKeys.all,
+    "dashboard",
+    "stats",
+    params,
+  ],
 
   techniciansRoot: () => [...adminKeys.all, "technicians"],
   technicians: (params = {}) => [...adminKeys.techniciansRoot(), params],
@@ -12,10 +17,10 @@ export const adminKeys = {
   clients: (params = {}) => [...adminKeys.clientsRoot(), params],
 };
 
-export const useAdminDashboardStats = () => {
+export const useAdminDashboardStats = (params = {}) => {
   return useQuery({
-    queryKey: adminKeys.dashboardStats(),
-    queryFn: () => adminService.dashboardStats(),
+    queryKey: adminKeys.dashboardStats(params),
+    queryFn: () => adminService.dashboardStats(params),
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: "always",

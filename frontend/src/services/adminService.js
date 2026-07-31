@@ -2,8 +2,10 @@ import api from "../lib/axios";
 import { endpoints } from "../api/endpoints";
 
 export const adminService = {
-  dashboardStats: async () => {
-    const { data } = await api.get(endpoints.admin.dashboard.stats);
+  dashboardStats: async (params = {}) => {
+    const { data } = await api.get(endpoints.admin.dashboard.stats, {
+      params,
+    });
     return data.stats;
   },
 

@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import { complaintService } from "../services/complaintService";
 import { adminKeys } from "./useAdmin";
 import { statsKeys } from "./useStats";
@@ -24,21 +29,17 @@ export const complaintKeys = {
   resolvedNotifyContacts: () => [...complaintKeys.all, "resolved-notify-contacts"],
 };
 
-// Fetch all complaints (Admin)
+// Fetch complaints for the current page/filters (Admin)
 export const useComplaints = (filters = {}) => {
   return useQuery({
     queryKey: complaintKeys.list(filters),
-    queryFn: async () => {
-      if (filters?.fetchAll) {
-        return complaintService.admin.listAll();
-      }
-      return complaintService.admin.list(filters);
-    },
+    queryFn: () => complaintService.admin.list(filters),
     // Admin needs to see technician-created complaints without hard refresh.
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: "always",
     refetchInterval: 20_000,
+    placeholderData: keepPreviousData,
   });
 };
 

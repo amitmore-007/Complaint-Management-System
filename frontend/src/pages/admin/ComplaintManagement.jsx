@@ -59,11 +59,33 @@ const ComplaintManagement = () => {
   const [isExportingComplaints, setIsExportingComplaints] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  // React Query hooks
-  const { data: complaints = [], isLoading } = useComplaints({
-    fetchAll: true,
-  });
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setDebouncedSearch(searchTerm.trim()),
+      400,
+    );
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // React Query hooks — server-side pagination/filtering, only the current
+  // page's records are fetched instead of the full complaint list.
+  const queryFilters = {
+    page: currentPage,
+    limit: itemsPerPage,
+    status: statusFilter,
+    priority: priorityFilter,
+    location: locationFilter,
+    search: debouncedSearch,
+  };
+  const { data: complaintsData, isLoading } = useComplaints(queryFilters);
+  const complaints = complaintsData?.complaints ?? [];
+  const pagination = complaintsData?.pagination ?? {
+    total: 0,
+    page: 1,
+    pages: 1,
+  };
   const { data: complaintDetails, isLoading: isLoadingDetails } = useComplaint(
     selectedComplaintId,
     { enabled: showDetailsModal && !!selectedComplaintId, role: "admin" },
@@ -124,74 +146,11 @@ const ComplaintManagement = () => {
     );
   }, []);
 
-  const filteredComplaints = React.useMemo(() => {
-    let filtered = complaints;
-
-    // Filter by status
-    if (statusFilter === "unresolved") {
-      filtered = filtered.filter(
-        (complaint) => complaint.status !== "resolved",
-      );
-    } else if (statusFilter !== "all") {
-      filtered = filtered.filter(
-        (complaint) => complaint.status === statusFilter,
-      );
-    }
-
-    // Filter by priority
-    if (priorityFilter !== "all") {
-      filtered = filtered.filter(
-        (complaint) => complaint.priority === priorityFilter,
-      );
-    }
-
-    // Filter by store/location
-    if (locationFilter !== "all") {
-      const selected = String(locationFilter).trim().toLowerCase();
-      filtered = filtered.filter((complaint) => {
-        const value = String(
-          complaint?.store?.name ?? complaint?.location ?? "",
-        )
-          .trim()
-          .toLowerCase();
-        return value === selected;
-      });
-    }
-
-    // Filter by search term
-    if (searchTerm) {
-      const q = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (complaint) =>
-          complaint.title.toLowerCase().includes(q) ||
-          complaint.description.toLowerCase().includes(q) ||
-          String(complaint.store?.name ?? "")
-            .toLowerCase()
-            .includes(q) ||
-          complaint.location.toLowerCase().includes(q) ||
-          complaint.complaintId.toLowerCase().includes(q) ||
-          complaint.client?.name.toLowerCase().includes(q) ||
-          complaint.createdByTechnician?.name.toLowerCase().includes(q) ||
-          complaint.createdByAdmin?.name.toLowerCase().includes(q),
-      );
-    }
-
-    return filtered;
-  }, [complaints, statusFilter, priorityFilter, locationFilter, searchTerm]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredComplaints.length / itemsPerPage),
-  );
-
-  const paginatedComplaints = React.useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredComplaints.slice(start, start + itemsPerPage);
-  }, [filteredComplaints, currentPage, itemsPerPage]);
+  const totalPages = Math.max(1, pagination.pages);
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, priorityFilter, locationFilter, itemsPerPage]);
+  }, [debouncedSearch, statusFilter, priorityFilter, locationFilter, itemsPerPage]);
 
   React.useEffect(() => {
     if (currentPage > totalPages) {
@@ -609,7 +568,7 @@ const ComplaintManagement = () => {
 
         {/* Complaints List */}
         <div className="space-y-4">
-          {filteredComplaints.length === 0 ? (
+          {complaints.length === 0 ? (
             <div
               className={`text-center py-8 sm:py-12 rounded-2xl ${
                 isDarkMode ? "bg-[#111]" : "bg-white"
@@ -630,7 +589,7 @@ const ComplaintManagement = () => {
               </p>
             </div>
           ) : (
-            paginatedComplaints.map((complaint) => (
+            complaints.map((complaint) => (
               <motion.div
                 key={complaint._id}
                 initial={{ opacity: 0, y: 20 }}
@@ -831,7 +790,7 @@ const ComplaintManagement = () => {
           )}
         </div>
 
-        {filteredComplaints.length > 0 && (
+        {pagination.total > 0 && (
           <div
             className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${
               isDarkMode
@@ -842,11 +801,8 @@ const ComplaintManagement = () => {
             <div className="flex items-center gap-3 text-sm">
               <span>
                 Showing {(currentPage - 1) * itemsPerPage + 1}-
-                {Math.min(
-                  currentPage * itemsPerPage,
-                  filteredComplaints.length,
-                )}{" "}
-                of {filteredComplaints.length}
+                {Math.min(currentPage * itemsPerPage, pagination.total)}{" "}
+                of {pagination.total}
               </span>
               <div className="flex items-center gap-2">
                 <label htmlFor="complaints-page-size">Rows:</label>

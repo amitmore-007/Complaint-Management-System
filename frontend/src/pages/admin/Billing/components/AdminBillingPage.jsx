@@ -1,5 +1,10 @@
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import dayjs from "dayjs";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 import {
   formatMoneyINR,
@@ -21,11 +26,23 @@ const AdminBillingPage = ({ isDarkMode }) => {
   const [modal, setModal] = useState({ open: false, record: null });
   const [editState, setEditState] = useState(null);
   const [downloadingBillUrl, setDownloadingBillUrl] = useState(null);
+  const [monthFilter, setMonthFilter] = useState("");
+  const muiTheme = useMemo(
+    () => createTheme({ palette: { mode: isDarkMode ? "dark" : "light" } }),
+    [isDarkMode]
+  );
 
   const records = useMemo(
     () => billingQuery.data?.records ?? [],
     [billingQuery.data]
   );
+
+  const filteredRecords = useMemo(() => {
+    if (!monthFilter) return records;
+    return records.filter(
+      (r) => new Date(r.submittedAt).toISOString().slice(0, 7) === monthFilter
+    );
+  }, [records, monthFilter]);
 
   const openModal = (record) => {
     setModal({ open: true, record });
@@ -133,16 +150,60 @@ const AdminBillingPage = ({ isDarkMode }) => {
 
   return (
     <>
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        {records.map((record) => (
-          <BillingRecordCard
-            key={record._id}
-            record={record}
-            isDarkMode={isDarkMode}
-            onView={() => openModal(record)}
-          />
-        ))}
+      <div className="flex items-center gap-3 flex-wrap">
+        <ThemeProvider theme={muiTheme}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Month"
+              views={["year", "month"]}
+              openTo="month"
+              format="YYYY-MM"
+              value={monthFilter ? dayjs(`${monthFilter}-01`) : null}
+              onChange={(v) => setMonthFilter(v ? v.format("YYYY-MM") : "")}
+              slotProps={{
+                textField: { size: "small" },
+                field: { clearable: true },
+              }}
+            />
+          </LocalizationProvider>
+        </ThemeProvider>
+        {monthFilter && (
+          <button
+            onClick={() => setMonthFilter("")}
+            type="button"
+            className={`text-sm font-semibold ${
+              isDarkMode
+                ? "text-gray-400 hover:text-white"
+                : "text-gray-500 hover:text-gray-900"
+            }`}
+          >
+            Clear
+          </button>
+        )}
       </div>
+
+      {filteredRecords.length === 0 ? (
+        <div
+          className={`p-8 rounded-2xl border text-center ${
+            isDarkMode
+              ? "bg-[#111] border-white/10 text-gray-300"
+              : "bg-white border-gray-200 text-gray-700"
+          }`}
+        >
+          No billing submissions for this month.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          {filteredRecords.map((record) => (
+            <BillingRecordCard
+              key={record._id}
+              record={record}
+              isDarkMode={isDarkMode}
+              onView={() => openModal(record)}
+            />
+          ))}
+        </div>
+      )}
 
       <BillingRecordModal
         open={modal.open}

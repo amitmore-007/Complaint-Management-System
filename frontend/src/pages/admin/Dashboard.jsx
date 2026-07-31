@@ -1,5 +1,10 @@
-﻿import React, { useState } from "react";
+﻿import React, { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import dayjs from "dayjs";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import {
   FileText,
   Users,
@@ -30,7 +35,15 @@ const AdminDashboard = () => {
   const { isDarkMode } = useTheme();
   const { user } = useAuthStore();
 
-  const dashboardStatsQuery = useAdminDashboardStats();
+  const [monthFilter, setMonthFilter] = useState("");
+  const muiTheme = useMemo(
+    () => createTheme({ palette: { mode: isDarkMode ? "dark" : "light" } }),
+    [isDarkMode]
+  );
+
+  const dashboardStatsQuery = useAdminDashboardStats(
+    monthFilter ? { month: monthFilter } : {}
+  );
   const stats = dashboardStatsQuery.data || {
     totalComplaints: 0,
     pendingComplaints: 0,
@@ -234,21 +247,55 @@ const AdminDashboard = () => {
     <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <h1
-            className={`text-2xl sm:text-3xl md:text-4xl font-bold mb-2 ${
-              isDarkMode ? "text-white" : "text-gray-900"
-            }`}
-          >
-            Admin Dashboard
-          </h1>
-          <p
-            className={`text-sm sm:text-base md:text-lg ${
-              isDarkMode ? "text-gray-400" : "text-gray-600"
-            }`}
-          >
-            Welcome back, {user?.name}! Here's your system overview.
-          </p>
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <h1
+              className={`text-2xl sm:text-3xl md:text-4xl font-bold mb-2 ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
+              Admin Dashboard
+            </h1>
+            <p
+              className={`text-sm sm:text-base md:text-lg ${
+                isDarkMode ? "text-gray-400" : "text-gray-600"
+              }`}
+            >
+              Welcome back, {user?.name}! Here's your system overview.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 flex-wrap">
+            <ThemeProvider theme={muiTheme}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Month"
+                  views={["year", "month"]}
+                  openTo="month"
+                  format="YYYY-MM"
+                  value={monthFilter ? dayjs(`${monthFilter}-01`) : null}
+                  onChange={(v) => setMonthFilter(v ? v.format("YYYY-MM") : "")}
+                  slotProps={{
+                    textField: { size: "small" },
+                    field: { clearable: true },
+                  }}
+                />
+              </LocalizationProvider>
+            </ThemeProvider>
+            {monthFilter && (
+              <button
+                onClick={() => setMonthFilter("")}
+                type="button"
+                className={`text-sm font-semibold ${
+                  isDarkMode
+                    ? "text-gray-400 hover:text-white"
+                    : "text-gray-500 hover:text-gray-900"
+                }`}
+              >
+                Clear
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Stats Cards */}

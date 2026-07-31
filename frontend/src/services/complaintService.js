@@ -7,7 +7,10 @@ export const complaintService = {
       const { data } = await api.get(endpoints.admin.complaints.root, {
         params,
       });
-      return data.complaints;
+      return {
+        complaints: data.complaints ?? [],
+        pagination: data.pagination ?? { total: 0, page: 1, pages: 1 },
+      };
     },
 
     listAll: async ({ limit = 500 } = {}) => {

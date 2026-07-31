@@ -188,11 +188,6 @@ const TechnicianAssignments = () => {
         }
       }
 
-      // Debug: Log all FormData entries
-      for (let [key, value] of formData.entries()) {
-        console.log(`  ${key}:`, value);
-      }
-
       await updateStatusMutation.mutateAsync({
         id: complaintId,
         payload: formData,

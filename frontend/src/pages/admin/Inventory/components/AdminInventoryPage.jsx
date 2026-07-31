@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
+import dayjs from "dayjs";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import {
   Package,
   Pencil,
@@ -60,11 +65,23 @@ const AdminInventoryPage = ({ isDarkMode }) => {
   const [modal, setModal] = useState({ open: false, record: null });
   const [deleteRecord, setDeleteRecord] = useState(null);
   const [activeTab, setActiveTab] = useState("purchases");
+  const [monthFilter, setMonthFilter] = useState("");
+  const muiTheme = useMemo(
+    () => createTheme({ palette: { mode: isDarkMode ? "dark" : "light" } }),
+    [isDarkMode],
+  );
 
   const records = useMemo(
     () => inventoryQuery.data?.records ?? [],
     [inventoryQuery.data],
   );
+
+  const filteredRecords = useMemo(() => {
+    if (!monthFilter) return records;
+    return records.filter(
+      (r) => new Date(r.purchaseDate).toISOString().slice(0, 7) === monthFilter,
+    );
+  }, [records, monthFilter]);
   const summary = inventoryQuery.data?.summary ?? {
     totalPurchaseValue: 0,
     gstValue: 0,
@@ -191,20 +208,51 @@ const AdminInventoryPage = ({ isDarkMode }) => {
         </div>
 
         {activeTab === "purchases" && (
-          <button
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-white bg-blue-600 hover:shadow-lg transition-all"
-            type="button"
-          >
-            <Plus className="h-4 w-4" />
-            Add Purchase Entry
-          </button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <ThemeProvider theme={muiTheme}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  label="Month"
+                  views={["year", "month"]}
+                  openTo="month"
+                  format="YYYY-MM"
+                  value={monthFilter ? dayjs(`${monthFilter}-01`) : null}
+                  onChange={(v) => setMonthFilter(v ? v.format("YYYY-MM") : "")}
+                  slotProps={{
+                    textField: { size: "small" },
+                    field: { clearable: true },
+                  }}
+                />
+              </LocalizationProvider>
+            </ThemeProvider>
+            {monthFilter && (
+              <button
+                onClick={() => setMonthFilter("")}
+                type="button"
+                className={`text-sm font-semibold ${
+                  isDarkMode
+                    ? "text-gray-400 hover:text-white"
+                    : "text-gray-500 hover:text-gray-900"
+                }`}
+              >
+                Clear
+              </button>
+            )}
+            <button
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-white bg-blue-600 hover:shadow-lg transition-all"
+              type="button"
+            >
+              <Plus className="h-4 w-4" />
+              Add Purchase Entry
+            </button>
+          </div>
         )}
       </div>
 
       {activeTab === "stock-balance" ? (
         <StockBalanceTable isDarkMode={isDarkMode} />
-      ) : records.length === 0 ? (
+      ) : filteredRecords.length === 0 ? (
         <div
           className={`p-8 rounded-2xl border text-center ${
             isDarkMode
@@ -212,7 +260,9 @@ const AdminInventoryPage = ({ isDarkMode }) => {
               : "bg-white border-gray-200 text-gray-700"
           }`}
         >
-          No inventory items added yet.
+          {monthFilter
+            ? "No purchase entries for this month."
+            : "No inventory items added yet."}
         </div>
       ) : (
         <div
@@ -241,7 +291,7 @@ const AdminInventoryPage = ({ isDarkMode }) => {
               </tr>
             </thead>
             <tbody>
-              {records.map((r) => (
+              {filteredRecords.map((r) => (
                 <tr
                   key={r._id}
                   className={`border-t ${
