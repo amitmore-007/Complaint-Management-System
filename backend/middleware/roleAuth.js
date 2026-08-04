@@ -1,58 +1,82 @@
 import jwt from "jsonwebtoken";
 import { resolveAuthUser } from "../utils/resolveAuthUser.js";
 
-// authenticate user with specific role requirement
-const authenticateRole = (requiredRole) => {
+const readBearerToken = (req) => {
+  const authHeader = req.headers["authorization"];
+  return authHeader && authHeader.split(" ")[1];
+};
+
+const rejectionFor = (reason) =>
+  reason === "stale_token"
+    ? { status: 401, message: "Session expired. Please login again." }
+    : { status: 401, message: "Invalid or inactive user" };
+
+/**
+ * The single authentication path. Every variant below is this function with
+ * different options — previously this block was duplicated four times, and
+ * only one copy enforced tokenVersion, so "logout all devices" was bypassable
+ * on any route guarded by the other three.
+ *
+ * @param roles  allowed roles; empty/omitted means any valid role
+ * @param scope  required JWT `scope` claim, if any (attendance portal)
+ */
+const authenticate = ({ roles = [], scope = null } = {}) => {
   return async (req, res, next) => {
     try {
-      const authHeader = req.headers["authorization"];
-      const token = authHeader && authHeader.split(" ")[1];
+      const token = readBearerToken(req);
 
       if (!token) {
         return res.status(401).json({
           success: false,
-          message: "Access token required",
+          message: scope ? "Session token required." : "Access token required",
         });
       }
 
-      // verify token
       let decoded;
       try {
         decoded = jwt.verify(token, process.env.JWT_SECRET);
-      } catch (error) {
-        return res.status(403).json({
+      } catch {
+        return res.status(scope ? 401 : 403).json({
           success: false,
-          message: "Invalid or expired token",
+          message: scope
+            ? "Session expired. Please enter your PIN again."
+            : "Invalid or expired token",
         });
       }
 
-      // check if token role matches required role
-      if (decoded.role !== requiredRole) {
+      // A portal token must not satisfy a normal route, and vice versa.
+      if ((decoded.scope ?? null) !== scope) {
         return res.status(403).json({
           success: false,
-          message: `${requiredRole} access required`,
+          message: scope ? "Invalid session scope." : "Invalid token scope",
+        });
+      }
+
+      if (roles.length > 0 && !roles.includes(decoded.role)) {
+        return res.status(403).json({
+          success: false,
+          message:
+            roles.length === 1
+              ? `${roles[0]} access required`
+              : "Access denied. Insufficient permissions.",
         });
       }
 
       const result = await resolveAuthUser(decoded);
 
       if (!result.ok) {
-        if (result.reason === "stale_token") {
-          return res.status(401).json({
-            success: false,
-            message: "Session expired. Please login again.",
-          });
-        }
-        return res.status(401).json({
-          success: false,
-          message: "Invalid or inactive user",
-        });
+        const { status, message } = rejectionFor(result.reason);
+        return res.status(status).json({ success: false, message });
       }
 
-      req.user = { id: result.user._id, role: decoded.role, ...result.user.toObject() };
+      req.user = {
+        id: result.user._id,
+        role: decoded.role,
+        ...result.user.toObject(),
+      };
       next();
     } catch (error) {
-      console.error("Role auth middleware error:", error);
+      console.error("Auth middleware error:", error);
       return res.status(403).json({
         success: false,
         message: "Authentication failed",
@@ -61,103 +85,22 @@ const authenticateRole = (requiredRole) => {
   };
 };
 
-// authenticate as client
-export const authenticateClient = authenticateRole("client");
+export const authenticateClient = authenticate({ roles: ["client"] });
+export const authenticateTechnician = authenticate({ roles: ["technician"] });
+export const authenticateAdmin = authenticate({ roles: ["admin"] });
 
-// authenticate as technician
-export const authenticateTechnician = authenticateRole("technician");
+// Any valid role. `authenticateToken` is the historical name used by the
+// equipment and store routes; both names resolve to the same middleware.
+export const authenticateAny = authenticate();
+export const authenticateToken = authenticateAny;
 
-// authenticate as admin
-export const authenticateAdmin = authenticateRole("admin");
+// Attendance portal: PIN-derived session, admin/technician only.
+export const authenticatePortal = authenticate({
+  roles: ["admin", "technician"],
+  scope: "attendance-portal",
+});
 
-// authenticate any valid role (admin, technician, client)
-export const authenticateAny = async (req, res, next) => {
-  try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-      return res.status(401).json({ success: false, message: 'Access token required' });
-    }
-
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (error) {
-      return res.status(403).json({ success: false, message: 'Invalid or expired token' });
-    }
-
-    const { userId, role } = decoded;
-    let user;
-
-    if (role === 'admin') {
-      const Admin = (await import('../models/Admin.js')).default;
-      user = await Admin.findById(userId);
-    } else if (role === 'client') {
-      const Client = (await import('../models/Client.js')).default;
-      user = await Client.findById(userId);
-    } else if (role === 'technician') {
-      const Technician = (await import('../models/Technician.js')).default;
-      user = await Technician.findById(userId);
-    }
-
-    if (!user || !user.isActive) {
-      return res.status(401).json({ success: false, message: 'Invalid or inactive user' });
-    }
-
-    req.user = { id: user._id, role, ...user.toObject() };
-    next();
-  } catch (error) {
-    console.error('Auth middleware error:', error);
-    return res.status(403).json({ success: false, message: 'Authentication failed' });
-  }
-};
-
-// authenticate portal session (scope: attendance-portal)
-export const authenticatePortal = async (req, res, next) => {
-  try {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-      return res.status(401).json({ success: false, message: 'Session token required.' });
-    }
-
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch {
-      return res.status(401).json({ success: false, message: 'Session expired. Please enter your PIN again.' });
-    }
-
-    if (decoded.scope !== 'attendance-portal') {
-      return res.status(403).json({ success: false, message: 'Invalid session scope.' });
-    }
-
-    const { userId, role } = decoded;
-    let user;
-
-    if (role === 'admin') {
-      const Admin = (await import('../models/Admin.js')).default;
-      user = await Admin.findById(userId);
-    } else if (role === 'technician') {
-      const Technician = (await import('../models/Technician.js')).default;
-      user = await Technician.findById(userId);
-    }
-
-    if (!user || !user.isActive) {
-      return res.status(401).json({ success: false, message: 'Account not found or inactive.' });
-    }
-
-    req.user = { id: user._id, role, ...user.toObject() };
-    next();
-  } catch (error) {
-    console.error('Portal auth error:', error);
-    return res.status(403).json({ success: false, message: 'Authentication failed.' });
-  }
-};
-
-// authorize multiple roles
+// Post-authentication role gate, used alongside authenticateToken.
 export const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {

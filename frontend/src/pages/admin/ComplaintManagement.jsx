@@ -41,7 +41,7 @@ import {
   useUpdateAdminComplaint,
 } from "../../hooks/useComplaints";
 import { useAdminTechnicians } from "../../hooks/useAdmin";
-import STORE_OPTIONS from "../../utils/storeOptions";
+import { useStoresList } from "../../hooks/useStores";
 import VideoPlayer from "../../components/player/VideoPlayer";
 
 const ComplaintManagement = () => {
@@ -76,7 +76,7 @@ const ComplaintManagement = () => {
     limit: itemsPerPage,
     status: statusFilter,
     priority: priorityFilter,
-    location: locationFilter,
+    store: locationFilter,
     search: debouncedSearch,
   };
   const { data: complaintsData, isLoading } = useComplaints(queryFilters);
@@ -131,20 +131,15 @@ const ComplaintManagement = () => {
   });
   const technicians = techniciansData?.technicians ?? [];
 
-  const storeOptions = React.useMemo(() => {
-    const valuesByKey = new Map();
-
-    (Array.isArray(STORE_OPTIONS) ? STORE_OPTIONS : []).forEach((name) => {
-      const cleaned = String(name ?? "").trim();
-      if (!cleaned) return;
-      const key = cleaned.toLowerCase();
-      if (!valuesByKey.has(key)) valuesByKey.set(key, cleaned);
-    });
-
-    return Array.from(valuesByKey.values()).sort((a, b) =>
-      a.localeCompare(b, undefined, { sensitivity: "base" }),
-    );
-  }, []);
+  const { data: stores = [] } = useStoresList();
+  const storeOptions = React.useMemo(
+    () =>
+      stores
+        .map((s) => s.name)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
+    [stores],
+  );
 
   const totalPages = Math.max(1, pagination.pages);
 
@@ -255,7 +250,7 @@ const ComplaintManagement = () => {
 
     setIsExportingComplaints(true);
     try {
-      const allComplaints = await complaintService.admin.listAll({
+      const allComplaints = await complaintService.listAll({
         limit: 500,
       });
 
@@ -270,12 +265,10 @@ const ComplaintManagement = () => {
         description: complaint?.description || "",
         status: complaint?.status || "",
         priority: complaint?.priority || "",
-        location: complaint?.location || "",
+        store: complaint?.store?.name || "",
         creatorType: complaint?.creatorType || "",
         creatorName:
-          complaint?.client?.name ||
-          complaint?.createdByAdmin?.name ||
-          complaint?.createdByTechnician?.name ||
+          complaint.createdBy?.name ||
           "",
         assignedTechnician: complaint?.assignedTechnician?.name || "",
         assignedBy: complaint?.assignedBy?.name || "",
@@ -330,7 +323,7 @@ const ComplaintManagement = () => {
           type: String,
           width: 24,
           height: 22,
-          value: (r) => r.location,
+          value: (r) => r.store,
         },
         {
           column: "Creator Type",
@@ -646,9 +639,7 @@ const ComplaintManagement = () => {
                           <Users className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                           <span className="truncate">
                             <strong>Creator:</strong>{" "}
-                            {complaint.client?.name ||
-                              complaint.createdByAdmin?.name ||
-                              complaint.createdByTechnician?.name ||
+                            {complaint.createdBy?.name ||
                               "N/A"}
                             <span
                               className={`ml-2 text-xs px-1.5 py-0.5 rounded ${
@@ -668,7 +659,7 @@ const ComplaintManagement = () => {
                         >
                           <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                           <span className="truncate">
-                            <strong>Location:</strong> {complaint.location}
+                            <strong>Store:</strong> {complaint.store?.name}
                           </span>
                         </div>
                       </div>
@@ -915,12 +906,10 @@ const ComplaintManagement = () => {
                         }`}
                       >
                         Creator:{" "}
-                        {selectedAssignComplaint.client?.name ||
-                          selectedAssignComplaint.createdByAdmin?.name ||
-                          selectedAssignComplaint.createdByTechnician?.name ||
+                        {selectedAssignComplaint.createdBy?.name ||
                           "N/A"}{" "}
                         ({selectedAssignComplaint.creatorType || "client"}) |
-                        Location: {selectedAssignComplaint.location}
+                        Store: {selectedAssignComplaint.store?.name}
                       </p>
 
                       {isReassignMode &&
@@ -1144,9 +1133,7 @@ const ComplaintManagement = () => {
                           >
                             <Users className="h-4 w-4" />
                             <span>
-                              {complaintDetails.client?.name ||
-                                complaintDetails.createdByAdmin?.name ||
-                                complaintDetails.createdByTechnician?.name ||
+                              {complaintDetails.createdBy?.name ||
                                 "N/A"}
                               <span
                                 className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
@@ -1166,10 +1153,7 @@ const ComplaintManagement = () => {
                           >
                             <Phone className="h-4 w-4" />
                             <span>
-                              {complaintDetails.client?.phoneNumber ||
-                                complaintDetails.createdByAdmin?.phoneNumber ||
-                                complaintDetails.createdByTechnician
-                                  ?.phoneNumber ||
+                              {complaintDetails.createdBy?.phoneNumber ||
                                 "N/A"}
                             </span>
                           </div>
@@ -1191,7 +1175,7 @@ const ComplaintManagement = () => {
                             }`}
                           >
                             <MapPin className="h-4 w-4" />
-                            <span>{complaintDetails.location}</span>
+                            <span>{complaintDetails.store?.name}</span>
                           </div>
                           <div
                             className={`flex items-center space-x-2 ${
@@ -1679,10 +1663,26 @@ const ComplaintManagement = () => {
 };
 
 const DuplicateComplaintModal = ({ complaint, isDarkMode, duplicateMutation, onClose }) => {
+  const { data: stores = [] } = useStoresList();
+  const storeOptions = React.useMemo(
+    () =>
+      stores
+        .map((st) => st.name)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
+    [stores],
+  );
+  const storeIdFor = (name) =>
+    stores.find(
+      (st) =>
+        String(st.name).trim().toLowerCase() ===
+        String(name || "").trim().toLowerCase(),
+    )?._id ?? "";
   const [formData, setFormData] = useState({
     title: complaint.title || "",
     description: complaint.description || "",
-    location: complaint.location || "",
+    storeId: complaint.store?._id || complaint.store || "",
+    storeName: complaint.store?.name || "",
     priority: complaint.priority || "medium",
   });
 
@@ -1759,9 +1759,15 @@ const DuplicateComplaintModal = ({ complaint, isDarkMode, duplicateMutation, onC
           <div>
             <label className={labelCls}>Store Name *</label>
             <StoreDropdown
-              options={STORE_OPTIONS}
-              value={formData.location}
-              onChange={(val) => setFormData((prev) => ({ ...prev, location: val }))}
+              options={storeOptions}
+              value={formData.storeName}
+              onChange={(val) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  storeName: val,
+                  storeId: storeIdFor(val),
+                }))
+              }
               isDarkMode={isDarkMode}
             />
           </div>
@@ -1816,10 +1822,26 @@ const DuplicateComplaintModal = ({ complaint, isDarkMode, duplicateMutation, onC
 };
 
 const EditComplaintModal = ({ complaint, isDarkMode, updateMutation, onClose }) => {
+  const { data: stores = [] } = useStoresList();
+  const storeOptions = React.useMemo(
+    () =>
+      stores
+        .map((st) => st.name)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
+    [stores],
+  );
+  const storeIdFor = (name) =>
+    stores.find(
+      (st) =>
+        String(st.name).trim().toLowerCase() ===
+        String(name || "").trim().toLowerCase(),
+    )?._id ?? "";
   const [formData, setFormData] = useState({
     title: complaint.title || "",
     description: complaint.description || "",
-    location: complaint.location || "",
+    storeId: complaint.store?._id || complaint.store || "",
+    storeName: complaint.store?.name || "",
     priority: complaint.priority || "medium",
   });
   const [existingPhotos, setExistingPhotos] = useState(complaint.photos || []);
@@ -1926,9 +1948,15 @@ const EditComplaintModal = ({ complaint, isDarkMode, updateMutation, onClose }) 
           <div>
             <label className={labelCls}>Store Name *</label>
             <StoreDropdown
-              options={STORE_OPTIONS}
-              value={formData.location}
-              onChange={(val) => setFormData((prev) => ({ ...prev, location: val }))}
+              options={storeOptions}
+              value={formData.storeName}
+              onChange={(val) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  storeName: val,
+                  storeId: storeIdFor(val),
+                }))
+              }
               isDarkMode={isDarkMode}
             />
           </div>

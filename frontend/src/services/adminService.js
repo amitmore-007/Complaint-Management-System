@@ -10,7 +10,7 @@ export const adminService = {
   },
 
   logoutAllDevices: async () => {
-    const { data } = await api.post(endpoints.admin.auth.logoutAllDevices);
+    const { data } = await api.post(endpoints.auth.logoutAllDevices);
     return data;
   },
 

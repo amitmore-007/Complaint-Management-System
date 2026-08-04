@@ -87,7 +87,7 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                     }`}
                   >
                     {record.complaint?.complaintId} ·{" "}
-                    {record.complaint?.location}
+                    {record.complaint?.store?.name}
                   </p>
                 </div>
 

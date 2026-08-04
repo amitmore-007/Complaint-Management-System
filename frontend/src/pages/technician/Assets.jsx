@@ -20,7 +20,6 @@ import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import useAuthStore from "../../store/authStore";
 import api from "../../lib/axios";
-import { STORE_OPTIONS } from "../../utils/storeOptions";
 import { useStoresList } from "../../hooks/useStores";
 
 const TechnicianAssets = () => {
@@ -35,10 +34,11 @@ const TechnicianAssets = () => {
   const [notes, setNotes] = useState("");
   const [activeTab, setActiveTab] = useState("submit");
 
-  const storeOptions = STORE_OPTIONS;
-
   const [contactSearch, setContactSearch] = useState("");
   const { data: stores = [], isLoading: storesLoading, refetch: refetchStores } = useStoresList();
+
+  // The submit form's store picker now uses the live collection too.
+  const storeOptions = stores.map((st) => st.name).filter(Boolean);
 
   const filteredStores = useMemo(() => {
     const q = contactSearch.toLowerCase();

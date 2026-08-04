@@ -1,5 +1,5 @@
 import express from "express";
-import { authenticateToken } from "../middleware/auth.js";
+import { authenticateToken } from "../middleware/roleAuth.js";
 import { authorizeRoles } from "../middleware/roleAuth.js";
 import {
   listStores,

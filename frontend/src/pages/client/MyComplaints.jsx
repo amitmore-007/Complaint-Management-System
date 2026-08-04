@@ -26,6 +26,8 @@ import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import api from "../../lib/axios";
+import { useStoresList } from "../../hooks/useStores";
+import StoreDropdown from "../../components/common/StoreDropdown";
 
 const MyComplaints = () => {
   const { isDarkMode } = useTheme();
@@ -51,7 +53,7 @@ const MyComplaints = () => {
   const fetchComplaints = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get("/client/complaints");
+      const response = await api.get("/complaints");
       setComplaints(response.data.complaints);
     } catch (error) {
       console.error("Failed to fetch complaints:", error);
@@ -77,7 +79,7 @@ const MyComplaints = () => {
           complaint.description
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          complaint.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          String(complaint.store?.name ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
           complaint.complaintId.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -109,13 +111,13 @@ const MyComplaints = () => {
           formData.append("removedPhotos", id);
         });
 
-        await api.put(`/client/complaints/${complaintId}`, formData, {
+        await api.put(`/complaints/${complaintId}`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
       } else {
-        await api.put(`/client/complaints/${complaintId}`, updateData);
+        await api.put(`/complaints/${complaintId}`, updateData);
       }
 
       toast.success("Complaint updated successfully");
@@ -132,7 +134,7 @@ const MyComplaints = () => {
 
   const deleteComplaint = async (complaintId) => {
     try {
-      await api.delete(`/client/complaints/${complaintId}`);
+      await api.delete(`/complaints/${complaintId}`);
       toast.success("Complaint deleted successfully");
       fetchComplaints();
       setDeleteConfirmation(null);
@@ -301,7 +303,7 @@ const MyComplaints = () => {
                 </span>
               </div>
               <p className={isDarkMode ? "text-white" : "text-gray-900"}>
-                {complaint.location}
+                {complaint.store?.name}
               </p>
             </div>
 
@@ -702,10 +704,20 @@ const MyComplaints = () => {
   );
 
   const EditComplaintModal = ({ complaint, onClose, onUpdate }) => {
+    const { data: stores = [] } = useStoresList();
+    const storeOptions = stores.map((st) => st.name).filter(Boolean);
+    const storeIdFor = (name) =>
+      stores.find(
+        (st) =>
+          String(st.name).trim().toLowerCase() ===
+          String(name || "").trim().toLowerCase(),
+      )?._id ?? "";
+
     const [formData, setFormData] = useState({
       title: complaint.title,
       description: complaint.description,
-      location: complaint.location,
+      storeId: complaint.store?._id || complaint.store || "",
+      storeName: complaint.store?.name || "",
       priority: complaint.priority,
     });
 
@@ -892,19 +904,19 @@ const MyComplaints = () => {
                   isDarkMode ? "text-gray-300" : "text-gray-700"
                 }`}
               >
-                Location *
+                Store *
               </label>
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                required
-                className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 ${
-                  isDarkMode
-                    ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                }`}
+              <StoreDropdown
+                options={storeOptions}
+                value={formData.storeName}
+                onChange={(val) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    storeName: val,
+                    storeId: storeIdFor(val),
+                  }))
+                }
+                isDarkMode={isDarkMode}
               />
             </div>
 
@@ -1309,7 +1321,7 @@ const MyComplaints = () => {
                         }`}
                       >
                         <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                        <span className="truncate">{complaint.location}</span>
+                        <span className="truncate">{complaint.store?.name}</span>
                       </span>
                       <span
                         className={`flex items-center space-x-1 ${

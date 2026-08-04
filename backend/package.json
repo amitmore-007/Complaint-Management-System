@@ -7,7 +7,17 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed:stores": "node scripts/seedStores.js"
+    "seed:stores": "node scripts/seedStores.js",
+    "check:layers": "node scripts/checkLayering.js",
+    "fix:user-indexes": "node scripts/fixUserIndexes.js",
+    "fix:user-indexes:dry": "node scripts/fixUserIndexes.js --dry-run",
+    "migrate:users": "node scripts/migrateToUserModel.js",
+    "migrate:users:dry": "node scripts/migrateToUserModel.js --dry-run",
+    "migrate:created-by": "node scripts/migrateComplaintCreatedBy.js",
+    "migrate:created-by:dry": "node scripts/migrateComplaintCreatedBy.js --dry-run",
+    "stores:preflight": "node scripts/preflightStores.js",
+    "stores:backfill": "node scripts/backfillComplaintStores.js",
+    "stores:backfill:dry": "node scripts/backfillComplaintStores.js --dry-run"
   },
   "dependencies": {
     "@fast-csv/format": "^5.0.5",

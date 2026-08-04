@@ -13,7 +13,7 @@ import {
   updateAssetRecord,
   deleteAssetRecord,
 } from "../controllers/equipmentController.js";
-import { authenticateToken } from "../middleware/auth.js";
+import { authenticateToken } from "../middleware/roleAuth.js";
 import { authorizeRoles } from "../middleware/roleAuth.js";
 
 const router = express.Router();

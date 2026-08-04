@@ -20,7 +20,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import StoreDropdown from "../../components/common/StoreDropdown";
-import STORE_OPTIONS from "../../utils/storeOptions";
+import { useStoresList } from "../../hooks/useStores";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
@@ -84,16 +84,15 @@ const TechnicianAssignments = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const storeOptions = useMemo(() => {
-    const map = new Map();
-    (Array.isArray(STORE_OPTIONS) ? STORE_OPTIONS : []).forEach((name) => {
-      const cleaned = String(name ?? "").trim();
-      if (!cleaned) return;
-      const key = cleaned.toLowerCase();
-      if (!map.has(key)) map.set(key, cleaned);
-    });
-    return Array.from(map.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
-  }, []);
+  const { data: stores = [] } = useStoresList();
+  const storeOptions = useMemo(
+    () =>
+      stores
+        .map((st) => st.name)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
+    [stores],
+  );
 
   const filteredAssignments = useMemo(() => {
     let filtered = assignments;
@@ -109,7 +108,7 @@ const TechnicianAssignments = () => {
     if (locationFilter !== "all") {
       const sel = String(locationFilter).trim().toLowerCase();
       filtered = filtered.filter((c) =>
-        String(c?.store?.name ?? c?.location ?? "").trim().toLowerCase() === sel
+        String(c?.store?.name ?? "").trim().toLowerCase() === sel
       );
     }
 
@@ -120,7 +119,7 @@ const TechnicianAssignments = () => {
           c.title.toLowerCase().includes(q) ||
           c.description.toLowerCase().includes(q) ||
           String(c.store?.name ?? "").toLowerCase().includes(q) ||
-          c.location.toLowerCase().includes(q) ||
+          String(c.store?.name ?? "").toLowerCase().includes(q) ||
           c.complaintId.toLowerCase().includes(q),
       );
     }
@@ -711,9 +710,7 @@ const TechnicianAssignments = () => {
                           <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                           <span className="truncate">
                             <strong>Creator:</strong>{" "}
-                            {complaint.client?.name ||
-                              complaint.createdByAdmin?.name ||
-                              complaint.createdByTechnician?.name ||
+                            {complaint.createdBy?.name ||
                               "N/A"}
                             <span
                               className={`ml-1 text-xs px-1.5 py-0.5 rounded ${
@@ -733,7 +730,7 @@ const TechnicianAssignments = () => {
                         >
                           <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                           <span className="truncate">
-                            <strong>Location:</strong> {complaint.location}
+                            <strong>Store:</strong> {complaint.store?.name}
                           </span>
                         </div>
                         <div

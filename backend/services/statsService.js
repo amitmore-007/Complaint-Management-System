@@ -1,17 +1,9 @@
-import Complaint from "../models/Complaint.js";
-import Technician from "../models/Technician.js";
+import { statsData } from "../data/statsData.js";
 
-const COMPLAINT_FIELDS =
-  "complaintId title description location priority status createdAt completedAt resolvedAt assignedAt startedAt";
-
-const POPULATE_OPTIONS = [
-  { path: "client", select: "name phoneNumber" },
-  { path: "createdByTechnician", select: "name phoneNumber" },
-  { path: "createdByAdmin", select: "name phoneNumber" },
-  { path: "assignedTechnician", select: "name phoneNumber" },
-  { path: "assignedBy", select: "name" },
-  { path: "store", select: "name managers" },
-];
+/**
+ * Analytics shaping. Every query lives in data/statsData.js; this file turns
+ * raw rows into the shapes the report cards expect.
+ */
 
 const periodFormatByInterval = (interval) => {
   switch (interval) {
@@ -25,6 +17,7 @@ const periodFormatByInterval = (interval) => {
   }
 };
 
+/** Outer-join two period-keyed series into one sorted timeline. */
 const mergeTimeSeries = ({ createdRows, resolvedRows }) => {
   const map = new Map();
 
@@ -59,104 +52,27 @@ export const getComplaintsCreatedVsResolved = async ({
   to,
   interval,
   timezone,
-}) => {
-  const format = periodFormatByInterval(interval);
-
-  const [result] = await Complaint.aggregate([
-    {
-      $facet: {
-        created: [
-          {
-            $match: {
-              createdAt: { $gte: from, $lt: to },
-            },
-          },
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format,
-                  date: "$createdAt",
-                  timezone,
-                },
-              },
-              created: { $sum: 1 },
-            },
-          },
-          { $sort: { _id: 1 } },
-        ],
-        resolved: [
-          {
-            $match: {
-              status: "resolved",
-              completedAt: { $ne: null, $gte: from, $lt: to },
-            },
-          },
-          {
-            $group: {
-              _id: {
-                $dateToString: {
-                  format,
-                  date: "$completedAt",
-                  timezone,
-                },
-              },
-              resolved: { $sum: 1 },
-            },
-          },
-          { $sort: { _id: 1 } },
-        ],
-      },
-    },
-  ]);
-
-  const createdRows = result?.created || [];
-  const resolvedRows = result?.resolved || [];
-
-  return mergeTimeSeries({ createdRows, resolvedRows });
-};
+}) =>
+  mergeTimeSeries(
+    await statsData.createdVsResolvedSeries({
+      from,
+      to,
+      format: periodFormatByInterval(interval),
+      timezone,
+    }),
+  );
 
 export const getComplaintsCreatedVsResolvedDrilldown = async ({ from, to }) => {
+  const [created, resolved] = await statsData.createdVsResolvedDrilldown({
+    from,
+    to,
+  });
 
-  const [created, resolved] = await Promise.all([
-    Complaint.find({
-      createdAt: { $gte: from, $lt: to },
-    })
-      .select(COMPLAINT_FIELDS)
-      .populate(POPULATE_OPTIONS)
-      .sort({ createdAt: -1, complaintId: -1 })
-      .lean(),
-    Complaint.find({
-      status: "resolved",
-      completedAt: { $ne: null, $gte: from, $lt: to },
-    })
-      .select(COMPLAINT_FIELDS)
-      .populate(POPULATE_OPTIONS)
-      .sort({ completedAt: -1, complaintId: -1 })
-      .lean(),
-  ]);
-
-  return {
-    created,
-    resolved,
-  };
+  return { created, resolved };
 };
 
 export const getComplaintsStatusFunnel = async ({ from, to }) => {
-  const rows = await Complaint.aggregate([
-    {
-      $match: {
-        createdAt: { $gte: from, $lt: to },
-      },
-    },
-    {
-      $group: {
-        _id: "$status",
-        count: { $sum: 1 },
-      },
-    },
-  ]);
-
+  const rows = await statsData.statusCounts({ from, to });
   const map = new Map(rows.map((r) => [r._id, r.count || 0]));
 
   const pending = map.get("pending") || 0;
@@ -173,281 +89,76 @@ export const getComplaintsStatusFunnel = async ({ from, to }) => {
   };
 };
 
-export const getComplaintsStoreLeaderboard = async ({
-  from,
-  to,
-  limit = 10,
-}) => {
-  const rows = await Complaint.aggregate([
-    {
-      $match: {
-        createdAt: { $gte: from, $lt: to },
-      },
-    },
-    {
-      $addFields: {
-        locationTrim: {
-          $trim: {
-            input: { $ifNull: ["$location", ""] },
-          },
-        },
-      },
-    },
-    {
-      $addFields: {
-        locationKey: { $toLower: "$locationTrim" },
-        locationLabel: {
-          $cond: [
-            { $gt: [{ $strLenCP: "$locationTrim" }, 0] },
-            "$locationTrim",
-            "Unknown",
-          ],
-        },
-      },
-    },
-    {
-      $group: {
-        _id: "$locationKey",
-        storeName: { $first: "$locationLabel" },
-        total: { $sum: 1 },
-        resolved: {
-          $sum: {
-            $cond: [{ $eq: ["$status", "resolved"] }, 1, 0],
-          },
-        },
-        unresolved: {
-          $sum: {
-            $cond: [{ $ne: ["$status", "resolved"] }, 1, 0],
-          },
-        },
-      },
-    },
-    {
-      $project: {
-        _id: 0,
-        storeName: 1,
-        total: 1,
-        resolved: 1,
-        unresolved: 1,
-      },
-    },
-    { $sort: { total: -1, unresolved: -1, storeName: 1 } },
-    { $limit: Math.max(1, Math.min(Number(limit) || 10, 50)) },
-  ]);
+export const getComplaintsStatusFunnelDrilldown = ({ status, from, to }) =>
+  statsData.statusDrilldown({ status, from, to });
 
-  return rows;
-};
-
-export const getComplaintsTimeToResolve = async ({
-  from,
-  to,
-  interval,
-  timezone,
-}) => {
-  const format = periodFormatByInterval(interval);
-
-  const rows = await Complaint.aggregate([
-    {
-      $addFields: {
-        resolvedDate: { $ifNull: ["$completedAt", "$resolvedAt"] },
-      },
-    },
-    {
-      $match: {
-        status: "resolved",
-        resolvedDate: { $ne: null, $gte: from, $lt: to },
-        createdAt: { $ne: null },
-      },
-    },
-    {
-      $project: {
-        resolvedDate: 1,
-        minutesToResolve: {
-          $dateDiff: {
-            startDate: "$createdAt",
-            endDate: "$resolvedDate",
-            unit: "minute",
-            timezone,
-          },
-        },
-      },
-    },
-    {
-      $group: {
-        _id: {
-          $dateToString: {
-            format,
-            date: "$resolvedDate",
-            timezone,
-          },
-        },
-        avgMinutes: { $avg: "$minutesToResolve" },
-        count: { $sum: 1 },
-      },
-    },
-    { $sort: { _id: 1 } },
-    {
-      $project: {
-        _id: 0,
-        period: "$_id",
-        count: 1,
-        avgHours: {
-          $divide: ["$avgMinutes", 60],
-        },
-      },
-    },
-  ]);
-
-  return rows;
-};
-
-export const getComplaintsAgingBuckets = async ({ from, to, timezone }) => {
-  const rows = await Complaint.aggregate([
-    {
-      $match: {
-        createdAt: { $gte: from, $lt: to },
-        status: { $ne: "resolved" },
-      },
-    },
-    {
-      $addFields: {
-        ageDays: {
-          $dateDiff: {
-            startDate: "$createdAt",
-            endDate: to,
-            unit: "day",
-            timezone,
-          },
-        },
-      },
-    },
-    {
-      $addFields: {
-        bucket: {
-          $switch: {
-            branches: [
-              { case: { $lte: ["$ageDays", 1] }, then: "0-1d" },
-              { case: { $lte: ["$ageDays", 3] }, then: "2-3d" },
-              { case: { $lte: ["$ageDays", 7] }, then: "4-7d" },
-              { case: { $lte: ["$ageDays", 14] }, then: "8-14d" },
-              { case: { $lte: ["$ageDays", 30] }, then: "15-30d" },
-            ],
-            default: "30d+",
-          },
-        },
-      },
-    },
-    {
-      $group: {
-        _id: "$bucket",
-        count: { $sum: 1 },
-      },
-    },
-    {
-      $addFields: {
-        sortKey: {
-          $switch: {
-            branches: [
-              { case: { $eq: ["$_id", "0-1d"] }, then: 1 },
-              { case: { $eq: ["$_id", "2-3d"] }, then: 2 },
-              { case: { $eq: ["$_id", "4-7d"] }, then: 3 },
-              { case: { $eq: ["$_id", "8-14d"] }, then: 4 },
-              { case: { $eq: ["$_id", "15-30d"] }, then: 5 },
-              { case: { $eq: ["$_id", "30d+"] }, then: 6 },
-            ],
-            default: 99,
-          },
-        },
-      },
-    },
-    { $sort: { sortKey: 1 } },
-    {
-      $project: {
-        _id: 0,
-        bucket: "$_id",
-        count: 1,
-      },
-    },
-  ]);
-
-  // Ensure all buckets exist, even if count is 0
-  const order = ["0-1d", "2-3d", "4-7d", "8-14d", "15-30d", "30d+"];
-  const map = new Map(rows.map((r) => [r.bucket, r.count || 0]));
-  return order.map((b) => ({ bucket: b, count: map.get(b) || 0 }));
-};
+export const getComplaintsStoreLeaderboard = ({ from, to, limit = 10 }) =>
+  statsData.storeLeaderboard({ from, to, limit });
 
 export const getComplaintsStoreLeaderboardDrilldown = async ({
   storeName,
   from,
   to,
 }) => {
-  const locationKey = String(storeName || "")
-    .trim()
-    .toLowerCase();
+  const complaints = await statsData.storeLeaderboardDrilldown({
+    storeName,
+    from,
+    to,
+  });
 
-  const complaints = await Complaint.find({
-    createdAt: { $gte: from, $lt: to },
-    $expr: {
-      $eq: [
-        {
-          $toLower: {
-            $trim: { input: { $ifNull: ["$location", ""] } },
-          },
-        },
-        locationKey,
-      ],
-    },
-  })
-    .select(COMPLAINT_FIELDS)
-    .populate(POPULATE_OPTIONS)
-    .sort({ createdAt: -1 })
-    .lean();
-
-  const resolved = complaints.filter((c) => c.status === "resolved");
-  const unresolved = complaints.filter((c) => c.status !== "resolved");
-
-  return { total: complaints, resolved, unresolved };
+  return {
+    total: complaints,
+    resolved: complaints.filter((c) => c.status === "resolved"),
+    unresolved: complaints.filter((c) => c.status !== "resolved"),
+  };
 };
 
-export const getTechniciansAssignedVsResolved = async ({ from, to }) => {
-  const [result] = await Complaint.aggregate([
-    {
-      $facet: {
-        assigned: [
-          {
-            $match: {
-              assignedTechnician: { $ne: null },
-              assignedAt: { $ne: null, $gte: from, $lt: to },
-            },
-          },
-          {
-            $group: {
-              _id: "$assignedTechnician",
-              assigned: { $sum: 1 },
-            },
-          },
-        ],
-        resolved: [
-          {
-            $match: {
-              assignedTechnician: { $ne: null },
-              status: "resolved",
-              completedAt: { $ne: null, $gte: from, $lt: to },
-            },
-          },
-          {
-            $group: {
-              _id: "$assignedTechnician",
-              resolved: { $sum: 1 },
-            },
-          },
-        ],
-      },
-    },
-  ]);
+export const getComplaintsTimeToResolve = ({ from, to, interval, timezone }) =>
+  statsData.timeToResolveSeries({
+    from,
+    to,
+    format: periodFormatByInterval(interval),
+    timezone,
+  });
 
-  const assignedRows = result?.assigned || [];
-  const resolvedRows = result?.resolved || [];
+export const getComplaintsTimeToResolveDrilldown = async ({ from, to }) => {
+  const complaints = await statsData.timeToResolveDrilldown({ from, to });
+
+  return complaints.map((c) => {
+    const resolvedDate = c.completedAt || c.resolvedAt;
+    const hoursToResolve =
+      resolvedDate && c.createdAt
+        ? Math.round(
+            ((new Date(resolvedDate).getTime() -
+              new Date(c.createdAt).getTime()) /
+              (1000 * 60 * 60)) *
+              10,
+          ) / 10
+        : null;
+
+    return { ...c, hoursToResolve };
+  });
+};
+
+const AGING_BUCKET_ORDER = ["0-1d", "2-3d", "4-7d", "8-14d", "15-30d", "30d+"];
+
+export const getComplaintsAgingBuckets = async ({ from, to, timezone }) => {
+  const rows = await statsData.agingBuckets({ from, to, timezone });
+  const map = new Map(rows.map((r) => [r.bucket, r.count || 0]));
+
+  // Every bucket appears, even at zero, so the chart keeps a stable x-axis.
+  return AGING_BUCKET_ORDER.map((bucket) => ({
+    bucket,
+    count: map.get(bucket) || 0,
+  }));
+};
+
+export const getComplaintsAgingDrilldown = ({ bucket, from, to, timezone }) =>
+  statsData.agingDrilldown({ bucket, from, to, timezone });
+
+export const getTechniciansAssignedVsResolved = async ({ from, to }) => {
+  const { assignedRows, resolvedRows } =
+    await statsData.techniciansAssignedVsResolved({ from, to });
 
   const map = new Map();
 
@@ -473,126 +184,32 @@ export const getTechniciansAssignedVsResolved = async ({ from, to }) => {
     }
   }
 
-  const ids = Array.from(map.values()).map((x) => x.technicianId);
-  const technicians = await Technician.find({ _id: { $in: ids } }).select(
-    "name phoneNumber",
+  const entries = Array.from(map.values());
+  const technicians = await statsData.findTechniciansByIds(
+    entries.map((e) => e.technicianId),
   );
-  const techMap = new Map(technicians.map((t) => [String(t._id), t]));
+  const byId = new Map(technicians.map((t) => [String(t._id), t]));
 
-  const rows = Array.from(map.values()).map((x) => {
-    const tech = techMap.get(String(x.technicianId));
-    return {
-      technicianId: x.technicianId,
-      technicianName: tech?.name || "Unknown",
-      technicianPhoneNumber: tech?.phoneNumber,
-      assigned: x.assigned,
-      resolved: x.resolved,
-    };
-  });
-
-  rows.sort((a, b) => b.assigned - a.assigned || b.resolved - a.resolved);
-
-  return rows;
+  return entries
+    .map((entry) => {
+      const tech = byId.get(String(entry.technicianId));
+      return {
+        technicianId: entry.technicianId,
+        technicianName: tech?.name || "Unknown",
+        technicianPhoneNumber: tech?.phoneNumber,
+        assigned: entry.assigned,
+        resolved: entry.resolved,
+      };
+    })
+    .sort((a, b) => b.assigned - a.assigned || b.resolved - a.resolved);
 };
 
-// Drilldown: open complaints in a specific aging bucket
-export const getComplaintsAgingDrilldown = async ({ bucket, from, to, timezone }) => {
-  const agg = await Complaint.aggregate([
-    { $match: { createdAt: { $gte: from, $lt: to }, status: { $ne: "resolved" } } },
-    {
-      $addFields: {
-        ageDays: { $dateDiff: { startDate: "$createdAt", endDate: to, unit: "day", timezone } },
-      },
-    },
-    {
-      $addFields: {
-        _bucket: {
-          $switch: {
-            branches: [
-              { case: { $lte: ["$ageDays", 1] }, then: "0-1d" },
-              { case: { $lte: ["$ageDays", 3] }, then: "2-3d" },
-              { case: { $lte: ["$ageDays", 7] }, then: "4-7d" },
-              { case: { $lte: ["$ageDays", 14] }, then: "8-14d" },
-              { case: { $lte: ["$ageDays", 30] }, then: "15-30d" },
-            ],
-            default: "30d+",
-          },
-        },
-      },
-    },
-    { $match: { _bucket: bucket } },
-    { $project: { _id: 1 } },
-  ]);
-
-  const ids = agg.map((d) => d._id);
-  return Complaint.find({ _id: { $in: ids } })
-    .select(COMPLAINT_FIELDS)
-    .populate(POPULATE_OPTIONS)
-    .sort({ createdAt: -1 })
-    .lean();
-};
-
-// Drilldown: resolved complaints in a specific time-to-resolve period
-export const getComplaintsTimeToResolveDrilldown = async ({ from, to }) => {
-  const complaints = await Complaint.find({
-    status: "resolved",
-    createdAt: { $ne: null },
-    $or: [
-      { completedAt: { $ne: null, $gte: from, $lt: to } },
-      { completedAt: null, resolvedAt: { $ne: null, $gte: from, $lt: to } },
-    ],
-  })
-    .select(COMPLAINT_FIELDS)
-    .populate(POPULATE_OPTIONS)
-    .sort({ completedAt: -1, resolvedAt: -1 })
-    .lean();
-
-  return complaints.map((c) => {
-    const resolvedDate = c.completedAt || c.resolvedAt;
-    const hoursToResolve =
-      resolvedDate && c.createdAt
-        ? Math.round(
-            ((new Date(resolvedDate).getTime() - new Date(c.createdAt).getTime()) /
-              (1000 * 60 * 60)) *
-              10,
-          ) / 10
-        : null;
-    return { ...c, hoursToResolve };
-  });
-};
-
-// Drilldown: complaints created in range with a specific status
-export const getComplaintsStatusFunnelDrilldown = async ({ status, from, to }) => {
-  return Complaint.find({
-    createdAt: { $gte: from, $lt: to },
-    status,
-  })
-    .select(COMPLAINT_FIELDS)
-    .populate(POPULATE_OPTIONS)
-    .sort({ createdAt: -1 })
-    .lean();
-};
-
-// Drilldown: complaints for a specific technician (assigned tab vs resolved tab)
 export const getTechnicianDrilldown = async ({ technicianId, from, to }) => {
-  const [assigned, resolved] = await Promise.all([
-    Complaint.find({
-      assignedTechnician: technicianId,
-      assignedAt: { $ne: null, $gte: from, $lt: to },
-    })
-      .select(COMPLAINT_FIELDS)
-      .populate(POPULATE_OPTIONS)
-      .sort({ assignedAt: -1 })
-      .lean(),
-    Complaint.find({
-      assignedTechnician: technicianId,
-      status: "resolved",
-      completedAt: { $ne: null, $gte: from, $lt: to },
-    })
-      .select(COMPLAINT_FIELDS)
-      .populate(POPULATE_OPTIONS)
-      .sort({ completedAt: -1 })
-      .lean(),
-  ]);
+  const [assigned, resolved] = await statsData.technicianDrilldown({
+    technicianId,
+    from,
+    to,
+  });
+
   return { assigned, resolved };
 };

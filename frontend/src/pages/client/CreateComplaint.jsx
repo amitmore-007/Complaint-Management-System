@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useDropzone } from "react-dropzone";
@@ -19,7 +19,7 @@ import {
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import { STORE_OPTIONS } from "../../utils/storeOptions";
+import { useStoresList } from "../../hooks/useStores";
 import StoreDropdown from "../../components/common/StoreDropdown";
 import {
   useCreateClientComplaint,
@@ -38,6 +38,25 @@ const createEmptyRow = () => ({
 
 const CreateComplaint = () => {
   const { isDarkMode } = useTheme();
+
+  // Stores come from the live collection now — the old hardcoded STORE_OPTIONS
+  // list could drift from what actually exists in the database.
+  const { data: stores = [] } = useStoresList();
+  const storeOptions = useMemo(
+    () =>
+      stores
+        .map((s) => s.name)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
+    [stores],
+  );
+  const storeIdByName = useMemo(
+    () =>
+      new Map(stores.map((s) => [String(s.name).trim().toLowerCase(), s._id])),
+    [stores],
+  );
+  const storeIdFor = (name) =>
+    storeIdByName.get(String(name || "").trim().toLowerCase()) ?? "";
   const navigate = useNavigate();
 
   const [mode, setMode] = useState("single");
@@ -94,7 +113,7 @@ const CreateComplaint = () => {
       const formData = new FormData();
       formData.append("title", data.title);
       formData.append("description", data.description);
-      formData.append("location", data.location);
+      formData.append("storeId", storeIdFor(data.location));
       formData.append("priority", data.priority);
       photos.forEach((p) => formData.append("photos", p.file));
 
@@ -155,7 +174,7 @@ const CreateComplaint = () => {
       const complaints = bulkRows.map((r) => ({
         title: r.title.trim(),
         description: r.description.trim(),
-        location: r.location,
+        storeId: storeIdFor(r.location),
         priority: r.priority,
       }));
       const result = await createBulkMutation.mutateAsync(complaints);
@@ -283,7 +302,7 @@ const CreateComplaint = () => {
                   <input type="hidden" {...register("location", { required: "Store selection is required" })} />
                   <StoreDropdown
                     isDarkMode={isDarkMode}
-                    options={STORE_OPTIONS}
+                    options={storeOptions}
                     value={selectedLocation}
                     onChange={(name) => setValue("location", name, { shouldValidate: true })}
                   />
@@ -519,7 +538,7 @@ const CreateComplaint = () => {
                           </label>
                           <StoreDropdown
                             isDarkMode={isDarkMode}
-                            options={STORE_OPTIONS}
+                            options={storeOptions}
                             value={row.location}
                             onChange={(name) => updateRow(row.id, "location", name)}
                           />

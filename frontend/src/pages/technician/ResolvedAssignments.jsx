@@ -323,9 +323,7 @@ const ResolvedAssignments = () => {
                           <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                           <span className="truncate">
                             <strong>Creator:</strong>{" "}
-                            {complaint.client?.name ||
-                              complaint.createdByAdmin?.name ||
-                              complaint.createdByTechnician?.name ||
+                            {complaint.createdBy?.name ||
                               "N/A"}
                             <span
                               className={`ml-1 text-xs px-1.5 py-0.5 rounded ${
@@ -345,7 +343,7 @@ const ResolvedAssignments = () => {
                         >
                           <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                           <span className="truncate">
-                            <strong>Location:</strong> {complaint.location}
+                            <strong>Store:</strong> {complaint.store?.name}
                           </span>
                         </div>
                         <div

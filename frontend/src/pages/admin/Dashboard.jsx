@@ -68,7 +68,7 @@ const AdminDashboard = () => {
 
   const openDetailsModal = async (complaint) => {
     try {
-      const response = await api.get(`/admin/complaints/${complaint._id}`);
+      const response = await api.get(`/complaints/${complaint._id}`);
       setSelectedComplaint(response.data.complaint);
       setShowDetailsModal(true);
     } catch (error) {
@@ -457,9 +457,7 @@ const AdminDashboard = () => {
                         <span className="flex items-center space-x-2">
                           <Users className="h-4 w-4" />
                           <span>
-                            {complaint.client?.name ||
-                              complaint.createdByAdmin?.name ||
-                              complaint.createdByTechnician?.name ||
+                            {complaint.createdBy?.name ||
                               "N/A"}
                             <span
                               className={`ml-2 text-xs px-2 py-0.5 rounded ${
@@ -474,7 +472,7 @@ const AdminDashboard = () => {
                         </span>
                         <span className="flex items-center space-x-2">
                           <MapPin className="h-4 w-4" />
-                          <span>{complaint.location}</span>
+                          <span>{complaint.store?.name}</span>
                         </span>
                         <span className="flex items-center space-x-2">
                           <Calendar className="h-4 w-4" />
@@ -724,9 +722,7 @@ const AdminDashboard = () => {
                               }`}
                             />
                             <span>
-                              {selectedComplaint.client?.name ||
-                                selectedComplaint.createdByAdmin?.name ||
-                                selectedComplaint.createdByTechnician?.name ||
+                              {selectedComplaint.createdBy?.name ||
                                 "N/A"}
                               <span
                                 className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
@@ -750,10 +746,7 @@ const AdminDashboard = () => {
                               }`}
                             />
                             <span>
-                              {selectedComplaint.client?.phoneNumber ||
-                                selectedComplaint.createdByAdmin?.phoneNumber ||
-                                selectedComplaint.createdByTechnician
-                                  ?.phoneNumber ||
+                              {selectedComplaint.createdBy?.phoneNumber ||
                                 "N/A"}
                             </span>
                           </div>
@@ -785,7 +778,7 @@ const AdminDashboard = () => {
                                 isDarkMode ? "text-gray-400" : "text-gray-500"
                               }`}
                             />
-                            <span>{selectedComplaint.location}</span>
+                            <span>{selectedComplaint.store?.name}</span>
                           </div>
                           <div
                             className={`flex items-center space-x-2 ${

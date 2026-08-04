@@ -17,7 +17,7 @@ const systemSettingSchema = new mongoose.Schema(
     },
     updatedByAdmin: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
     },
   },
   { timestamps: true },

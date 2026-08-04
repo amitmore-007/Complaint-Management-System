@@ -1,5 +1,6 @@
-// Master store list for seeding/initialization.
-// Keep in sync with frontend/src/utils/storeOptions.js
+// Master store list, used ONLY to seed the Store collection on a fresh
+// install (utils/seedStores.js). The app reads stores from the database via
+// GET /api/stores — the frontend copy of this list has been removed.
 
 export const STORE_OPTIONS = [
   "Magarpatta",

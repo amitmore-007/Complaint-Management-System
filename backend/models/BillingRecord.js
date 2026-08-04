@@ -63,7 +63,7 @@ const billingRecordSchema = new mongoose.Schema(
     },
     technician: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Technician",
+      ref: "User",
       required: true,
       index: true,
     },
@@ -86,7 +86,7 @@ const billingRecordSchema = new mongoose.Schema(
     },
     updatedByAdmin: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
     },
     updatedByAdminAt: {
       type: Date,

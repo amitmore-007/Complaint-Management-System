@@ -1,53 +1,134 @@
 import api from "../lib/axios";
 import { endpoints } from "../api/endpoints";
 
+const multipart = (payload) =>
+  payload instanceof FormData
+    ? { headers: { "Content-Type": "multipart/form-data" } }
+    : undefined;
+
+/**
+ * One complaint API for every role. The server scopes what you can see and
+ * touch from the JWT, so there is no admin/client/technician variant here —
+ * this used to be three near-identical blocks.
+ */
 export const complaintService = {
-  admin: {
-    list: async (params = {}) => {
-      const { data } = await api.get(endpoints.admin.complaints.root, {
-        params,
+  list: async (params = {}) => {
+    const { data } = await api.get(endpoints.complaints.root, { params });
+    return {
+      complaints: data.complaints ?? [],
+      pagination: data.pagination ?? { total: 0, page: 1, pages: 1 },
+    };
+  },
+
+  // Walks every page. Only for the Excel export, which genuinely needs them all.
+  listAll: async ({ limit = 500 } = {}) => {
+    const all = [];
+    let page = 1;
+    let totalPages = 1;
+
+    while (page <= totalPages) {
+      const { data } = await api.get(endpoints.complaints.root, {
+        params: { page, limit },
       });
+
+      const complaints = Array.isArray(data?.complaints) ? data.complaints : [];
+      all.push(...complaints);
+
+      const serverPages = Number(data?.pagination?.pages);
+      totalPages =
+        Number.isFinite(serverPages) && serverPages > 0
+          ? serverPages
+          : complaints.length < limit
+            ? page
+            : page + 1;
+
+      page += 1;
+    }
+
+    return all;
+  },
+
+  getById: async (complaintId) => {
+    const { data } = await api.get(endpoints.complaints.byId(complaintId));
+    return data.complaint;
+  },
+
+  create: async (formData) => {
+    const { data } = await api.post(endpoints.complaints.root, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+
+  createBulk: async (complaints) => {
+    const { data } = await api.post(endpoints.complaints.bulk, { complaints });
+    return data;
+  },
+
+  update: async (complaintId, payload) => {
+    const { data } = await api.put(
+      endpoints.complaints.byId(complaintId),
+      payload,
+      multipart(payload),
+    );
+    return data;
+  },
+
+  remove: async (complaintId) => {
+    const { data } = await api.delete(endpoints.complaints.byId(complaintId));
+    return data;
+  },
+
+  duplicate: async (complaintId, payload) => {
+    const { data } = await api.post(
+      endpoints.complaints.duplicate(complaintId),
+      payload,
+    );
+    return data;
+  },
+
+  // Technician assignment views
+  assignments: {
+    dashboard: async () => {
+      const { data } = await api.get(endpoints.complaints.assigned);
+      const payload = data?.data ?? {};
+      const complaints = Array.isArray(payload.complaints)
+        ? payload.complaints
+        : [];
+
       return {
-        complaints: data.complaints ?? [],
-        pagination: data.pagination ?? { total: 0, page: 1, pages: 1 },
+        complaints,
+        stats: payload.stats ?? {
+          total: complaints.length,
+          assigned: complaints.filter((c) => c.status === "assigned").length,
+          inProgress: complaints.filter((c) => c.status === "in-progress").length,
+          completed: complaints.filter((c) => c.status === "resolved").length,
+        },
       };
     },
 
-    listAll: async ({ limit = 500 } = {}) => {
-      const allComplaints = [];
-      let page = 1;
-      let totalPages = 1;
-
-      while (page <= totalPages) {
-        const { data } = await api.get(endpoints.admin.complaints.root, {
-          params: { page, limit },
-        });
-
-        const complaints = Array.isArray(data?.complaints)
-          ? data.complaints
-          : [];
-        allComplaints.push(...complaints);
-
-        const serverPages = Number(data?.pagination?.pages);
-        if (Number.isFinite(serverPages) && serverPages > 0) {
-          totalPages = serverPages;
-        } else {
-          totalPages = complaints.length < limit ? page : page + 1;
-        }
-
-        page += 1;
-      }
-
-      return allComplaints;
+    list: async () => {
+      const { data } = await api.get(endpoints.complaints.assigned);
+      return data?.data?.complaints ?? [];
     },
 
-    getById: async (complaintId) => {
-      const { data } = await api.get(
-        endpoints.admin.complaints.byId(complaintId),
+    resolved: async () => {
+      const { data } = await api.get(endpoints.complaints.assignedResolved);
+      return data?.data?.complaints ?? [];
+    },
+
+    updateStatus: async (complaintId, payload) => {
+      const { data } = await api.patch(
+        endpoints.complaints.updateStatus(complaintId),
+        payload,
+        multipart(payload),
       );
-      return data.complaint;
+      return data;
     },
+  },
 
+  // Genuinely admin-only operations
+  admin: {
     assign: async ({ complaintId, technicianId }) => {
       const { data } = await api.post(endpoints.admin.complaints.assign, {
         complaintId,
@@ -76,41 +157,6 @@ export const complaintService = {
       return Boolean(data?.setting?.autoAssignEnabled);
     },
 
-    create: async (formData) => {
-      const { data } = await api.post(
-        endpoints.admin.complaints.root,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
-      );
-      return data;
-    },
-
-    createBulk: async (complaints) => {
-      const { data } = await api.post(endpoints.admin.complaints.bulk, { complaints });
-      return data;
-    },
-
-    update: async (complaintId, payload) => {
-      const { data } = await api.put(
-        endpoints.admin.complaints.update(complaintId),
-        payload,
-        payload instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
-      );
-      return data;
-    },
-
-    duplicate: async (complaintId, payload) => {
-      const { data } = await api.post(endpoints.admin.complaints.duplicate(complaintId), payload);
-      return data;
-    },
-
-    remove: async (complaintId) => {
-      const { data } = await api.delete(endpoints.admin.complaints.byId(complaintId));
-      return data;
-    },
-
     getResolvedNotifyContacts: async () => {
       const { data } = await api.get(
         endpoints.admin.settings.resolvedNotifyContacts,
@@ -126,163 +172,4 @@ export const complaintService = {
       return data.setting;
     },
   },
-
-  client: {
-    list: async (params = {}) => {
-      const { data } = await api.get(endpoints.client.complaints.root, {
-        params,
-      });
-      return data.complaints ?? data;
-    },
-
-    getById: async (complaintId) => {
-      const { data } = await api.get(
-        endpoints.client.complaints.byId(complaintId),
-      );
-      return data.complaint;
-    },
-
-    create: async (formData) => {
-      const { data } = await api.post(
-        endpoints.client.complaints.root,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
-      );
-      return data;
-    },
-
-    createBulk: async (complaints) => {
-      const { data } = await api.post(endpoints.client.complaints.bulk, { complaints });
-      return data;
-    },
-
-    update: async (complaintId, formData) => {
-      const { data } = await api.put(
-        endpoints.client.complaints.byId(complaintId),
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
-      );
-      return data;
-    },
-
-    remove: async (complaintId) => {
-      const { data } = await api.delete(
-        endpoints.client.complaints.byId(complaintId),
-      );
-      return data;
-    },
-  },
-
-  technician: {
-    assignmentsDashboard: async () => {
-      const { data } = await api.get(endpoints.technician.assignments.root);
-
-      if (data?.success) {
-        const payload = data.data || {};
-        const complaints = Array.isArray(payload.complaints)
-          ? payload.complaints
-          : [];
-
-        const stats = payload.stats || {
-          total: complaints.length,
-          assigned: complaints.filter((c) => c.status === "assigned").length,
-          inProgress: complaints.filter((c) => c.status === "in-progress")
-            .length,
-          completed: complaints.filter((c) => c.status === "resolved").length,
-        };
-
-        return { complaints, stats };
-      }
-
-      const complaints =
-        data?.complaints ?? data?.assignments ?? data?.data?.complaints ?? [];
-
-      const safeComplaints = Array.isArray(complaints) ? complaints : [];
-      const stats = {
-        total: safeComplaints.length,
-        assigned: safeComplaints.filter((c) => c.status === "assigned").length,
-        inProgress: safeComplaints.filter((c) => c.status === "in-progress")
-          .length,
-        completed: safeComplaints.filter((c) => c.status === "resolved").length,
-      };
-
-      return { complaints: safeComplaints, stats };
-    },
-
-    assignments: async () => {
-      const { data } = await api.get(endpoints.technician.assignments.root);
-
-      if (data?.success && Array.isArray(data?.data?.complaints)) {
-        return data.data.complaints;
-      }
-
-      return data.complaints ?? data.assignments ?? data;
-    },
-
-    resolvedAssignments: async () => {
-      const { data } = await api.get(endpoints.technician.assignments.resolved);
-
-      if (data?.success && Array.isArray(data?.data?.complaints)) {
-        return data.data.complaints;
-      }
-
-      return data.complaints ?? data.assignments ?? data;
-    },
-
-    myComplaints: async () => {
-      const { data } = await api.get(endpoints.technician.complaints.my);
-      return data.complaints ?? data;
-    },
-
-    create: async (formData) => {
-      const { data } = await api.post(
-        endpoints.technician.complaints.root,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        },
-      );
-      return data;
-    },
-
-    createBulk: async (complaints) => {
-      const { data } = await api.post(endpoints.technician.complaints.bulk, { complaints });
-      return data;
-    },
-
-    update: async (complaintId, payload) => {
-      const { data } = await api.put(
-        endpoints.technician.complaints.update(complaintId),
-        payload,
-        payload instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined,
-      );
-      return data;
-    },
-
-    duplicate: async (complaintId, payload) => {
-      const { data } = await api.post(endpoints.technician.complaints.duplicate(complaintId), payload);
-      return data;
-    },
-
-    updateAssignmentStatus: async (complaintId, payload) => {
-      const { data } = await api.patch(
-        endpoints.technician.assignments.updateStatus(complaintId),
-        payload,
-        payload instanceof FormData
-          ? { headers: { "Content-Type": "multipart/form-data" } }
-          : undefined,
-      );
-      return data;
-    },
-  },
-};
-
-export const resolveComplaintDetailEndpoint = ({ role, id }) => {
-  if (role === "admin") return endpoints.admin.complaints.byId(id);
-  if (role === "client") return endpoints.client.complaints.byId(id);
-  return null;
 };

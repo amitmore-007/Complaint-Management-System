@@ -1,13 +1,8 @@
-import BillingRecord from "../models/BillingRecord.js";
-import Complaint from "../models/Complaint.js";
-import InventoryItem from "../models/InventoryItem.js";
+import { billingRecordData } from "../data/billingRecordData.js";
+import { complaintData } from "../data/complaintData.js";
+import { inventoryData } from "../data/inventoryData.js";
 import { uploadToCloudinary } from "../config/cloudinary.js";
-
-const createHttpError = (statusCode, message) => {
-  const err = new Error(message);
-  err.statusCode = statusCode;
-  return err;
-};
+import { createHttpError } from "../utils/httpError.js";
 
 const parseBoolean = (value, defaultValue = false) => {
   if (value === true || value === false) return value;
@@ -60,9 +55,7 @@ const resolveMaterialAgainstCatalog = async (name) => {
   const itemNameKey = String(name || "").trim().toLowerCase();
   if (!itemNameKey) return null;
 
-  const catalogItem = await InventoryItem.findOne({ itemNameKey }).sort({
-    purchaseDate: -1,
-  });
+  const catalogItem = await inventoryData.findByNameKey(itemNameKey);
   if (!catalogItem) return null;
 
   return { gstType: catalogItem.gstType, gstPercent: catalogItem.gstPercent };
@@ -92,6 +85,34 @@ const indexFilesByFieldName = (files) => {
 };
 
 export const billingService = {
+  // One list for both roles: a technician sees only their own submissions,
+  // an admin sees everything. This used to be two near-identical functions.
+  listBillingRecords: async ({ role, userId, page = 1, limit = 30 }) => {
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 30, 1), 200);
+    const safePage = Math.max(parseInt(page, 10) || 1, 1);
+
+    const filter = role === "admin" ? {} : { technician: userId };
+
+    const [records, total] = await Promise.all([
+      billingRecordData.list({
+        filter,
+        page: safePage,
+        limit: safeLimit,
+      }),
+      billingRecordData.count(filter),
+    ]);
+
+    return {
+      records,
+      pagination: {
+        total,
+        page: safePage,
+        pages: Math.ceil(total / safeLimit),
+        limit: safeLimit,
+      },
+    };
+  },
+
   technician: {
     createBillingRecord: async ({
       technicianId,
@@ -103,11 +124,7 @@ export const billingService = {
         throw createHttpError(400, "complaintId is required");
       }
 
-      const complaint = await Complaint.findById(complaintId)
-        .select(
-          "assignedTechnician status title description location complaintId materialsUsed materials"
-        )
-        .populate("materials.item", "itemName unitRate gstType gstPercent");
+      const complaint = await complaintData.findForBilling(complaintId);
 
       if (!complaint) {
         throw createHttpError(404, "Complaint not found");
@@ -127,9 +144,7 @@ export const billingService = {
         );
       }
 
-      const existing = await BillingRecord.findOne({
-        complaint: complaint._id,
-      });
+      const existing = await billingRecordData.findByComplaint(complaint._id);
       if (existing) {
         throw createHttpError(
           409,
@@ -193,7 +208,7 @@ export const billingService = {
         );
       }
 
-      const billingRecord = new BillingRecord({
+      const billingRecord = await billingRecordData.create({
         complaint: complaint._id,
         technician: technicianId,
         isComplaintResolved: safeIsResolved,
@@ -202,69 +217,17 @@ export const billingService = {
         submittedAt: new Date(),
       });
 
-      await billingRecord.save();
+      await billingRecordData.save(billingRecord);
 
-      return BillingRecord.findById(billingRecord._id)
-        .populate("complaint", "complaintId title description location status")
-        .populate("technician", "name phoneNumber");
+      return billingRecordData.findByIdPopulated(billingRecord._id);
     },
 
-    listBillingRecords: async ({ technicianId, page = 1, limit = 20 }) => {
-      const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 200);
-      const safePage = Math.max(parseInt(page, 10) || 1, 1);
-
-      const filter = { technician: technicianId };
-
-      const records = await BillingRecord.find(filter)
-        .populate("complaint", "complaintId title description location status")
-        .sort({ submittedAt: -1 })
-        .limit(safeLimit)
-        .skip((safePage - 1) * safeLimit);
-
-      const total = await BillingRecord.countDocuments(filter);
-
-      return {
-        records,
-        pagination: {
-          total,
-          page: safePage,
-          pages: Math.ceil(total / safeLimit),
-          limit: safeLimit,
-        },
-      };
-    },
   },
 
   admin: {
-    listBillingRecords: async ({ page = 1, limit = 30 }) => {
-      const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 30, 1), 100);
-      const safePage = Math.max(parseInt(page, 10) || 1, 1);
-
-      const records = await BillingRecord.find({})
-        .populate("complaint", "complaintId title description location status")
-        .populate("technician", "name phoneNumber")
-        .sort({ submittedAt: -1 })
-        .limit(safeLimit)
-        .skip((safePage - 1) * safeLimit);
-
-      const total = await BillingRecord.countDocuments({});
-
-      return {
-        records,
-        pagination: {
-          total,
-          page: safePage,
-          pages: Math.ceil(total / safeLimit),
-          limit: safeLimit,
-        },
-      };
-    },
 
     getBillingRecord: async ({ id }) => {
-      const record = await BillingRecord.findById(id)
-        .populate("complaint", "complaintId title description location status")
-        .populate("technician", "name phoneNumber")
-        .populate("updatedByAdmin", "name phoneNumber");
+      const record = await billingRecordData.findByIdPopulated(id);
 
       if (!record) {
         throw createHttpError(404, "Billing record not found");
@@ -280,7 +243,7 @@ export const billingService = {
       isComplaintResolved,
       materials,
     }) => {
-      const record = await BillingRecord.findById(id);
+      const record = await billingRecordData.findById(id);
       if (!record) {
         throw createHttpError(404, "Billing record not found");
       }
@@ -335,17 +298,10 @@ export const billingService = {
       record.updatedByAdmin = adminId;
       record.updatedByAdminAt = new Date();
 
-      await record.save();
+      await billingRecordData.save(record);
 
-      return BillingRecord.findById(record._id)
-        .populate("complaint", "complaintId title description location status")
-        .populate("technician", "name phoneNumber")
-        .populate("updatedByAdmin", "name");
+      return billingRecordData.findByIdPopulated(record._id);
     },
   },
 };
 
-export const getHttpErrorStatus = (error) => {
-  const statusCode = error?.statusCode;
-  return Number.isInteger(statusCode) ? statusCode : null;
-};

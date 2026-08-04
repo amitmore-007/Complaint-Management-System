@@ -24,7 +24,7 @@ import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import { useMyComplaints, useTechnicianDuplicateComplaint, useUpdateTechnicianComplaint } from "../../hooks/useComplaints";
 import StoreDropdown from "../../components/common/StoreDropdown";
-import STORE_OPTIONS from "../../utils/storeOptions";
+import { useStoresList } from "../../hooks/useStores";
 
 const TechnicianMyComplaints = () => {
   const { isDarkMode } = useTheme();
@@ -100,16 +100,15 @@ const TechnicianMyComplaints = () => {
     });
   };
 
-  const storeOptions = React.useMemo(() => {
-    const map = new Map();
-    (Array.isArray(STORE_OPTIONS) ? STORE_OPTIONS : []).forEach((name) => {
-      const cleaned = String(name ?? "").trim();
-      if (!cleaned) return;
-      const key = cleaned.toLowerCase();
-      if (!map.has(key)) map.set(key, cleaned);
-    });
-    return Array.from(map.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
-  }, []);
+  const { data: stores = [] } = useStoresList();
+  const storeOptions = React.useMemo(
+    () =>
+      stores
+        .map((st) => st.name)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
+    [stores],
+  );
 
   const filteredComplaints = React.useMemo(() => {
     let filtered = complaints;
@@ -127,7 +126,7 @@ const TechnicianMyComplaints = () => {
     if (locationFilter !== "all") {
       const sel = String(locationFilter).trim().toLowerCase();
       filtered = filtered.filter((c) =>
-        String(c?.store?.name ?? c?.location ?? "").trim().toLowerCase() === sel
+        String(c?.store?.name ?? "").trim().toLowerCase() === sel
       );
     }
 
@@ -138,7 +137,7 @@ const TechnicianMyComplaints = () => {
           c.title.toLowerCase().includes(q) ||
           c.description.toLowerCase().includes(q) ||
           String(c.store?.name ?? "").toLowerCase().includes(q) ||
-          c.location.toLowerCase().includes(q) ||
+          String(c.store?.name ?? "").toLowerCase().includes(q) ||
           c.complaintId.toLowerCase().includes(q),
       );
     }
@@ -415,7 +414,7 @@ const TechnicianMyComplaints = () => {
                             isDarkMode ? "text-gray-300" : "text-gray-700"
                           }
                         >
-                          {complaint.location}
+                          {complaint.store?.name}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -623,7 +622,7 @@ const TechnicianMyComplaints = () => {
                     <p
                       className={isDarkMode ? "text-gray-300" : "text-gray-700"}
                     >
-                      {selectedComplaint.location}
+                      {selectedComplaint.store?.name}
                     </p>
                   </div>
 
@@ -801,10 +800,26 @@ const TechnicianMyComplaints = () => {
 };
 
 const DuplicateComplaintModal = ({ complaint, isDarkMode, duplicateMutation, onClose }) => {
+  const { data: stores = [] } = useStoresList();
+  const storeOptions = React.useMemo(
+    () =>
+      stores
+        .map((st) => st.name)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
+    [stores],
+  );
+  const storeIdFor = (name) =>
+    stores.find(
+      (st) =>
+        String(st.name).trim().toLowerCase() ===
+        String(name || "").trim().toLowerCase(),
+    )?._id ?? "";
   const [formData, setFormData] = useState({
     title: complaint.title || "",
     description: complaint.description || "",
-    location: complaint.location || "",
+    storeId: complaint.store?._id || complaint.store || "",
+    storeName: complaint.store?.name || "",
     priority: complaint.priority || "medium",
   });
 
@@ -881,9 +896,15 @@ const DuplicateComplaintModal = ({ complaint, isDarkMode, duplicateMutation, onC
           <div>
             <label className={labelCls}>Store Name *</label>
             <StoreDropdown
-              options={STORE_OPTIONS}
-              value={formData.location}
-              onChange={(val) => setFormData((prev) => ({ ...prev, location: val }))}
+              options={storeOptions}
+              value={formData.storeName}
+              onChange={(val) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  storeName: val,
+                  storeId: storeIdFor(val),
+                }))
+              }
               isDarkMode={isDarkMode}
             />
           </div>
@@ -938,10 +959,26 @@ const DuplicateComplaintModal = ({ complaint, isDarkMode, duplicateMutation, onC
 };
 
 const EditComplaintModal = ({ complaint, isDarkMode, updateMutation, onClose }) => {
+  const { data: stores = [] } = useStoresList();
+  const storeOptions = React.useMemo(
+    () =>
+      stores
+        .map((st) => st.name)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
+    [stores],
+  );
+  const storeIdFor = (name) =>
+    stores.find(
+      (st) =>
+        String(st.name).trim().toLowerCase() ===
+        String(name || "").trim().toLowerCase(),
+    )?._id ?? "";
   const [formData, setFormData] = useState({
     title: complaint.title || "",
     description: complaint.description || "",
-    location: complaint.location || "",
+    storeId: complaint.store?._id || complaint.store || "",
+    storeName: complaint.store?.name || "",
     priority: complaint.priority || "medium",
     store: complaint.store?._id || complaint.store || "",
   });
@@ -1049,7 +1086,7 @@ const EditComplaintModal = ({ complaint, isDarkMode, updateMutation, onClose }) 
           {/* Location */}
           <div>
             <label className={labelCls}>Location *</label>
-            <input type="text" name="location" value={formData.location} onChange={handleChange} required className={inputCls} />
+            {/* store is picked below; free-text location no longer exists */}
           </div>
 
           {/* Store */}

@@ -15,7 +15,7 @@ export const billingKeys = {
 export const useTechnicianBillingRecords = (params = {}) => {
   return useQuery({
     queryKey: billingKeys.technicianList(params),
-    queryFn: () => billingService.technician.list(params),
+    queryFn: () => billingService.list(params),
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: "always",
@@ -26,7 +26,7 @@ export const useCreateBillingRecord = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (formData) => billingService.technician.create(formData),
+    mutationFn: (formData) => billingService.create(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: billingKeys.technicianRoot() });
       // Also refresh admin lists if already opened in another tab
@@ -38,7 +38,7 @@ export const useCreateBillingRecord = () => {
 export const useAdminBillingRecords = (params = {}) => {
   return useQuery({
     queryKey: billingKeys.adminList(params),
-    queryFn: () => billingService.admin.list(params),
+    queryFn: () => billingService.list(params),
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: "always",
@@ -48,7 +48,7 @@ export const useAdminBillingRecords = (params = {}) => {
 export const useAdminBillingRecord = (id, options = {}) => {
   return useQuery({
     queryKey: billingKeys.adminDetail(id),
-    queryFn: () => billingService.admin.getById(id),
+    queryFn: () => billingService.getById(id),
     enabled: !!id && options.enabled !== false,
     staleTime: 0,
   });
@@ -58,7 +58,7 @@ export const useUpdateAdminBillingRecord = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, payload }) => billingService.admin.update(id, payload),
+    mutationFn: ({ id, payload }) => billingService.update(id, payload),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: billingKeys.adminRoot() });
       if (variables?.id) {

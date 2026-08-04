@@ -33,7 +33,7 @@ export const complaintKeys = {
 export const useComplaints = (filters = {}) => {
   return useQuery({
     queryKey: complaintKeys.list(filters),
-    queryFn: () => complaintService.admin.list(filters),
+    queryFn: () => complaintService.list(filters),
     // Admin needs to see technician-created complaints without hard refresh.
     staleTime: 0,
     refetchOnMount: "always",
@@ -47,13 +47,7 @@ export const useComplaints = (filters = {}) => {
 export const useComplaint = (id, options = {}) => {
   return useQuery({
     queryKey: complaintKeys.detail(id),
-    queryFn: async () => {
-      const userRole = options.role || "admin";
-      if (userRole === "admin") return complaintService.admin.getById(id);
-      if (userRole === "client") return complaintService.client.getById(id);
-
-      throw new Error("Complaint detail is not available for technician role");
-    },
+    queryFn: () => complaintService.getById(id),
     enabled: !!id && options.enabled !== false,
     staleTime: 0, // Always fetch fresh data for complaint details
   });
@@ -64,7 +58,7 @@ export const useAssignedComplaints = () => {
   return useQuery({
     queryKey: complaintKeys.technicianAssignments(),
     queryFn: async () => {
-      return complaintService.technician.assignments();
+      return complaintService.assignments.list();
     },
     // Technician assignments should reflect admin assignments quickly.
     staleTime: 0,
@@ -79,7 +73,7 @@ export const useMyComplaints = () => {
   return useQuery({
     queryKey: complaintKeys.technicianMyComplaints(),
     queryFn: async () => {
-      return complaintService.technician.myComplaints();
+      return complaintService.list({ limit: 100 });
     },
   });
 };
@@ -89,7 +83,7 @@ export const useClientComplaints = (filters = {}) => {
   return useQuery({
     queryKey: complaintKeys.clientList(filters),
     queryFn: async () => {
-      return complaintService.client.list(filters);
+      return complaintService.list(filters);
     },
     staleTime: 60_000,
     refetchOnMount: true,
@@ -102,7 +96,7 @@ export const useTechnicianDashboardAssignments = () => {
   return useQuery({
     queryKey: dashboardKeys.technicianAssignments(),
     queryFn: async () => {
-      return complaintService.technician.assignmentsDashboard();
+      return complaintService.assignments.dashboard();
     },
     staleTime: 60_000,
     refetchOnMount: true,
@@ -115,7 +109,7 @@ export const useResolvedComplaints = () => {
   return useQuery({
     queryKey: complaintKeys.technicianResolved(),
     queryFn: async () => {
-      return complaintService.technician.resolvedAssignments();
+      return complaintService.assignments.resolved();
     },
   });
 };
@@ -126,7 +120,7 @@ export const useCreateComplaint = () => {
 
   return useMutation({
     mutationFn: async (complaintData) => {
-      return complaintService.admin.create(complaintData);
+      return complaintService.create(complaintData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
@@ -140,7 +134,7 @@ export const useCreateComplaint = () => {
 export const useCreateAdminBulkComplaints = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (complaints) => complaintService.admin.createBulk(complaints),
+    mutationFn: async (complaints) => complaintService.createBulk(complaints),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
@@ -152,7 +146,7 @@ export const useCreateAdminBulkComplaints = () => {
 export const useCreateClientBulkComplaints = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (complaints) => complaintService.client.createBulk(complaints),
+    mutationFn: async (complaints) => complaintService.createBulk(complaints),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.client() });
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
@@ -165,7 +159,7 @@ export const useCreateClientBulkComplaints = () => {
 export const useCreateTechnicianBulkComplaints = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (complaints) => complaintService.technician.createBulk(complaints),
+    mutationFn: async (complaints) => complaintService.createBulk(complaints),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.technicianMyComplaints() });
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
@@ -178,7 +172,7 @@ export const useCreateTechnicianBulkComplaints = () => {
 export const useUpdateAdminComplaint = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ complaintId, payload }) => complaintService.admin.update(complaintId, payload),
+    mutationFn: ({ complaintId, payload }) => complaintService.update(complaintId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
@@ -190,7 +184,7 @@ export const useUpdateAdminComplaint = () => {
 export const useUpdateTechnicianComplaint = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ complaintId, payload }) => complaintService.technician.update(complaintId, payload),
+    mutationFn: ({ complaintId, payload }) => complaintService.update(complaintId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.technicianMyComplaints() });
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
@@ -202,7 +196,7 @@ export const useUpdateTechnicianComplaint = () => {
 export const useAdminDeleteComplaint = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (complaintId) => complaintService.admin.remove(complaintId),
+    mutationFn: (complaintId) => complaintService.remove(complaintId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
@@ -214,7 +208,7 @@ export const useAdminDeleteComplaint = () => {
 export const useAdminDuplicateComplaint = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ complaintId, payload }) => complaintService.admin.duplicate(complaintId, payload),
+    mutationFn: ({ complaintId, payload }) => complaintService.duplicate(complaintId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
@@ -226,7 +220,7 @@ export const useAdminDuplicateComplaint = () => {
 export const useTechnicianDuplicateComplaint = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ complaintId, payload }) => complaintService.technician.duplicate(complaintId, payload),
+    mutationFn: ({ complaintId, payload }) => complaintService.duplicate(complaintId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.technicianMyComplaints() });
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
@@ -240,7 +234,7 @@ export const useCreateAdminComplaint = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (formData) => complaintService.admin.create(formData),
+    mutationFn: async (formData) => complaintService.create(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
       // Admin-created complaints can belong to a client; make sure client views
@@ -256,7 +250,7 @@ export const useCreateClientComplaint = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (formData) => complaintService.client.create(formData),
+    mutationFn: async (formData) => complaintService.create(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.client() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboardStats() });
@@ -272,7 +266,7 @@ export const useCreateTechnicianComplaint = () => {
 
   return useMutation({
     mutationFn: async (formData) =>
-      complaintService.technician.create(formData),
+      complaintService.create(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: complaintKeys.technicianMyComplaints(),
@@ -379,7 +373,7 @@ export const useUpdateComplaintStatus = () => {
 
   return useMutation({
     mutationFn: async ({ id, payload }) => {
-      return complaintService.technician.updateAssignmentStatus(id, payload);
+      return complaintService.assignments.updateStatus(id, payload);
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });

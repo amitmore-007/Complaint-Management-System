@@ -1,3 +1,7 @@
+// LEGACY — retained ONLY so scripts/migrateToUserModel.js can read the
+// pre-merge collections. No application code imports this; identity now lives
+// in models/User.js with a `role` discriminator. Safe to delete once the
+// migration has been run and verified in production.
 import mongoose from 'mongoose';
 
 const technicianSchema = new mongoose.Schema({

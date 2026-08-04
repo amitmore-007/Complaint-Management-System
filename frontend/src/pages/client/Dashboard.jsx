@@ -235,7 +235,7 @@ const ClientDashboard = () => {
                 </span>
               </div>
               <p className={isDarkMode ? "text-white" : "text-gray-900"}>
-                {complaint.location}
+                {complaint.store?.name}
               </p>
             </div>
 

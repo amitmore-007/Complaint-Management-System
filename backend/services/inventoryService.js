@@ -1,46 +1,17 @@
-import InventoryItem from "../models/InventoryItem.js";
-import Complaint from "../models/Complaint.js";
+import { inventoryData } from "../data/inventoryData.js";
+import { complaintData } from "../data/complaintData.js";
+import { createHttpError } from "../utils/httpError.js";
 
 // Purchased qty (summed across every purchase entry for that item name) minus
 // used qty (summed across every complaint's recorded materials for that item
 // name) — computed fresh each call rather than stored, so it's always
 // consistent with the underlying purchase/complaint records.
 const computeStockBalances = async () => {
-  const purchased = await InventoryItem.aggregate([
-    { $sort: { purchaseDate: -1, createdAt: -1 } },
-    {
-      $group: {
-        _id: "$itemNameKey",
-        itemId: { $first: "$_id" },
-        itemName: { $first: "$itemName" },
-        gstType: { $first: "$gstType" },
-        gstPercent: { $first: "$gstPercent" },
-        latestUnitRate: { $first: "$unitRate" },
-        purchasedQty: { $sum: "$quantity" },
-      },
-    },
-    { $sort: { itemName: 1 } },
-  ]);
+  const purchased = await inventoryData.aggregatePurchased();
 
-  const usedRows = await Complaint.aggregate([
-    { $match: { materialsUsed: true, "materials.0": { $exists: true } } },
-    { $unwind: "$materials" },
-    {
-      $lookup: {
-        from: InventoryItem.collection.name,
-        localField: "materials.item",
-        foreignField: "_id",
-        as: "invItem",
-      },
-    },
-    { $unwind: "$invItem" },
-    {
-      $group: {
-        _id: "$invItem.itemNameKey",
-        usedQty: { $sum: "$materials.quantity" },
-      },
-    },
-  ]);
+  const usedRows = await complaintData.aggregateMaterialUsage(
+    inventoryData.collectionName(),
+  );
 
   const usedByKey = new Map(usedRows.map((r) => [r._id, r.usedQty]));
 
@@ -59,12 +30,6 @@ const computeStockBalances = async () => {
   });
 };
 
-const createHttpError = (statusCode, message) => {
-  const err = new Error(message);
-  err.statusCode = statusCode;
-  return err;
-};
-
 const toItemNameKey = (name) => String(name || "").trim().toLowerCase();
 
 const validateGstType = (gstType) => {
@@ -76,10 +41,10 @@ const validateGstType = (gstType) => {
 // An item name's GST type/% is fixed once it exists — any new/edited entry
 // sharing that name is forced to match rather than trusting client input.
 const resolveLockedGst = async ({ itemNameKey, gstType, gstPercent, excludeId }) => {
-  const filter = { itemNameKey };
-  if (excludeId) filter._id = { $ne: excludeId };
-
-  const existing = await InventoryItem.findOne(filter).sort({ purchaseDate: -1 });
+  const existing = await inventoryData.findLatestByNameKey({
+    itemNameKey,
+    excludeId,
+  });
   if (existing) {
     return { gstType: existing.gstType, gstPercent: existing.gstPercent };
   }
@@ -122,7 +87,7 @@ export const inventoryService = {
       const itemNameKey = toItemNameKey(trimmedName);
       const lockedGst = await resolveLockedGst({ itemNameKey, gstType, gstPercent });
 
-      const item = new InventoryItem({
+      const item = await inventoryData.create({
         itemName: trimmedName,
         itemNameKey,
         purchaseDate: new Date(purchaseDate),
@@ -133,7 +98,6 @@ export const inventoryService = {
         createdBy: adminId,
       });
 
-      await item.save();
       return item;
     },
 
@@ -141,31 +105,14 @@ export const inventoryService = {
       const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 30, 1), 100);
       const safePage = Math.max(parseInt(page, 10) || 1, 1);
 
-      const records = await InventoryItem.find({})
-        .sort({ purchaseDate: -1, createdAt: -1 })
-        .limit(safeLimit)
-        .skip((safePage - 1) * safeLimit);
+      const records = await inventoryData.list({
+        page: safePage,
+        limit: safeLimit,
+      });
 
-      const total = await InventoryItem.countDocuments({});
+      const total = await inventoryData.count();
 
-      const [summaryAgg] = await InventoryItem.aggregate([
-        {
-          $group: {
-            _id: null,
-            totalPurchaseValue: { $sum: "$totalAmount" },
-            gstValue: {
-              $sum: {
-                $cond: [{ $eq: ["$gstType", "gst"] }, "$totalAmount", 0],
-              },
-            },
-            nonGstValue: {
-              $sum: {
-                $cond: [{ $eq: ["$gstType", "non-gst"] }, "$totalAmount", 0],
-              },
-            },
-          },
-        },
-      ]);
+      const summary = await inventoryData.summary();
 
       return {
         records,
@@ -175,16 +122,12 @@ export const inventoryService = {
           pages: Math.ceil(total / safeLimit),
           limit: safeLimit,
         },
-        summary: {
-          totalPurchaseValue: summaryAgg?.totalPurchaseValue ?? 0,
-          gstValue: summaryAgg?.gstValue ?? 0,
-          nonGstValue: summaryAgg?.nonGstValue ?? 0,
-        },
+        summary,
       };
     },
 
     updateItem: async ({ id, itemName, purchaseDate, unitRate, quantity, gstType, gstPercent }) => {
-      const item = await InventoryItem.findById(id);
+      const item = await inventoryData.findById(id);
       if (!item) {
         throw createHttpError(404, "Inventory item not found");
       }
@@ -225,12 +168,12 @@ export const inventoryService = {
       item.gstType = lockedGst.gstType;
       item.gstPercent = lockedGst.gstPercent;
 
-      await item.save();
+      await inventoryData.save(item);
       return item;
     },
 
     deleteItem: async ({ id }) => {
-      const item = await InventoryItem.findByIdAndDelete(id);
+      const item = await inventoryData.deleteById(id);
       if (!item) {
         throw createHttpError(404, "Inventory item not found");
       }
@@ -258,7 +201,3 @@ export const inventoryService = {
   },
 };
 
-export const getHttpErrorStatus = (error) => {
-  const statusCode = error?.statusCode;
-  return Number.isInteger(statusCode) ? statusCode : null;
-};

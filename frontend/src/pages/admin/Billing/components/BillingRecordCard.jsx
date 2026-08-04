@@ -45,7 +45,7 @@ const BillingRecordCard = ({ record, isDarkMode, onView }) => {
             } text-sm`}
           >
             <span className="font-semibold">Location:</span>{" "}
-            {record.complaint?.location}
+            {record.complaint?.store?.name}
           </p>
           <p
             className={`${

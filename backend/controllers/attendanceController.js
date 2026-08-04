@@ -1,369 +1,151 @@
-import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
-import { DateTime } from 'luxon';
-import Attendance from '../models/Attendance.js';
-import Admin from '../models/Admin.js';
-import Technician from '../models/Technician.js';
+import { attendanceService } from "../services/attendanceService.js";
+import { respondWithError } from "../utils/httpError.js";
 
-// Bug fix #2: use IST so midnight in India is always correct
-const todayDate = () => DateTime.now().setZone('Asia/Kolkata').toFormat('yyyy-MM-dd');
-
-const secondsSince = (date) => Math.floor((Date.now() - new Date(date).getTime()) / 1000);
-
-// findLast polyfill — DocumentArray on older Node won't have it
-const findLast = (arr, predicate) => {
-  for (let i = arr.length - 1; i >= 0; i--) {
-    if (predicate(arr[i])) return arr[i];
-  }
-  return undefined;
-};
-
-// Returns the user's active (not yet checked-out) session regardless of date.
-// This handles night-shift workers who check in before midnight and check out after.
-const findActiveRecord = (userId) =>
-  Attendance.findOne({ userId: String(userId), currentStatus: { $ne: 'checked_out' } });
+/**
+ * HTTP only. Business rules live in services/attendanceService.js; database
+ * access in data/attendanceData.js.
+ */
 
 // POST /api/attendance/check-in
 export const checkIn = async (req, res) => {
   try {
-    const { id: userId, role: userRole, name: userName, phoneNumber: userPhone } = req.user;
-    const date = todayDate();
-
-    // Block if an active session already exists (covers same-day and night-shift crossover)
-    const active = await findActiveRecord(userId);
-    if (active) {
-      return res.status(400).json({
-        success: false,
-        message: active.date === date
-          ? 'You are already checked in.'
-          : 'You have an active session from a previous shift. Please check out first.',
-      });
-    }
-
-    const now = new Date();
-
-    // If today has a checked-out record, re-open it (split shift / re-check-in)
-    const todayRecord = await Attendance.findOne({ userId: String(userId), date });
-    if (todayRecord) {
-      todayRecord.currentStatus = 'working';
-      todayRecord.currentSessionStart = now;
-      todayRecord.checkOutTime = null;
-      todayRecord.sessions.push({ type: 'work', startTime: now });
-      todayRecord.markModified('sessions');
-      await todayRecord.save();
-      return res.status(200).json({ success: true, attendance: todayRecord });
-    }
-
-    // First check-in of the day
-    const record = await Attendance.create({
-      userId: String(userId),
-      userRole,
-      userName,
-      userPhone,
-      date,
-      checkInTime: now,
-      currentStatus: 'working',
-      currentSessionStart: now,
-      sessions: [{ type: 'work', startTime: now }],
-    });
-
-    res.status(201).json({ success: true, attendance: record });
+    const { record, created } = await attendanceService.checkIn(req.user);
+    res.status(created ? 201 : 200).json({ success: true, attendance: record });
   } catch (error) {
-    console.error('Check-in error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("Check-in error:", error);
+    respondWithError(res, error, "Internal server error");
   }
 };
 
 // POST /api/attendance/break/start
 export const startBreak = async (req, res) => {
   try {
-    const { id: userId } = req.user;
-
-    const record = await findActiveRecord(userId);
-    if (!record) {
-      return res.status(400).json({ success: false, message: 'You have not checked in today.' });
-    }
-    if (record.currentStatus !== 'working') {
-      return res.status(400).json({ success: false, message: 'You are already on a break.' });
-    }
-
-    const now = new Date();
-
-    // close the open work session
-    const openWork = findLast(record.sessions, (s) => s.type === 'work' && !s.endTime);
-    if (openWork) {
-      openWork.endTime = now;
-      record.totalWorkSeconds += secondsSince(openWork.startTime);
-    }
-
-    // open a break session
-    record.sessions.push({ type: 'break', startTime: now });
-    record.currentStatus = 'on_break';
-    record.currentSessionStart = now;
-
-    // Bug fix #4: tell Mongoose the nested array changed
-    record.markModified('sessions');
-    await record.save();
-    res.status(200).json({ success: true, attendance: record });
+    const attendance = await attendanceService.startBreak(req.user.id);
+    res.status(200).json({ success: true, attendance });
   } catch (error) {
-    console.error('Start break error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("Start break error:", error);
+    respondWithError(res, error, "Internal server error");
   }
 };
 
 // POST /api/attendance/break/end
 export const endBreak = async (req, res) => {
   try {
-    const { id: userId } = req.user;
-
-    const record = await findActiveRecord(userId);
-    if (!record || record.currentStatus !== 'on_break') {
-      return res.status(400).json({ success: false, message: 'You are not on a break.' });
-    }
-
-    const now = new Date();
-
-    // close the open break session
-    const openBreak = findLast(record.sessions, (s) => s.type === 'break' && !s.endTime);
-    if (openBreak) {
-      openBreak.endTime = now;
-      record.totalBreakSeconds += secondsSince(openBreak.startTime);
-    }
-
-    // open a new work session
-    record.sessions.push({ type: 'work', startTime: now });
-    record.currentStatus = 'working';
-    record.currentSessionStart = now;
-
-    // Bug fix #4
-    record.markModified('sessions');
-    await record.save();
-    res.status(200).json({ success: true, attendance: record });
+    const attendance = await attendanceService.endBreak(req.user.id);
+    res.status(200).json({ success: true, attendance });
   } catch (error) {
-    console.error('End break error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("End break error:", error);
+    respondWithError(res, error, "Internal server error");
   }
 };
 
 // POST /api/attendance/check-out
 export const checkOut = async (req, res) => {
   try {
-    const { id: userId } = req.user;
-
-    const record = await findActiveRecord(userId);
-    if (!record) {
-      return res.status(400).json({ success: false, message: 'You have not checked in today.' });
-    }
-
-    const now = new Date();
-
-    // close whatever session is open (work or break)
-    const openSession = findLast(record.sessions, (s) => !s.endTime);
-    if (openSession) {
-      openSession.endTime = now;
-      if (openSession.type === 'work') {
-        record.totalWorkSeconds += secondsSince(openSession.startTime);
-      } else {
-        record.totalBreakSeconds += secondsSince(openSession.startTime);
-      }
-    }
-
-    record.currentStatus = 'checked_out';
-    record.currentSessionStart = null;
-    record.checkOutTime = now;
-
-    // Bug fix #4
-    record.markModified('sessions');
-    await record.save();
-    res.status(200).json({ success: true, attendance: record });
+    const attendance = await attendanceService.checkOut(req.user.id);
+    res.status(200).json({ success: true, attendance });
   } catch (error) {
-    console.error('Check-out error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("Check-out error:", error);
+    respondWithError(res, error, "Internal server error");
   }
 };
 
 // GET /api/attendance/today
 export const getToday = async (req, res) => {
   try {
-    const { id: userId } = req.user;
-    const date = todayDate();
-
-    // Try today's record first; fall back to any active session (night-shift crossover)
-    const record =
-      (await Attendance.findOne({ userId: String(userId), date })) ||
-      (await findActiveRecord(userId));
-
-    res.status(200).json({ success: true, attendance: record || null });
+    const attendance = await attendanceService.getToday(req.user.id);
+    res.status(200).json({ success: true, attendance });
   } catch (error) {
-    console.error('Get today error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("Get today error:", error);
+    respondWithError(res, error, "Internal server error");
   }
 };
 
-// GET /api/attendance/history  (any authenticated user — own records)
-// query params: limit (default 30)
+// GET /api/attendance/history
 export const getHistory = async (req, res) => {
   try {
-    const { id: userId } = req.user;
-    const limit = Math.min(parseInt(req.query.limit) || 30, 90);
-
-    const records = await Attendance.find({ userId: String(userId) })
-      .sort({ date: -1 })
-      .limit(limit);
+    const records = await attendanceService.getHistory({
+      userId: req.user.id,
+      limit: req.query.limit,
+    });
 
     res.status(200).json({ success: true, records });
   } catch (error) {
-    console.error('Get history error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("Get history error:", error);
+    respondWithError(res, error, "Internal server error");
   }
 };
 
-// GET /api/attendance/summary  (admin only)
-// query params: date (default today)
+// GET /api/attendance/summary  (admin)
 export const getSummary = async (req, res) => {
   try {
-    const date = req.query.date || todayDate();
-
-    const records = await Attendance.find({ date });
-
-    const working = records.filter((r) => r.currentStatus === 'working').length;
-    const on_break = records.filter((r) => r.currentStatus === 'on_break').length;
-    const checked_out = records.filter((r) => r.currentStatus === 'checked_out').length;
-    const totalCheckedIn = records.length;
-
-    const [activeAdmins, activeTechnicians] = await Promise.all([
-      Admin.countDocuments({ isActive: true }),
-      Technician.countDocuments({ isActive: true }),
-    ]);
-
-    const totalActive = activeAdmins + activeTechnicians;
-    const notCheckedIn = Math.max(0, totalActive - totalCheckedIn);
-
-    res.status(200).json({
-      success: true,
-      summary: { working, on_break, checked_out, total_checked_in: totalCheckedIn, not_checked_in: notCheckedIn, total_active: totalActive },
-    });
+    const summary = await attendanceService.getSummary(req.query.date);
+    res.status(200).json({ success: true, summary });
   } catch (error) {
-    console.error('Summary error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("Summary error:", error);
+    respondWithError(res, error, "Internal server error");
   }
 };
 
-// GET /api/attendance  (admin only)
-// query params: date, userRole, userId, from, to
-// Bug fix #3: date and from/to are mutually exclusive — from/to takes priority if both given
+// GET /api/attendance  (admin)
 export const listAll = async (req, res) => {
   try {
-    const { date, userRole, userId, from, to } = req.query;
-    const filter = {};
-
-    if (from || to) {
-      // date range — ignore single date param
-      filter.date = {};
-      if (from) filter.date.$gte = from;
-      if (to) filter.date.$lte = to;
-    } else if (date) {
-      filter.date = date;
-    }
-
-    if (userRole) filter.userRole = userRole;
-    if (userId) filter.userId = userId;
-
-    const records = await Attendance.find(filter).sort({ date: -1, checkInTime: -1 });
+    const records = await attendanceService.listAll(req.query);
     res.status(200).json({ success: true, records });
   } catch (error) {
-    console.error('List attendance error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("List attendance error:", error);
+    respondWithError(res, error, "Internal server error");
   }
 };
 
-// ── Portal (token-based, no login required) ────────────────────────────────
-
-const portalHashPin = (pin, token) =>
-  crypto.createHmac('sha256', token).update(pin).digest('hex');
-
-const findUserByAttendanceToken = async (token) => {
-  const admin = await Admin.findOne({ attendanceToken: token }).select('+attendanceToken +attendancePin');
-  if (admin) return { user: admin, role: 'admin' };
-  const technician = await Technician.findOne({ attendanceToken: token }).select('+attendanceToken +attendancePin');
-  if (technician) return { user: technician, role: 'technician' };
-  return null;
-};
+// ---- portal (token + PIN, no login required) ----
 
 // POST /api/attendance/portal/:token/session
 export const verifyPortalPin = async (req, res) => {
   try {
-    const { token } = req.params;
-    const { pin } = req.body;
+    const result = await attendanceService.verifyPortalPin({
+      token: req.params.token,
+      pin: req.body.pin,
+    });
 
-    if (!pin || !/^\d{4}$/.test(pin)) {
-      return res.status(400).json({ success: false, message: 'PIN must be exactly 4 digits.' });
-    }
-
-    const result = await findUserByAttendanceToken(token);
-    if (!result) {
-      return res.status(404).json({ success: false, message: 'Invalid or expired link.' });
-    }
-
-    const { user, role } = result;
-
-    if (!user.isActive) {
-      return res.status(403).json({ success: false, message: 'Your account is inactive. Contact admin.' });
-    }
-
-    if (!user.attendancePin) {
-      return res.status(400).json({ success: false, message: 'PIN not configured. Contact admin.' });
-    }
-
-    if (portalHashPin(pin, token) !== user.attendancePin) {
-      return res.status(401).json({ success: false, message: 'Incorrect PIN.' });
-    }
-
-    const sessionToken = jwt.sign(
-      { userId: String(user._id), role, scope: 'attendance-portal' },
-      process.env.JWT_SECRET,
-      { expiresIn: '8h' }
-    );
-
-    res.json({ success: true, sessionToken, user: { name: user.name, role } });
+    res.json({ success: true, ...result });
   } catch (error) {
-    console.error('Portal verify PIN error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("Portal verify PIN error:", error);
+    respondWithError(res, error, "Internal server error");
   }
 };
 
 // GET /api/attendance/portal/:token/status
 export const getPortalStatus = async (req, res) => {
   try {
-    const { id: userId } = req.user;
-    const date = todayDate();
-
-    const attendance =
-      (await Attendance.findOne({ userId: String(userId), date })) ||
-      (await findActiveRecord(userId));
+    const attendance = await attendanceService.getToday(req.user.id);
 
     res.json({
       success: true,
-      attendance: attendance || null,
+      attendance,
       user: { name: req.user.name, role: req.user.role },
     });
   } catch (error) {
-    console.error('Portal status error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    console.error("Portal status error:", error);
+    respondWithError(res, error, "Internal server error");
   }
 };
 
 // POST /api/attendance/portal/:token/record
-// body: { action: 'check_in' | 'check_out' | 'break_start' | 'break_end' }
 export const createPortalRecord = async (req, res) => {
-  const { action } = req.body;
-  const handlers = { check_in: checkIn, check_out: checkOut, break_start: startBreak, break_end: endBreak };
-  const handler = handlers[action];
+  const handlers = {
+    check_in: checkIn,
+    check_out: checkOut,
+    break_start: startBreak,
+    break_end: endBreak,
+  };
 
+  const handler = handlers[req.body.action];
   if (!handler) {
     return res.status(400).json({
       success: false,
-      message: 'Invalid action. Allowed: check_in, check_out, break_start, break_end',
+      message:
+        "Invalid action. Allowed: check_in, check_out, break_start, break_end",
     });
   }
 
@@ -371,8 +153,8 @@ export const createPortalRecord = async (req, res) => {
     await handler(req, res);
   } catch (error) {
     if (!res.headersSent) {
-      console.error('Portal record error:', error);
-      res.status(500).json({ success: false, message: 'Internal server error' });
+      console.error("Portal record error:", error);
+      res.status(500).json({ success: false, message: "Internal server error" });
     }
   }
 };

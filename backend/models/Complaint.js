@@ -23,13 +23,12 @@ const complaintSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    location: {
-      type: String,
-      required: true,
-    },
+    // Where the complaint is. Was previously duplicated as a free-text
+    // `location` string that every consumer read instead of this ref.
     store: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Store",
+      required: true,
     },
     priority: {
       type: String,
@@ -47,30 +46,40 @@ const complaintSchema = new mongoose.Schema(
         publicId: String,
       },
     ],
-    client: {
+    // Whoever raised the complaint, regardless of role. Replaces the three
+    // mutually-exclusive refs below (exactly one was ever set, discriminated by
+    // creatorType), which forced a 3-way null-coalesce at every read site.
+    createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Client",
-    },
-    createdByTechnician: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Technician",
-    },
-    createdByAdmin: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
     },
     creatorType: {
       type: String,
       enum: ["client", "technician", "admin"],
       required: true,
     },
+
+    // DEPRECATED — superseded by createdBy. Retained (unused) for one release so
+    // a rollback is a code revert. Drop once createdBy is verified in production.
+    client: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    createdByTechnician: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    createdByAdmin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     assignedTechnician: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Technician",
+      ref: "User",
     },
     assignedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Admin",
+      ref: "User",
     },
     assignedAt: {
       type: Date,
@@ -142,6 +151,9 @@ const complaintSchema = new mongoose.Schema(
 
 // Create indexes for better performance
 complaintSchema.index({ complaintId: 1 });
+// Serves "my complaints" for every role: { createdBy, creatorType }.
+complaintSchema.index({ createdBy: 1, creatorType: 1 });
+// Deprecated alongside the fields above — drop with them.
 complaintSchema.index({ client: 1 });
 complaintSchema.index({ createdByTechnician: 1 });
 complaintSchema.index({ createdByAdmin: 1 });

@@ -67,8 +67,9 @@ const AuthorizeConsent = () => {
     }
     setIsLoading(true);
     try {
-      await axios.post(`${API_BASE_URL}/${role}/auth/send-otp`, {
+      await axios.post(`${API_BASE_URL}/auth/send-otp`, {
         phoneNumber: `+91${phoneNumber}`,
+        role,
       });
       setStep("otp");
       setCountdown(60);
@@ -83,9 +84,10 @@ const AuthorizeConsent = () => {
   const onVerifyOtp = async (data) => {
     setIsLoading(true);
     try {
-      const verifyRes = await axios.post(`${API_BASE_URL}/${role}/auth/verify-otp`, {
+      const verifyRes = await axios.post(`${API_BASE_URL}/auth/verify-otp`, {
         phoneNumber: `+91${phoneNumber}`,
         otp: data.otp,
+        role,
       });
 
       const completeRes = await axios.post(`${API_BASE_URL.replace(/\/api$/, "")}/mcp-oauth/authorize/complete`, {

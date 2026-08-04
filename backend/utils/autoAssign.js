@@ -1,4 +1,4 @@
-import Technician from "../models/Technician.js";
+import { userData } from "../data/userData.js";
 import { sendAssignmentNotification } from "../config/msg91.js";
 
 const DEFAULT_TECHNICIAN_PHONE_FALLBACK = "9545445133";
@@ -31,10 +31,10 @@ export const autoAssignComplaintToDefaultTechnician = async ({
     return { assigned: false, reason: "missing_default_phone" };
   }
 
-  const technician = await Technician.findOne({
+  const technician = await userData.findActiveByPhoneAndRole({
     phoneNumber: defaultPhone10,
-    isActive: true,
-  }).select("name phoneNumber");
+    role: "technician",
+  });
 
   if (!technician) {
     return { assigned: false, reason: "technician_not_found" };
@@ -49,12 +49,16 @@ export const autoAssignComplaintToDefaultTechnician = async ({
 
   await complaint.save();
 
+  // The template needs the store name; `store` may still be an unpopulated ref
+  // when this is called straight after creation.
+  await complaint.populate("store", "name");
+
   try {
     await sendAssignmentNotification(
       technician.phoneNumber,
       technician.name,
       complaint.complaintId,
-      complaint.location || "",
+      complaint.store?.name || "",
       complaint.title || ""
     );
   } catch (err) {

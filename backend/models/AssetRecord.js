@@ -24,7 +24,7 @@ const equipmentItemSchema = new mongoose.Schema({
 const assetRecordSchema = new mongoose.Schema({
   technician: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Technician',
+    ref: "User",
     required: true
   },
   storeName: {

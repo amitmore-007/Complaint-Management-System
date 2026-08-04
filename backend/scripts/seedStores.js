@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import { pathToFileURL } from "url";
 
 import connectDB from "../config/database.js";
 import { seedStores } from "../utils/seedStores.js";
@@ -25,7 +26,11 @@ const main = async () => {
   await mongoose.connection.close();
 };
 
-main().catch(async (err) => {
+const isDirectRun =
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+const run = () =>
+  main().catch(async (err) => {
   console.error("❌ Seed failed:", err);
   try {
     await mongoose.connection.close();
@@ -34,3 +39,5 @@ main().catch(async (err) => {
   }
   process.exit(1);
 });
+
+if (isDirectRun) run();

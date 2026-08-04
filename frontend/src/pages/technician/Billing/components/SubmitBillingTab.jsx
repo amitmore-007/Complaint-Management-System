@@ -228,7 +228,7 @@ const SubmitBillingTab = ({ isDarkMode, submittedQuery }) => {
                   }`}
                 >
                   <span className="font-semibold">Location:</span>{" "}
-                  {complaint.location}
+                  {complaint.store?.name}
                 </p>
                 <p
                   className={`text-sm line-clamp-2 ${

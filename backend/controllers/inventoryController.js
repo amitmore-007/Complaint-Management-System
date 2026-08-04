@@ -1,7 +1,5 @@
-import {
-  inventoryService,
-  getHttpErrorStatus,
-} from "../services/inventoryService.js";
+import { inventoryService } from "../services/inventoryService.js";
+import { respondWithError } from "../utils/httpError.js";
 
 export const adminCreateInventoryItem = async (req, res) => {
   try {
@@ -22,11 +20,7 @@ export const adminCreateInventoryItem = async (req, res) => {
     });
   } catch (error) {
     console.error("Create inventory item error:", error);
-    const status = getHttpErrorStatus(error) ?? 500;
-    return res.status(status).json({
-      success: false,
-      message: status === 500 ? "Internal server error" : error.message,
-    });
+    return respondWithError(res, error, "Internal server error");
   }
 };
 
@@ -46,10 +40,7 @@ export const adminListInventoryItems = async (req, res) => {
     });
   } catch (error) {
     console.error("List inventory items error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return respondWithError(res, error, "Internal server error");
   }
 };
 
@@ -72,11 +63,7 @@ export const adminUpdateInventoryItem = async (req, res) => {
     });
   } catch (error) {
     console.error("Update inventory item error:", error);
-    const status = getHttpErrorStatus(error) ?? 500;
-    return res.status(status).json({
-      success: false,
-      message: status === 500 ? "Internal server error" : error.message,
-    });
+    return respondWithError(res, error, "Internal server error");
   }
 };
 
@@ -90,11 +77,7 @@ export const adminDeleteInventoryItem = async (req, res) => {
     });
   } catch (error) {
     console.error("Delete inventory item error:", error);
-    const status = getHttpErrorStatus(error) ?? 500;
-    return res.status(status).json({
-      success: false,
-      message: status === 500 ? "Internal server error" : error.message,
-    });
+    return respondWithError(res, error, "Internal server error");
   }
 };
 
@@ -108,10 +91,7 @@ export const listInventoryItemNames = async (req, res) => {
     });
   } catch (error) {
     console.error("List inventory item names error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return respondWithError(res, error, "Internal server error");
   }
 };
 
@@ -125,9 +105,6 @@ export const adminGetStockBalance = async (req, res) => {
     });
   } catch (error) {
     console.error("Get stock balance error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return respondWithError(res, error, "Internal server error");
   }
 };

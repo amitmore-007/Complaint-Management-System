@@ -819,9 +819,7 @@ const TechnicianDashboard = () => {
                             <User className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                             <span className="truncate">
                               <strong>Creator:</strong>{" "}
-                              {complaint.client?.name ||
-                                complaint.createdByAdmin?.name ||
-                                complaint.createdByTechnician?.name ||
+                              {complaint.createdBy?.name ||
                                 "N/A"}
                               <span className="ml-1 text-xs px-1.5 py-0.5 rounded bg-white/10 text-gray-300">
                                 {complaint.creatorType || "client"}
@@ -831,7 +829,7 @@ const TechnicianDashboard = () => {
                           <div className="flex items-center space-x-2 text-gray-400">
                             <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                             <span className="truncate">
-                              <strong>Location:</strong> {complaint.location}
+                              <strong>Store:</strong> {complaint.store?.name}
                             </span>
                           </div>
                           <div className="flex items-center space-x-2 text-gray-400">
@@ -1143,7 +1141,7 @@ const TechnicianDashboard = () => {
                           isDarkMode ? "text-gray-400" : "text-gray-600"
                         }`}
                       >
-                        Location: {c.location}
+                        Store: {c.store?.name}
                       </div>
                     </div>
                     <div className="flex justify-end">

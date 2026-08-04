@@ -8,9 +8,10 @@ import connectDB from "./config/database.js";
 import { seedStores } from "./utils/seedStores.js";
 
 // Route imports
-import clientRoutes from "./routes/clientRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 import technicianRoutes from "./routes/technicianRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import billingRoutes from "./routes/billingRoutes.js";
 import complaintRoutes from "./routes/complaintRoutes.js";
 import equipmentRoutes from "./routes/equipmentRoutes.js";
 import statsRoutes from "./routes/statsRoutes.js";
@@ -120,9 +121,10 @@ app.get("/.well-known/oauth-authorization-server", (req, res) => {
 });
 
 // API Routes
-app.use("/api/client", clientRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/technician", technicianRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/billing", billingRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/equipment", equipmentRoutes);
 app.use("/api/stores", storeRoutes);

@@ -1,10 +1,5 @@
 import express from "express";
-import multer from "multer";
 import {
-  sendAdminOTP,
-  verifyAdminOTP,
-  getCurrentAdmin,
-  getAllComplaints,
   assignComplaint,
   reassignComplaint,
   getAllClients,
@@ -12,27 +7,18 @@ import {
   toggleUserStatus,
   deleteUser,
   getDashboardStats,
-  getComplaintById,
   createClient,
   createTechnician,
   updateClient,
   updateTechnician,
-  createAdminComplaint,
   getComplaintAutoAssignSetting,
   updateComplaintAutoAssignSetting,
   getResolvedNotifyContactsSetting,
   updateResolvedNotifyContactsSetting,
-  logoutAllDevices,
   generateAttendanceToken,
   revokeAttendanceToken,
 } from "../controllers/adminController.js";
 import { authenticateAdmin } from "../middleware/roleAuth.js";
-import { createBulkComplaints, duplicateComplaint, updateComplaintAdmin, deleteComplaintAdmin } from "../controllers/complaintController.js";
-import {
-  adminGetBillingRecord,
-  adminListBillingRecords,
-  adminUpdateBillingRecord,
-} from "../controllers/billingController.js";
 import {
   adminCreateInventoryItem,
   adminListInventoryItems,
@@ -43,31 +29,15 @@ import {
 
 const router = express.Router();
 
-// Configure multer for file uploads - using memory storage for direct Cloudinary upload
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only image files are allowed!"), false);
-    }
-  },
-});
-
-// authentication routes
-router.post("/auth/send-otp", sendAdminOTP);
-router.post("/auth/verify-otp", verifyAdminOTP);
-router.get("/auth/me", authenticateAdmin, getCurrentAdmin);
-router.post("/auth/logout-all-devices", authenticateAdmin, logoutAllDevices);
+// Auth lives at /api/auth/* (routes/authRoutes.js) for every role.
 
 // dashboard
 router.get("/dashboard/stats", authenticateAdmin, getDashboardStats);
 
-// complaint management
-router.post("/complaints/bulk", authenticateAdmin, createBulkComplaints);
-router.get("/complaints", authenticateAdmin, getAllComplaints);
+// Complaint CRUD is shared across roles at /api/complaints/*.
+// Only genuinely admin-only complaint operations live here.
+router.post("/complaints/assign", authenticateAdmin, assignComplaint);
+router.patch("/complaints/:id/reassign", authenticateAdmin, reassignComplaint);
 router.get(
   "/complaints/auto-assign",
   authenticateAdmin,
@@ -78,18 +48,6 @@ router.patch(
   authenticateAdmin,
   updateComplaintAutoAssignSetting,
 );
-router.post("/complaints/:id/duplicate", authenticateAdmin, duplicateComplaint);
-router.put("/complaints/:id", authenticateAdmin, upload.array("photos", 5), updateComplaintAdmin);
-router.delete("/complaints/:id", authenticateAdmin, deleteComplaintAdmin);
-router.get("/complaints/:id", authenticateAdmin, getComplaintById);
-router.post(
-  "/complaints",
-  authenticateAdmin,
-  upload.array("photos", 5),
-  createAdminComplaint,
-);
-router.post("/complaints/assign", authenticateAdmin, assignComplaint);
-router.patch("/complaints/:id/reassign", authenticateAdmin, reassignComplaint);
 
 // user management - clients
 router.get("/clients", authenticateAdmin, getAllClients);
@@ -126,9 +84,7 @@ router.patch(
 );
 
 // billing
-router.get("/billing", authenticateAdmin, adminListBillingRecords);
-router.get("/billing/:id", authenticateAdmin, adminGetBillingRecord);
-router.put("/billing/:id", authenticateAdmin, adminUpdateBillingRecord);
+// Billing lives at /api/billing/* — listing is shared and role-scoped.
 
 // inventory
 router.get("/inventory", authenticateAdmin, adminListInventoryItems);

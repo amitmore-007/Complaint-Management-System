@@ -1,56 +1,39 @@
 import express from "express";
 import multer from "multer";
+
 import {
-  createComplaint,
-  getMyComplaints,
+  listComplaints,
   getComplaintById,
+  createComplaint,
   updateComplaint,
   deleteComplaint,
+  duplicateComplaint,
+  createBulkComplaints,
   getAssignedComplaints,
+  getResolvedComplaints,
   updateComplaintStatus,
 } from "../controllers/complaintController.js";
 import {
-  authenticateClient,
+  authenticateAny,
   authenticateTechnician,
 } from "../middleware/roleAuth.js";
 
 const router = express.Router();
 
-// Configure multer for file uploads - using memory storage for direct Cloudinary upload
+// Photos only — 5 MB each, max 5.
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-      cb(null, true);
-    } else {
-      cb(new Error("Only image files are allowed!"), false);
-    }
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("Only image files are allowed!"), false);
   },
 });
 
-// Client routes
-router.post(
-  "/",
-  authenticateClient,
-  upload.array("photos", 5),
-  createComplaint
-);
-router.get("/my", authenticateClient, getMyComplaints);
-router.get("/assigned/me", authenticateTechnician, getAssignedComplaints);
-router.get("/:id", authenticateClient, getComplaintById);
-router.put(
-  "/:id",
-  authenticateClient,
-  upload.array("photos", 5),
-  updateComplaint
-);
-router.delete("/:id", authenticateClient, deleteComplaint);
-
-// Separate multer instance for the status route — accepts images + videos
+// Resolution media — images and video, so a much larger cap.
 const statusUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB (to accommodate videos)
+  limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (
       file.mimetype.startsWith("image/") ||
@@ -63,7 +46,23 @@ const statusUpload = multer({
   },
 });
 
-// Technician routes
+/**
+ * One complaint API for every role. Authorization is decided inside the
+ * controller from req.user.role (services/complaintService.js) rather than by
+ * having a separate endpoint and a separate near-identical handler per role.
+ *
+ * Admin-only operations that genuinely differ — assign, reassign, auto-assign
+ * settings — remain under /api/admin.
+ */
+
+// Technician assignment views. Declared before "/:id" so the literal path wins.
+router.get("/assigned/me", authenticateTechnician, getAssignedComplaints);
+router.get(
+  "/assigned/me/resolved",
+  authenticateTechnician,
+  getResolvedComplaints,
+);
+
 router.patch(
   "/:id/status",
   authenticateTechnician,
@@ -71,7 +70,17 @@ router.patch(
     { name: "resolutionPhotos", maxCount: 5 },
     { name: "resolutionVideos", maxCount: 2 },
   ]),
-  updateComplaintStatus
+  updateComplaintStatus,
 );
+
+router.post("/bulk", authenticateAny, createBulkComplaints);
+router.post("/:id/duplicate", authenticateAny, duplicateComplaint);
+
+router.get("/", authenticateAny, listComplaints);
+router.post("/", authenticateAny, upload.array("photos", 5), createComplaint);
+
+router.get("/:id", authenticateAny, getComplaintById);
+router.put("/:id", authenticateAny, upload.array("photos", 5), updateComplaint);
+router.delete("/:id", authenticateAny, deleteComplaint);
 
 export default router;

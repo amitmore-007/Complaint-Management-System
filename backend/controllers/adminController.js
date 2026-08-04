@@ -1,542 +1,26 @@
-import crypto from "crypto";
-import jwt from "jsonwebtoken";
-import Client from "../models/Client.js";
-import Technician from "../models/Technician.js";
-import Admin from "../models/Admin.js";
-import Complaint from "../models/Complaint.js";
-import Store from "../models/Store.js";
-import Notification from "../models/Notification.js";
-import OTP from "../models/OTP.js";
-import {
-  sendOTP,
-  sendStatusUpdateNotification,
-  sendAssignmentNotification,
-} from "../config/msg91.js";
-import {
-  uploadToCloudinary,
-  deleteFromCloudinary,
-} from "../config/cloudinary.js";
-import { generateNextComplaintId } from "../utils/complaintId.js";
-import { autoAssignComplaintToDefaultTechnician } from "../utils/autoAssign.js";
-import {
-  getComplaintAutoAssignEnabled,
-  setComplaintAutoAssignEnabled,
-} from "../utils/complaintAutoAssignSetting.js";
-import {
-  getResolvedNotifyContacts,
-  setResolvedNotifyContacts,
-} from "../utils/resolvedNotifyContactSetting.js";
+import { assignmentService } from "../services/assignmentService.js";
+import { userService } from "../services/userService.js";
+import { dashboardService } from "../services/dashboardService.js";
+import { settingsService } from "../services/settingsService.js";
+import { respondWithError } from "../utils/httpError.js";
+
+/**
+ * HTTP only. Business rules live in services/, database access in data/.
+ * This file covers the admin-exclusive surface: assignment, user management,
+ * dashboard and settings. Complaint CRUD is shared at /api/complaints.
+ */
 
 // ============================================
-// HELPER FUNCTIONS
+// ASSIGNMENT
 // ============================================
 
-// generate 6-digit otp
-const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
-
-// generate jwt token for admin (never expires)
-const generateToken = (userId, tokenVersion = 0) => {
-  return jwt.sign({ userId, role: "admin", tokenVersion }, process.env.JWT_SECRET, {
-    expiresIn: "999y",
-  });
-};
-
-// normalize phone number (remove +91, keep only 10 digits)
-const normalizePhoneNumber = (phoneNumber) => {
-  if (!phoneNumber) return "";
-
-  let cleaned = phoneNumber.replace(/\D/g, "");
-
-  if (cleaned.startsWith("91") && cleaned.length === 12) {
-    cleaned = cleaned.substring(2);
-  }
-
-  if (cleaned.length === 10) {
-    return cleaned;
-  }
-
-  return phoneNumber;
-};
-
-// ============================================
-// AUTHENTICATION CONTROLLERS
-// ============================================
-
-// send otp to admin's whatsapp
-export const sendAdminOTP = async (req, res) => {
-  try {
-    const { phoneNumber } = req.body;
-
-    if (!phoneNumber) {
-      return res.status(400).json({
-        success: false,
-        message: "Phone number is required",
-      });
-    }
-
-    const otp = generateOTP();
-
-    // delete any existing otp for this phone number
-    await OTP.deleteMany({ phoneNumber, role: "admin" });
-
-    // create new otp record
-    const otpRecord = new OTP({
-      phoneNumber,
-      otp,
-      role: "admin",
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    });
-
-    await otpRecord.save();
-
-    // send otp via whatsapp
-    const result = await sendOTP(phoneNumber, otp);
-
-    if (result.success) {
-      res.status(200).json({
-        success: true,
-        message: "OTP sent successfully to WhatsApp",
-        messageId: result.messageId,
-      });
-    } else {
-      await OTP.deleteOne({ _id: otpRecord._id });
-      res.status(500).json({
-        success: false,
-        message: "Failed to send OTP. Please try again.",
-        error: result.error,
-      });
-    }
-  } catch (error) {
-    console.error("Send Admin OTP error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-// verify otp and login admin
-export const verifyAdminOTP = async (req, res) => {
-  try {
-    const { phoneNumber, otp, name } = req.body;
-
-    if (!phoneNumber || !otp) {
-      return res.status(400).json({
-        success: false,
-        message: "Phone number and OTP are required",
-      });
-    }
-
-    // find valid otp
-    const otpRecord = await OTP.findOne({
-      phoneNumber,
-      otp,
-      role: "admin",
-      isUsed: false,
-      expiresAt: { $gt: new Date() },
-    });
-
-    if (!otpRecord) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid or expired OTP",
-      });
-    }
-
-    // mark otp as used
-    otpRecord.isUsed = true;
-    await otpRecord.save();
-
-    // find or create admin
-    let admin = await Admin.findOne({ phoneNumber });
-
-    if (!admin) {
-      const defaultName = name || `Admin-${phoneNumber.slice(-4)}`;
-      admin = new Admin({
-        phoneNumber,
-        name: defaultName,
-        isVerified: true,
-      });
-      await admin.save();
-    } else {
-      admin.isVerified = true;
-      admin.lastLogin = new Date();
-      if (name && name !== admin.name) {
-        admin.name = name;
-      }
-      await admin.save();
-    }
-
-    // generate jwt token
-    const token = generateToken(admin._id, admin.tokenVersion ?? 0);
-
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      token,
-      user: {
-        id: admin._id,
-        phoneNumber: admin.phoneNumber,
-        name: admin.name,
-        role: "admin",
-        isActive: admin.isActive,
-      },
-    });
-  } catch (error) {
-    console.error("Verify Admin OTP error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-// get current logged in admin
-export const getCurrentAdmin = async (req, res) => {
-  try {
-    const admin = await Admin.findById(req.user.id);
-
-    if (!admin) {
-      return res.status(404).json({
-        success: false,
-        message: "Admin not found",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      user: {
-        id: admin._id,
-        phoneNumber: admin.phoneNumber,
-        name: admin.name,
-        role: "admin",
-        isActive: admin.isActive,
-        lastLogin: admin.lastLogin,
-      },
-    });
-  } catch (error) {
-    console.error("Get current admin error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-// ============================================
-// COMPLAINT MANAGEMENT CONTROLLERS
-// ============================================
-
-// create complaint by admin
-export const createAdminComplaint = async (req, res) => {
-  try {
-    const { title, description, location, priority, storeId } = req.body;
-    const adminId = req.user.id;
-
-    if (!title || !description || (!location && !storeId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Title, description, and location are required",
-      });
-    }
-
-    // Verify admin exists
-    const admin = await Admin.findById(adminId);
-    if (!admin) {
-      return res.status(404).json({
-        success: false,
-        message: "Admin not found",
-      });
-    }
-
-    // Resolve store -> location
-    let resolvedLocation = location;
-    let resolvedStoreId = null;
-    let resolvedStoreName = null;
-
-    if (storeId) {
-      const store = await Store.findById(storeId).select("name");
-      if (!store) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid store selected",
-        });
-      }
-      resolvedStoreId = store._id;
-      resolvedStoreName = store.name;
-      resolvedLocation = store.name;
-    }
-
-    const complaintId = await generateNextComplaintId({
-      storeName: resolvedStoreName || resolvedLocation,
-    });
-
-    // Handle photo uploads - parallel for speed
-    let photos = [];
-    if (req.files && req.files.length > 0) {
-      try {
-        const uploadResults = await Promise.all(
-          req.files.map((file) => uploadToCloudinary(file)),
-        );
-        photos = uploadResults.map((result) => ({
-          url: result.url,
-          publicId: result.publicId,
-        }));
-      } catch (uploadError) {
-        console.error("Photo upload error:", uploadError);
-        // Clean up any uploaded photos if one fails
-        for (const photo of photos) {
-          if (photo?.publicId) {
-            await deleteFromCloudinary(photo.publicId);
-          }
-        }
-        return res.status(400).json({
-          success: false,
-          message: "Failed to upload photos",
-        });
-      }
-    }
-
-    const complaint = new Complaint({
-      complaintId,
-      title,
-      description,
-      location: resolvedLocation,
-      store: resolvedStoreId,
-      priority: priority || "medium",
-      photos,
-      createdByAdmin: adminId,
-      creatorType: "admin",
-    });
-
-    await complaint.save();
-
-    const shouldAutoAssign = await getComplaintAutoAssignEnabled();
-    if (shouldAutoAssign) {
-      await autoAssignComplaintToDefaultTechnician({
-        complaint,
-        assignedBy: adminId,
-      });
-    }
-
-    // Populate admin + store info for response
-    await complaint.populate("createdByAdmin", "name phoneNumber");
-    await complaint.populate("store", "name managers");
-    await complaint.populate("assignedTechnician", "name phoneNumber");
-    await complaint.populate("assignedBy", "name");
-
-    res.status(201).json({
-      success: true,
-      message: "Complaint created successfully",
-      complaint,
-    });
-  } catch (error) {
-    console.error("Create admin complaint error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
-    });
-  }
-};
-
-// get all complaints with filters
-const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-export const getAllComplaints = async (req, res) => {
-  try {
-    const { status, priority, location, search, page = 1, limit = 10 } =
-      req.query;
-
-    const filter = {};
-
-    if (status && status !== "all") {
-      filter.status = status === "unresolved" ? { $ne: "resolved" } : status;
-    }
-
-    if (priority && priority !== "all") filter.priority = priority;
-
-    if (location && location !== "all") {
-      filter.location = new RegExp(`^${escapeRegex(location)}$`, "i");
-    }
-
-    if (search && search.trim()) {
-      const regex = new RegExp(escapeRegex(search.trim()), "i");
-
-      const [matchingClients, matchingTechnicians, matchingAdmins] =
-        await Promise.all([
-          Client.find({ name: regex }).select("_id"),
-          Technician.find({ name: regex }).select("_id"),
-          Admin.find({ name: regex }).select("_id"),
-        ]);
-
-      filter.$or = [
-        { title: regex },
-        { description: regex },
-        { location: regex },
-        { complaintId: regex },
-        { client: { $in: matchingClients.map((c) => c._id) } },
-        {
-          createdByTechnician: {
-            $in: matchingTechnicians.map((t) => t._id),
-          },
-        },
-        { createdByAdmin: { $in: matchingAdmins.map((a) => a._id) } },
-      ];
-    }
-
-    const complaints = await Complaint.find(filter)
-      .populate("client", "name phoneNumber")
-      .populate("createdByTechnician", "name phoneNumber")
-      .populate("createdByAdmin", "name phoneNumber")
-      .populate("assignedTechnician", "name phoneNumber")
-      .populate("assignedBy", "name")
-      .populate("store", "name managers")
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Complaint.countDocuments(filter);
-
-    res.status(200).json({
-      success: true,
-      complaints,
-      pagination: {
-        total,
-        page: parseInt(page),
-        pages: Math.ceil(total / limit),
-      },
-    });
-  } catch (error) {
-    console.error("Get all complaints error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-// assign complaint to technician
 export const assignComplaint = async (req, res) => {
   try {
-    const { complaintId, technicianId } = req.body;
-    const adminId = req.user.id;
-
-    if (!complaintId || !technicianId) {
-      return res.status(400).json({
-        success: false,
-        message: "Complaint ID and Technician ID are required",
-      });
-    }
-
-    // Find the complaint with client info
-    const complaint = await Complaint.findById(complaintId).populate(
-      "client",
-      "name phoneNumber",
-    );
-
-    if (!complaint) {
-      return res.status(404).json({
-        success: false,
-        message: "Complaint not found",
-      });
-    }
-
-    if (complaint.status !== "pending") {
-      return res.status(400).json({
-        success: false,
-        message: "Complaint is already assigned or completed",
-      });
-    }
-
-    // Find the technician
-    const technician = await Technician.findById(technicianId);
-    if (!technician) {
-      return res.status(404).json({
-        success: false,
-        message: "Technician not found",
-      });
-    }
-
-    if (!technician.isActive) {
-      return res.status(400).json({
-        success: false,
-        message: "Technician is not active",
-      });
-    }
-
-    // Update complaint
-    complaint.assignedTechnician = technicianId;
-    complaint.assignedBy = adminId;
-    complaint.assignedAt = new Date();
-    complaint.status = "assigned";
-
-    await complaint.save();
-
-    // Update technician stats
-    await Technician.findByIdAndUpdate(technicianId, {
-      $inc: { activeAssignments: 1 },
+    const complaint = await assignmentService.assign({
+      complaintId: req.body.complaintId,
+      technicianId: req.body.technicianId,
+      adminId: req.user.id,
     });
-
-    // Send WhatsApp notification to technician
-    if (technician && technician.phoneNumber) {
-      try {
-        const templateLocation = complaint.location || "";
-        const templateIssueTitle = complaint.title || "";
-
-        const notificationResult = await sendAssignmentNotification(
-          technician.phoneNumber,
-          technician.name,
-          complaint.complaintId,
-          templateLocation,
-          templateIssueTitle,
-        );
-
-        // Save notification record
-        const notification = new Notification({
-          complaint: complaint._id,
-          recipient: technician.phoneNumber,
-          type: "assignment",
-          message: `Complaint ${complaint.complaintId} assigned to ${technician.name}`,
-          status: notificationResult.success ? "sent" : "failed",
-          messageId: notificationResult.messageId,
-          error: notificationResult.success ? null : notificationResult.error,
-          sentAt: notificationResult.success ? new Date() : null,
-        });
-
-        await notification.save();
-
-        if (!notificationResult.success) {
-          console.error(
-            "❌ Failed to send assignment notification:",
-            notificationResult.error,
-          );
-        }
-      } catch (notificationError) {
-        console.error("❌ Assignment notification error:", notificationError);
-
-        // Save failed notification record
-        const notification = new Notification({
-          complaint: complaint._id,
-          recipient: technician.phoneNumber,
-          type: "assignment",
-          message: `Complaint ${complaint.complaintId} assigned to ${technician.name}`,
-          status: "failed",
-          error: notificationError.message,
-        });
-
-        await notification.save();
-      }
-    }
-
-    // Populate response
-    await complaint.populate([
-      { path: "client", select: "name phoneNumber" },
-      { path: "assignedTechnician", select: "name phoneNumber" },
-      { path: "assignedBy", select: "name" },
-    ]);
 
     res.status(200).json({
       success: true,
@@ -545,130 +29,17 @@ export const assignComplaint = async (req, res) => {
     });
   } catch (error) {
     console.error("Assign complaint error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
-    });
+    respondWithError(res, error, "Internal server error");
   }
 };
 
-// reassign complaint to a different technician
 export const reassignComplaint = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { technicianId } = req.body;
-    const adminId = req.user.id;
-
-    if (!technicianId) {
-      return res.status(400).json({
-        success: false,
-        message: "Technician ID is required",
-      });
-    }
-
-    const complaint = await Complaint.findById(id).populate(
-      "client",
-      "name phoneNumber",
-    );
-    if (!complaint) {
-      return res.status(404).json({
-        success: false,
-        message: "Complaint not found",
-      });
-    }
-
-    if (!["assigned", "in-progress"].includes(complaint.status)) {
-      return res.status(400).json({
-        success: false,
-        message: "Only assigned or in-progress complaints can be reassigned",
-      });
-    }
-
-    const technician = await Technician.findById(technicianId);
-    if (!technician) {
-      return res.status(404).json({
-        success: false,
-        message: "Technician not found",
-      });
-    }
-    if (!technician.isActive) {
-      return res.status(400).json({
-        success: false,
-        message: "Technician is not active",
-      });
-    }
-
-    const previousTechnicianId = complaint.assignedTechnician
-      ? String(complaint.assignedTechnician)
-      : null;
-    const isNewTechnician = previousTechnicianId !== String(technicianId);
-
-    // Adjust activeAssignments counters
-    if (isNewTechnician) {
-      if (previousTechnicianId) {
-        await Technician.findByIdAndUpdate(previousTechnicianId, {
-          $inc: { activeAssignments: -1 },
-        });
-      }
-      await Technician.findByIdAndUpdate(technicianId, {
-        $inc: { activeAssignments: 1 },
-      });
-    }
-
-    // Reset complaint to assigned state for the new technician
-    complaint.assignedTechnician = technicianId;
-    complaint.assignedBy = adminId;
-    complaint.assignedAt = new Date();
-    complaint.status = "assigned";
-    complaint.startedAt = null;
-
-    await complaint.save();
-
-    // Notify the new technician
-    if (technician.phoneNumber) {
-      try {
-        const notificationResult = await sendAssignmentNotification(
-          technician.phoneNumber,
-          technician.name,
-          complaint.complaintId,
-          complaint.location || "",
-          complaint.title || "",
-        );
-
-        const notification = new Notification({
-          complaint: complaint._id,
-          recipient: technician.phoneNumber,
-          type: "assignment",
-          message: `Complaint ${complaint.complaintId} reassigned to ${technician.name}`,
-          status: notificationResult.success ? "sent" : "failed",
-          messageId: notificationResult.messageId,
-          error: notificationResult.success ? null : notificationResult.error,
-          sentAt: notificationResult.success ? new Date() : null,
-        });
-
-        await notification.save();
-      } catch (notificationError) {
-        console.error("❌ Reassign notification error:", notificationError);
-
-        const notification = new Notification({
-          complaint: complaint._id,
-          recipient: technician.phoneNumber,
-          type: "assignment",
-          message: `Complaint ${complaint.complaintId} reassigned to ${technician.name}`,
-          status: "failed",
-          error: notificationError.message,
-        });
-
-        await notification.save();
-      }
-    }
-
-    await complaint.populate([
-      { path: "client", select: "name phoneNumber" },
-      { path: "assignedTechnician", select: "name phoneNumber" },
-      { path: "assignedBy", select: "name" },
-    ]);
+    const complaint = await assignmentService.reassign({
+      complaintId: req.params.id,
+      technicianId: req.body.technicianId,
+      adminId: req.user.id,
+    });
 
     res.status(200).json({
       success: true,
@@ -677,539 +48,102 @@ export const reassignComplaint = async (req, res) => {
     });
   } catch (error) {
     console.error("Reassign complaint error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
-    });
+    respondWithError(res, error, "Internal server error");
   }
 };
 
+// ============================================
+// SETTINGS
+// ============================================
+
 export const getComplaintAutoAssignSetting = async (req, res) => {
   try {
-    const enabled = await getComplaintAutoAssignEnabled();
-
-    res.status(200).json({
-      success: true,
-      setting: {
-        autoAssignEnabled: enabled,
-      },
-    });
+    const setting = await settingsService.getAutoAssign();
+    res.status(200).json({ success: true, setting });
   } catch (error) {
     console.error("Get complaint auto-assign setting error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    respondWithError(res, error, "Internal server error");
   }
 };
 
 export const updateComplaintAutoAssignSetting = async (req, res) => {
   try {
-    const { enabled } = req.body;
-
-    if (typeof enabled !== "boolean") {
-      return res.status(400).json({
-        success: false,
-        message: "enabled must be a boolean",
-      });
-    }
-
-    const setting = await setComplaintAutoAssignEnabled({
-      enabled,
+    const setting = await settingsService.setAutoAssign({
+      enabled: req.body.enabled,
       adminId: req.user.id,
     });
 
     res.status(200).json({
       success: true,
-      message: `Auto assign ${enabled ? "enabled" : "disabled"} successfully`,
-      setting: {
-        autoAssignEnabled: Boolean(setting?.booleanValue),
-        updatedAt: setting?.updatedAt,
-      },
+      message: `Auto assign ${req.body.enabled ? "enabled" : "disabled"} successfully`,
+      setting,
     });
   } catch (error) {
     console.error("Update complaint auto-assign setting error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    respondWithError(res, error, "Internal server error");
   }
 };
 
 export const getResolvedNotifyContactsSetting = async (req, res) => {
   try {
-    const contacts = await getResolvedNotifyContacts();
-    res.status(200).json({ success: true, setting: contacts });
+    const setting = await settingsService.getResolvedNotifyContacts();
+    res.status(200).json({ success: true, setting });
   } catch (error) {
     console.error("Get resolved notify contacts error:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    respondWithError(res, error, "Internal server error");
   }
 };
 
 export const updateResolvedNotifyContactsSetting = async (req, res) => {
   try {
-    const { contacts } = req.body;
-
-    if (!Array.isArray(contacts)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "contacts must be an array" });
-    }
-
-    const saved = await setResolvedNotifyContacts({
-      contacts,
+    const setting = await settingsService.setResolvedNotifyContacts({
+      contacts: req.body.contacts,
       adminId: req.user.id,
     });
 
     res.status(200).json({
       success: true,
       message: "Resolved notification contacts updated successfully",
-      setting: saved,
+      setting,
     });
   } catch (error) {
     console.error("Update resolved notify contacts error:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-};
-
-// auto-assign pending complaints to available technicians
-export const autoAssignPendingComplaints = async () => {
-  try {
-    // Get all pending complaints
-    const pendingComplaints = await Complaint.find({ status: "pending" })
-      .populate("client", "phoneNumber")
-      .sort({ createdAt: 1 }); // Oldest first
-
-    if (pendingComplaints.length === 0) {
-      return;
-    }
-
-    // Get active technicians
-    const technicians = await Technician.find({
-      isActive: true,
-    }).sort({ _id: 1 });
-
-    if (technicians.length === 0) {
-      console.log("No active technicians available for auto-assignment");
-      return;
-    }
-
-    // Get technician with least assignments (round-robin approach)
-    const technicianAssignments = await Promise.all(
-      technicians.map(async (tech) => {
-        const count = await Complaint.countDocuments({
-          assignedTechnician: tech._id,
-          status: { $in: ["assigned", "in-progress"] },
-        });
-        return { technician: tech, assignmentCount: count };
-      }),
-    );
-
-    // Sort by assignment count (ascending)
-    technicianAssignments.sort((a, b) => a.assignmentCount - b.assignmentCount);
-
-    // Assign complaints in round-robin fashion
-    for (let i = 0; i < pendingComplaints.length; i++) {
-      const complaint = pendingComplaints[i];
-      const techIndex = i % technicianAssignments.length;
-      const selectedTech = technicianAssignments[techIndex].technician;
-
-      complaint.assignedTechnician = selectedTech._id;
-      complaint.assignedAt = new Date();
-      complaint.status = "assigned";
-
-      await complaint.save();
-
-      // Send notification to technician
-      if (selectedTech.phoneNumber) {
-        await sendAssignmentNotification(
-          selectedTech.phoneNumber,
-          selectedTech.name,
-          complaint.complaintId,
-          complaint.location || "",
-          complaint.title || "",
-        );
-      }
-    }
-  } catch (error) {
-    console.error("Auto-assign error:", error);
-  }
-};
-
-// get single complaint by id
-export const getComplaintById = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const complaint = await Complaint.findById(id)
-      .populate("client", "name phoneNumber")
-      .populate("createdByTechnician", "name phoneNumber")
-      .populate("createdByAdmin", "name phoneNumber")
-      .populate("assignedTechnician", "name phoneNumber")
-      .populate("assignedBy", "name")
-      .populate("store", "name managers")
-      .populate("materials.item", "itemName");
-
-    if (!complaint) {
-      return res.status(404).json({
-        success: false,
-        message: "Complaint not found",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      complaint,
-    });
-  } catch (error) {
-    console.error("Get complaint by ID error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    respondWithError(res, error, "Internal server error");
   }
 };
 
 // ============================================
-// USER MANAGEMENT CONTROLLERS
+// USER MANAGEMENT
 // ============================================
 
-// get all clients with pagination
 export const getAllClients = async (req, res) => {
   try {
-    const { page = 1, limit = 50, search } = req.query;
-
-    const filter = {};
-    if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { phoneNumber: { $regex: search, $options: "i" } },
-      ];
-    }
-
-    const clients = await Client.find(filter)
-      .select("name phoneNumber isActive createdAt")
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Client.countDocuments(filter);
-
-    // Get complaint counts for each client
-    const clientsWithStats = await Promise.all(
-      clients.map(async (client) => {
-        const complaintCount = await Complaint.countDocuments({
-          client: client._id,
-        });
-        return {
-          ...client.toObject(),
-          complaintCount,
-        };
-      }),
-    );
-
-    res.status(200).json({
-      success: true,
-      clients: clientsWithStats,
-      pagination: {
-        total,
-        page: parseInt(page),
-        pages: Math.ceil(total / limit),
-      },
-    });
+    const { clients, pagination } = await userService.listClients(req.query);
+    res.status(200).json({ success: true, clients, pagination });
   } catch (error) {
     console.error("Get all clients error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    respondWithError(res, error, "Internal server error");
   }
 };
 
-// get all technicians with assignment stats
 export const getAllTechnicians = async (req, res) => {
   try {
-    const { page = 1, limit = 50, search } = req.query;
-
-    const filter = {};
-    if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { phoneNumber: { $regex: search, $options: "i" } },
-      ];
-    }
-
-    const technicians = await Technician.find(filter)
-      .select("name phoneNumber isActive createdAt +attendanceToken")
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Technician.countDocuments(filter);
-
-    // Get assignment stats for each technician (allow multiple assignments)
-    const techniciansWithStats = await Promise.all(
-      technicians.map(async (tech) => {
-        const activeAssignments = await Complaint.countDocuments({
-          assignedTechnician: tech._id,
-          status: { $in: ["assigned", "in-progress"] },
-        });
-        const completedAssignments = await Complaint.countDocuments({
-          assignedTechnician: tech._id,
-          status: "resolved",
-        });
-        const totalAssignments = await Complaint.countDocuments({
-          assignedTechnician: tech._id,
-        });
-        const obj = tech.toObject();
-        return {
-          ...obj,
-          hasAttendanceToken: !!obj.attendanceToken,
-          attendanceToken: undefined,
-          activeAssignments,
-          completedAssignments,
-          totalAssignments,
-        };
-      }),
+    const { technicians, pagination } = await userService.listTechnicians(
+      req.query,
     );
-
-    res.status(200).json({
-      success: true,
-      technicians: techniciansWithStats,
-      pagination: {
-        total,
-        page: parseInt(page),
-        pages: Math.ceil(total / limit),
-      },
-    });
+    res.status(200).json({ success: true, technicians, pagination });
   } catch (error) {
     console.error("Get all technicians error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    respondWithError(res, error, "Internal server error");
   }
 };
 
-// toggle user (client/technician) active status
-export const toggleUserStatus = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { isActive } = req.body;
-
-    // Try to find user in both Client and Technician models
-    let user = await Client.findById(userId);
-    let userType = "client";
-
-    if (!user) {
-      user = await Technician.findById(userId);
-      userType = "technician";
-    }
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    user.isActive = isActive;
-    await user.save();
-
-    res.status(200).json({
-      success: true,
-      message: `User ${isActive ? "activated" : "deactivated"} successfully`,
-      user: {
-        id: user._id,
-        name: user.name,
-        phoneNumber: user.phoneNumber,
-        role: userType,
-        isActive: user.isActive,
-      },
-    });
-  } catch (error) {
-    console.error("Toggle user status error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-// delete user (client/technician) if no active assignments
-export const deleteUser = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    // Try to find user in both Client and Technician models
-    let user = await Client.findById(userId);
-    let userType = "client";
-    let Model = Client;
-
-    if (!user) {
-      user = await Technician.findById(userId);
-      userType = "technician";
-      Model = Technician;
-    }
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    // Check if user has active complaints/assignments
-    if (userType === "client") {
-      const activeComplaints = await Complaint.countDocuments({
-        client: userId,
-        status: { $in: ["pending", "assigned", "in-progress"] },
-      });
-
-      if (activeComplaints > 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Cannot delete client with active complaints",
-        });
-      }
-    } else if (userType === "technician") {
-      const activeAssignments = await Complaint.countDocuments({
-        assignedTechnician: userId,
-        status: { $in: ["assigned", "in-progress"] },
-      });
-
-      if (activeAssignments > 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Cannot delete technician with active assignments",
-        });
-      }
-    }
-
-    await Model.findByIdAndDelete(userId);
-
-    res.status(200).json({
-      success: true,
-      message: "User deleted successfully",
-    });
-  } catch (error) {
-    console.error("Delete user error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-// get dashboard statistics
-export const getDashboardStats = async (req, res) => {
-  try {
-    // month filter, expects "YYYY-MM"; scopes complaint/client/technician
-    // counts to that calendar month instead of all-time totals
-    const monthMatch = /^(\d{4})-(\d{2})$/.exec(req.query.month || "");
-    let dateRange = null;
-    if (monthMatch) {
-      const year = Number(monthMatch[1]);
-      const month = Number(monthMatch[2]);
-      dateRange = {
-        $gte: new Date(year, month - 1, 1),
-        $lt: new Date(year, month, 1),
-      };
-    }
-    const createdAtFilter = dateRange ? { createdAt: dateRange } : {};
-
-    const totalComplaints = await Complaint.countDocuments(createdAtFilter);
-    const pendingComplaints = await Complaint.countDocuments({
-      status: "pending",
-      ...createdAtFilter,
-    });
-    const inProgressComplaints = await Complaint.countDocuments({
-      status: "in-progress",
-      ...createdAtFilter,
-    });
-    const resolvedComplaints = await Complaint.countDocuments({
-      status: "resolved",
-      ...createdAtFilter,
-    });
-
-    const totalClients = await Client.countDocuments(createdAtFilter);
-    const totalTechnicians = await Technician.countDocuments(createdAtFilter);
-    const activeTechnicians = await Technician.countDocuments({
-      isActive: true,
-      ...createdAtFilter,
-    });
-
-    // Recent complaints
-    const recentComplaints = await Complaint.find(createdAtFilter)
-      .populate("client", "name phoneNumber")
-      .populate("createdByAdmin", "name phoneNumber")
-      .populate("createdByTechnician", "name phoneNumber")
-      .populate("assignedTechnician", "name")
-      .sort({ createdAt: -1 })
-      .limit(5);
-
-    res.status(200).json({
-      success: true,
-      stats: {
-        totalComplaints,
-        pendingComplaints,
-        inProgressComplaints,
-        resolvedComplaints,
-        totalClients,
-        totalTechnicians,
-        activeTechnicians,
-        recentComplaints,
-      },
-    });
-  } catch (error) {
-    console.error("Get dashboard stats error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-// create new client by admin
 export const createClient = async (req, res) => {
   try {
-    const { name, phoneNumber } = req.body;
-    const adminId = req.user.id;
-
-    if (!name || !phoneNumber) {
-      return res.status(400).json({
-        success: false,
-        message: "Name and phone number are required",
-      });
-    }
-
-    // normalize phone number
-    const normalizedPhone = normalizePhoneNumber(phoneNumber);
-
-    // Check if client already exists
-    const existingClient = await Client.findOne({
-      phoneNumber: normalizedPhone,
-    });
-    if (existingClient) {
-      return res.status(400).json({
-        success: false,
-        message: "Client with this phone number already exists",
-      });
-    }
-
-    const client = new Client({
-      name: name.trim(),
-      phoneNumber: normalizedPhone,
-      isVerified: true,
-      isActive: true,
-    });
-
-    await client.save();
-
-    // Update admin's created clients list
-    await Admin.findByIdAndUpdate(adminId, {
-      $push: { createdClients: client._id },
+    const client = await userService.createClient({
+      name: req.body.name,
+      phoneNumber: req.body.phoneNumber,
+      adminId: req.user.id,
     });
 
     res.status(201).json({
@@ -1225,52 +159,16 @@ export const createClient = async (req, res) => {
     });
   } catch (error) {
     console.error("Create client error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    respondWithError(res, error, "Internal server error");
   }
 };
 
-// create new technician by admin
 export const createTechnician = async (req, res) => {
   try {
-    const { name, phoneNumber } = req.body;
-    const adminId = req.user.id;
-
-    if (!name || !phoneNumber) {
-      return res.status(400).json({
-        success: false,
-        message: "Name and phone number are required",
-      });
-    }
-
-    // normalize phone number
-    const normalizedPhone = normalizePhoneNumber(phoneNumber);
-
-    // check if technician already exists
-    const existingTechnician = await Technician.findOne({
-      phoneNumber: normalizedPhone,
-    });
-    if (existingTechnician) {
-      return res.status(400).json({
-        success: false,
-        message: "Technician with this phone number already exists",
-      });
-    }
-
-    const technician = new Technician({
-      name: name.trim(),
-      phoneNumber: normalizedPhone,
-      isVerified: true,
-      isActive: true,
-    });
-
-    await technician.save();
-
-    // Update admin's created technicians list
-    await Admin.findByIdAndUpdate(adminId, {
-      $push: { createdTechnicians: technician._id },
+    const technician = await userService.createTechnician({
+      name: req.body.name,
+      phoneNumber: req.body.phoneNumber,
+      adminId: req.user.id,
     });
 
     res.status(201).json({
@@ -1286,201 +184,135 @@ export const createTechnician = async (req, res) => {
     });
   } catch (error) {
     console.error("Create technician error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    respondWithError(res, error, "Internal server error");
   }
 };
 
-// update client information
 export const updateClient = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, phoneNumber } = req.body;
-
-    const client = await Client.findById(id);
-    if (!client) {
-      return res.status(404).json({
-        success: false,
-        message: "Client not found",
-      });
-    }
-
-    // Normalize phone number if provided
-    const normalizedPhone = phoneNumber
-      ? normalizePhoneNumber(phoneNumber)
-      : null;
-
-    // Check if phone number is being changed and if it conflicts
-    if (normalizedPhone && normalizedPhone !== client.phoneNumber) {
-      const existingClient = await Client.findOne({
-        phoneNumber: normalizedPhone,
-        _id: { $ne: id },
-      });
-      if (existingClient) {
-        return res.status(400).json({
-          success: false,
-          message: "Phone number already in use by another client",
-        });
-      }
-    }
-
-    if (name) client.name = name.trim();
-    if (normalizedPhone) client.phoneNumber = normalizedPhone;
-
-    await client.save();
-
-    res.json({
-      success: true,
-      message: "Client updated successfully",
-      client,
+    const client = await userService.updateClient({
+      id: req.params.id,
+      name: req.body.name,
+      phoneNumber: req.body.phoneNumber,
+      isActive: req.body.isActive,
     });
-  } catch (error) {
-    console.error("Update client error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-// update technician information
-export const updateTechnician = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, phoneNumber } = req.body;
-
-    const technician = await Technician.findById(id);
-    if (!technician) {
-      return res.status(404).json({
-        success: false,
-        message: "Technician not found",
-      });
-    }
-
-    // Normalize phone number if provided
-    const normalizedPhone = phoneNumber
-      ? normalizePhoneNumber(phoneNumber)
-      : null;
-
-    // Check if phone number is being changed and if it conflicts
-    if (normalizedPhone && normalizedPhone !== technician.phoneNumber) {
-      const existingTechnician = await Technician.findOne({
-        phoneNumber: normalizedPhone,
-        _id: { $ne: id },
-      });
-      if (existingTechnician) {
-        return res.status(400).json({
-          success: false,
-          message: "Phone number already in use by another technician",
-        });
-      }
-    }
-
-    if (name) technician.name = name.trim();
-    if (normalizedPhone) technician.phoneNumber = normalizedPhone;
-
-    await technician.save();
-
-    res.json({
-      success: true,
-      message: "Technician updated successfully",
-      technician,
-    });
-  } catch (error) {
-    console.error("Update technician error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-// ── Attendance Token Management ────────────────────────────────────────────
-
-const portalHashPin = (pin, token) =>
-  crypto.createHmac('sha256', token).update(pin).digest('hex');
-
-// POST /api/admin/users/:userId/attendance-token
-// body: { userRole: 'admin' | 'technician', pin: '4-digit string' }
-export const generateAttendanceToken = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { userRole, pin } = req.body;
-
-    if (!userRole || !['admin', 'technician'].includes(userRole)) {
-      return res.status(400).json({ success: false, message: 'userRole must be admin or technician.' });
-    }
-
-    if (!pin || !/^\d{4}$/.test(pin)) {
-      return res.status(400).json({ success: false, message: 'PIN must be exactly 4 digits.' });
-    }
-
-    const Model = userRole === 'admin' ? Admin : Technician;
-    const user = await Model.findById(userId);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found.' });
-    }
-
-    const attendanceToken = crypto.randomBytes(16).toString('hex');
-    const attendancePin   = portalHashPin(pin, attendanceToken);
-
-    await Model.findByIdAndUpdate(userId, { attendanceToken, attendancePin });
-
-    res.json({
-      success: true,
-      attendanceToken,
-      portalPath: `/attendance/portal/${attendanceToken}`,
-    });
-  } catch (error) {
-    console.error('Generate attendance token error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error.' });
-  }
-};
-
-// DELETE /api/admin/users/:userId/attendance-token
-// body: { userRole: 'admin' | 'technician' }
-export const revokeAttendanceToken = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { userRole } = req.body;
-
-    if (!userRole || !['admin', 'technician'].includes(userRole)) {
-      return res.status(400).json({ success: false, message: 'userRole must be admin or technician.' });
-    }
-
-    const Model = userRole === 'admin' ? Admin : Technician;
-    await Model.findByIdAndUpdate(userId, { $unset: { attendanceToken: 1, attendancePin: 1 } });
-
-    res.json({ success: true, message: 'Attendance link revoked.' });
-  } catch (error) {
-    console.error('Revoke attendance token error:', error);
-    res.status(500).json({ success: false, message: 'Internal server error.' });
-  }
-};
-
-// logout from all devices — increments tokenVersion so all existing tokens are invalidated,
-// then returns a fresh token for the current device so the session stays alive
-export const logoutAllDevices = async (req, res) => {
-  try {
-    const admin = await Admin.findById(req.user.id);
-    if (!admin) {
-      return res.status(404).json({ success: false, message: "Admin not found" });
-    }
-
-    admin.tokenVersion = (admin.tokenVersion ?? 0) + 1;
-    await admin.save();
-
-    const newToken = generateToken(admin._id, admin.tokenVersion);
 
     res.status(200).json({
       success: true,
-      message: "Logged out from all other devices.",
-      token: newToken,
+      message: "Client updated successfully",
+      client: {
+        id: client._id,
+        name: client.name,
+        phoneNumber: client.phoneNumber,
+        isActive: client.isActive,
+      },
     });
   } catch (error) {
-    console.error("Logout all devices error:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    console.error("Update client error:", error);
+    respondWithError(res, error, "Internal server error");
+  }
+};
+
+export const updateTechnician = async (req, res) => {
+  try {
+    const technician = await userService.updateTechnician({
+      id: req.params.id,
+      name: req.body.name,
+      phoneNumber: req.body.phoneNumber,
+      isActive: req.body.isActive,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Technician updated successfully",
+      technician: {
+        id: technician._id,
+        name: technician.name,
+        phoneNumber: technician.phoneNumber,
+        isActive: technician.isActive,
+      },
+    });
+  } catch (error) {
+    console.error("Update technician error:", error);
+    respondWithError(res, error, "Internal server error");
+  }
+};
+
+export const toggleUserStatus = async (req, res) => {
+  try {
+    const user = await userService.toggleStatus({
+      userId: req.params.userId,
+      isActive: req.body.isActive,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `User ${user.isActive ? "activated" : "deactivated"} successfully`,
+      user: {
+        id: user._id,
+        name: user.name,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        isActive: user.isActive,
+      },
+    });
+  } catch (error) {
+    console.error("Toggle user status error:", error);
+    respondWithError(res, error, "Internal server error");
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    await userService.remove(req.params.userId);
+    res
+      .status(200)
+      .json({ success: true, message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Delete user error:", error);
+    respondWithError(res, error, "Internal server error");
+  }
+};
+
+export const generateAttendanceToken = async (req, res) => {
+  try {
+    const result = await userService.generateAttendanceToken({
+      userId: req.params.userId,
+      userRole: req.body.userRole,
+      pin: req.body.pin,
+    });
+
+    res.json({ success: true, ...result });
+  } catch (error) {
+    console.error("Generate attendance token error:", error);
+    respondWithError(res, error, "Internal server error.");
+  }
+};
+
+export const revokeAttendanceToken = async (req, res) => {
+  try {
+    await userService.revokeAttendanceToken({
+      userId: req.params.userId,
+      userRole: req.body.userRole,
+    });
+
+    res.json({ success: true, message: "Attendance access revoked." });
+  } catch (error) {
+    console.error("Revoke attendance token error:", error);
+    respondWithError(res, error, "Internal server error.");
+  }
+};
+
+// ============================================
+// DASHBOARD
+// ============================================
+
+export const getDashboardStats = async (req, res) => {
+  try {
+    const stats = await dashboardService.getStats({ month: req.query.month });
+    res.status(200).json({ success: true, stats });
+  } catch (error) {
+    console.error("Get dashboard stats error:", error);
+    respondWithError(res, error, "Internal server error");
   }
 };

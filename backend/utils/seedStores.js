@@ -1,4 +1,4 @@
-import Store from "../models/Store.js";
+import { storeData } from "../data/storeData.js";
 import { STORE_OPTIONS } from "../config/storeOptions.js";
 
 const normalizedKey = (value) =>
@@ -10,9 +10,7 @@ const ensureStoreExistsByName = async (storeName, { reactivate } = {}) => {
   const name = String(storeName || "").trim();
   if (!name) return { store: null, created: false, updated: false };
 
-  const existing = await Store.findOne({
-    name: { $regex: new RegExp(`^${name}$`, "i") },
-  });
+  const existing = await storeData.findByExactName(name);
 
   if (existing) {
     if (reactivate && existing.isActive === false) {
@@ -25,13 +23,11 @@ const ensureStoreExistsByName = async (storeName, { reactivate } = {}) => {
   }
 
   try {
-    const createdStore = await Store.create({ name });
+    const createdStore = await storeData.create({ name });
     return { store: createdStore, created: true, updated: false };
   } catch (error) {
     // Race / duplicate key
-    const fallback = await Store.findOne({
-      name: { $regex: new RegExp(`^${name}$`, "i") },
-    });
+    const fallback = await storeData.findByExactName(name);
 
     if (fallback) return { store: fallback, created: false, updated: false };
 
@@ -58,8 +54,8 @@ export const seedStores = async ({ reactivate = false } = {}) => {
     if (updated) updatedCount += 1;
   }
 
-  const totalActive = await Store.countDocuments({ isActive: true });
-  const totalAll = await Store.countDocuments({});
+  const totalActive = await storeData.count({ isActive: true });
+  const totalAll = await storeData.count({});
 
   return {
     createdCount,

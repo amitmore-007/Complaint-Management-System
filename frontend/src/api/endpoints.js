@@ -1,22 +1,39 @@
 // Centralized API endpoint builders (all paths are relative to VITE_API_URL)
 
 export const endpoints = {
+  // Auth is role-agnostic: one set of endpoints, role passed in the body.
+  auth: {
+    me: "/auth/me",
+    sendOtp: "/auth/send-otp",
+    verifyOtp: "/auth/verify-otp",
+    logoutAllDevices: "/auth/logout-all-devices",
+  },
+
+  // One complaint API for every role — the server scopes results by the
+  // caller's role, so there is no per-role variant.
+  complaints: {
+    root: "/complaints",
+    bulk: "/complaints/bulk",
+    byId: (complaintId) => `/complaints/${complaintId}`,
+    duplicate: (complaintId) => `/complaints/${complaintId}/duplicate`,
+    assigned: "/complaints/assigned/me",
+    assignedResolved: "/complaints/assigned/me/resolved",
+    updateStatus: (complaintId) => `/complaints/${complaintId}/status`,
+  },
+
+  // Listing is role-scoped server-side; create is technician-only and
+  // get/update are admin-only, enforced by route guards.
+  billing: {
+    root: "/billing",
+    byId: (id) => `/billing/${id}`,
+  },
+
   admin: {
-    auth: {
-      me: "/admin/auth/me",
-      sendOtp: "/admin/auth/send-otp",
-      verifyOtp: "/admin/auth/verify-otp",
-      logoutAllDevices: "/admin/auth/logout-all-devices",
-    },
     dashboard: {
       stats: "/admin/dashboard/stats",
     },
+    // Only genuinely admin-only complaint operations.
     complaints: {
-      root: "/admin/complaints",
-      bulk: "/admin/complaints/bulk",
-      byId: (complaintId) => `/admin/complaints/${complaintId}`,
-      update: (complaintId) => `/admin/complaints/${complaintId}`,
-      duplicate: (complaintId) => `/admin/complaints/${complaintId}/duplicate`,
       assign: "/admin/complaints/assign",
       reassign: (complaintId) => `/admin/complaints/${complaintId}/reassign`,
       autoAssign: "/admin/complaints/auto-assign",
@@ -33,10 +50,6 @@ export const endpoints = {
       toggleStatus: (userId) => `/admin/users/${userId}/toggle-status`,
       byId: (userId) => `/admin/users/${userId}`,
     },
-    billing: {
-      root: "/admin/billing",
-      byId: (id) => `/admin/billing/${id}`,
-    },
     inventory: {
       root: "/admin/inventory",
       byId: (id) => `/admin/inventory/${id}`,
@@ -47,53 +60,10 @@ export const endpoints = {
     },
   },
 
-  client: {
-    auth: {
-      me: "/client/auth/me",
-      sendOtp: "/client/auth/send-otp",
-      verifyOtp: "/client/auth/verify-otp",
-    },
-    complaints: {
-      root: "/client/complaints",
-      bulk: "/client/complaints/bulk",
-      byId: (complaintId) => `/client/complaints/${complaintId}`,
-    },
-  },
-
   technician: {
-    auth: {
-      me: "/technician/auth/me",
-      sendOtp: "/technician/auth/send-otp",
-      verifyOtp: "/technician/auth/verify-otp",
-    },
-    complaints: {
-      root: "/technician/complaints",
-      bulk: "/technician/complaints/bulk",
-      duplicate: (complaintId) => `/technician/complaints/${complaintId}/duplicate`,
-      update: (complaintId) => `/technician/complaints/${complaintId}`,
-      my: "/technician/complaints/my",
-    },
-    assignments: {
-      root: "/technician/assignments",
-      resolved: "/technician/resolved-assignments",
-      updateStatus: (complaintId) =>
-        `/technician/assignments/${complaintId}/status`,
-    },
-    billing: {
-      root: "/technician/billing",
-      byId: (id) => `/technician/billing/${id}`,
-    },
     inventory: {
       items: "/technician/inventory/items",
     },
-  },
-
-  complaints: {
-    // Common complaint routes (note: most role-specific actions go via /client or /technician)
-    my: "/complaints/my",
-    assignedMe: "/complaints/assigned/me",
-    byId: (complaintId) => `/complaints/${complaintId}`,
-    updateStatus: (complaintId) => `/complaints/${complaintId}/status`,
   },
 
   equipment: {

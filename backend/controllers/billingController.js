@@ -1,9 +1,7 @@
-import {
-  billingService,
-  getHttpErrorStatus,
-} from "../services/billingService.js";
+import { billingService } from "../services/billingService.js";
+import { respondWithError } from "../utils/httpError.js";
 
-export const technicianCreateBillingRecord = async (req, res) => {
+export const createBillingRecord = async (req, res) => {
   try {
     const record = await billingService.technician.createBillingRecord({
       technicianId: req.user.id,
@@ -19,22 +17,19 @@ export const technicianCreateBillingRecord = async (req, res) => {
     });
   } catch (error) {
     console.error("Create billing record error:", error);
-    const status = getHttpErrorStatus(error) ?? 500;
-    return res.status(status).json({
-      success: false,
-      message: status === 500 ? "Internal server error" : error.message,
-    });
+    return respondWithError(res, error, "Internal server error");
   }
 };
 
-export const technicianListBillingRecords = async (req, res) => {
+// Technician sees their own submissions, admin sees all — scoped server-side.
+export const listBillingRecords = async (req, res) => {
   try {
-    const { records, pagination } =
-      await billingService.technician.listBillingRecords({
-        technicianId: req.user.id,
-        page: req.query.page,
-        limit: req.query.limit,
-      });
+    const { records, pagination } = await billingService.listBillingRecords({
+      role: req.user.role,
+      userId: req.user.id,
+      page: req.query.page,
+      limit: req.query.limit,
+    });
 
     return res.status(200).json({
       success: true,
@@ -42,37 +37,12 @@ export const technicianListBillingRecords = async (req, res) => {
       pagination,
     });
   } catch (error) {
-    console.error("List technician billing records error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    console.error("List billing records error:", error);
+    return respondWithError(res, error, "Internal server error");
   }
 };
 
-export const adminListBillingRecords = async (req, res) => {
-  try {
-    const { records, pagination } =
-      await billingService.admin.listBillingRecords({
-        page: req.query.page,
-        limit: req.query.limit,
-      });
-
-    return res.status(200).json({
-      success: true,
-      records,
-      pagination,
-    });
-  } catch (error) {
-    console.error("List admin billing records error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-export const adminGetBillingRecord = async (req, res) => {
+export const getBillingRecord = async (req, res) => {
   try {
     const record = await billingService.admin.getBillingRecord({
       id: req.params.id,
@@ -84,15 +54,11 @@ export const adminGetBillingRecord = async (req, res) => {
     });
   } catch (error) {
     console.error("Get admin billing record error:", error);
-    const status = getHttpErrorStatus(error) ?? 500;
-    return res.status(status).json({
-      success: false,
-      message: status === 500 ? "Internal server error" : error.message,
-    });
+    return respondWithError(res, error, "Internal server error");
   }
 };
 
-export const adminUpdateBillingRecord = async (req, res) => {
+export const updateBillingRecord = async (req, res) => {
   try {
     const record = await billingService.admin.updateBillingRecord({
       adminId: req.user.id,
@@ -109,10 +75,6 @@ export const adminUpdateBillingRecord = async (req, res) => {
     });
   } catch (error) {
     console.error("Update admin billing record error:", error);
-    const status = getHttpErrorStatus(error) ?? 500;
-    return res.status(status).json({
-      success: false,
-      message: status === 500 ? "Internal server error" : error.message,
-    });
+    return respondWithError(res, error, "Internal server error");
   }
 };

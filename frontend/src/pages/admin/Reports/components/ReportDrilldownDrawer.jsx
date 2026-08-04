@@ -28,12 +28,7 @@ const formatDateTime = (value) => {
   });
 };
 
-const getCreatorLabel = (complaint) => {
-  if (complaint?.client?.name) return complaint.client.name;
-  if (complaint?.createdByTechnician?.name) return complaint.createdByTechnician.name;
-  if (complaint?.createdByAdmin?.name) return complaint.createdByAdmin.name;
-  return "Unknown";
-};
+const getCreatorLabel = (complaint) => complaint?.createdBy?.name || "Unknown";
 
 // ── status / priority tones ───────────────────────────────────────────────────
 
@@ -113,7 +108,7 @@ const ComplaintRow = ({ complaint, eventLabel, eventTime, extraBadge, isDarkMode
     <div className="grid gap-2 text-sm">
       <div className={`flex items-start gap-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
         <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
-        <span>{complaint?.store?.name || complaint.location || "Unknown store"}</span>
+        <span>{complaint?.store?.name || "Unknown store"}</span>
       </div>
       <div className={`flex items-start gap-2 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
         <User className="mt-0.5 h-4 w-4 shrink-0" />

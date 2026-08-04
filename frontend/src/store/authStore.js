@@ -31,8 +31,9 @@ const useAuthStore = create(
       sendOTP: async (phoneNumber, role) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await axios.post(`${API_BASE_URL}/${role}/auth/send-otp`, {
-            phoneNumber
+          const response = await axios.post(`${API_BASE_URL}/auth/send-otp`, {
+            phoneNumber,
+            role
           });
           set({ isLoading: false });
           return response.data;
@@ -47,10 +48,10 @@ const useAuthStore = create(
       verifyOTP: async (phoneNumber, otp, role, name) => {
         set({ isLoading: true, error: null });
         try {
-          const payload = { phoneNumber, otp };
+          const payload = { phoneNumber, otp, role };
           if (name) payload.name = name;
 
-          const response = await axios.post(`${API_BASE_URL}/${role}/auth/verify-otp`, payload);
+          const response = await axios.post(`${API_BASE_URL}/auth/verify-otp`, payload);
 
           const { user, token } = response.data;
           get().setAuth(user, token);
@@ -70,7 +71,7 @@ const useAuthStore = create(
         if (!token || !user?.role) return null;
 
         try {
-          const response = await axios.get(`${API_BASE_URL}/${user.role}/auth/me`, {
+          const response = await axios.get(`${API_BASE_URL}/auth/me`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           set({ user: response.data.user });
@@ -94,7 +95,7 @@ const useAuthStore = create(
         }
 
         try {
-          const response = await axios.get(`${API_BASE_URL}/${user.role}/auth/me`, {
+          const response = await axios.get(`${API_BASE_URL}/auth/me`, {
             headers: { Authorization: `Bearer ${token}` }
           });
 

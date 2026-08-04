@@ -18,9 +18,9 @@ from api._http import headers as _headers
 def whoami(auth: AuthPayload) -> Dict:
     try:
         token = auth["token"]
-        role = auth["role"]
 
-        response = requests.get(f"{SERVER_URL}/api/{role}/auth/me", headers=_headers(token))
+        # Auth is role-agnostic now — the role is carried in the JWT.
+        response = requests.get(f"{SERVER_URL}/api/auth/me", headers=_headers(token))
 
         if response.status_code != 200:
             logger.error(f"[user.whoami] failed ({response.status_code}) | {response.text}")
