@@ -2,6 +2,7 @@ import { complaintData, isValidId } from "../data/complaintData.js";
 import { storeData } from "../data/storeData.js";
 import { userData } from "../data/userData.js";
 import { inventoryData } from "../data/inventoryData.js";
+import { attendanceService } from "./attendanceService.js";
 import {
   uploadToCloudinary,
   uploadVideoToCloudinary,
@@ -527,6 +528,14 @@ export const complaintService = {
     }
 
     if (status === "resolved") {
+      const attendanceToday = await attendanceService.getToday(technicianId);
+      if (!attendanceToday) {
+        throw createHttpError(
+          400,
+          "Please mark your attendance before resolving this complaint",
+        );
+      }
+
       if (!resolutionNotes || resolutionNotes.trim() === "") {
         throw createHttpError(
           400,

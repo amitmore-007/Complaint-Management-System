@@ -1,9 +1,11 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Clock, Coffee, LogIn, LogOut, UserX, Play, RefreshCw } from 'lucide-react';
+import { Users, Clock, Coffee, LogIn, LogOut, UserX, Play, RefreshCw, Download, Loader2 } from 'lucide-react';
 import dayjs from 'dayjs';
+import writeXlsxFile from 'write-excel-file/browser';
+import toast from 'react-hot-toast';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { MenuItem, TextField } from '@mui/material';
+import { MenuItem, TextField, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -88,17 +90,29 @@ const LiveWorkTime = ({ totalWorkSeconds, currentSessionStart, isWorking }) => {
 
 const AttendanceManagement = () => {
   const { isDarkMode } = useTheme();
+  const [filterMode, setFilterMode] = useState('day'); // 'day' | 'month'
   const [date, setDate] = useState(todayStr());
+  const [month, setMonth] = useState(dayjs());
   const [roleFilter, setRoleFilter] = useState('');
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [isExporting, setIsExporting] = useState(false);
 
   const muiTheme = useMemo(
     () => createTheme({ palette: { mode: isDarkMode ? 'dark' : 'light' } }),
     [isDarkMode]
   );
 
+  const monthRange = useMemo(
+    () => ({ from: month.startOf('month').format('YYYY-MM-DD'), to: month.endOf('month').format('YYYY-MM-DD') }),
+    [month]
+  );
+
   const params = Object.fromEntries(
-    Object.entries({ date, userRole: roleFilter || undefined }).filter(([, v]) => v)
+    Object.entries(
+      filterMode === 'month'
+        ? { ...monthRange, userRole: roleFilter || undefined }
+        : { date, userRole: roleFilter || undefined }
+    ).filter(([, v]) => v)
   );
 
   const { data: records = [], isLoading, refetch, isFetching } = useAllAttendance(params, { refetchInterval: 60_000 });
@@ -107,6 +121,64 @@ const AttendanceManagement = () => {
   useEffect(() => {
     if (!isFetching) setLastRefresh(new Date());
   }, [isFetching]);
+
+  const handleDownload = async () => {
+    if (isExporting || !records.length) {
+      if (!records.length) toast.error('No records to export');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const rows = records.map((r) => ({
+        name: r.userName || '',
+        phone: r.userPhone || '',
+        role: r.userRole || '',
+        date: r.date || '',
+        status: r.currentStatus || '',
+        checkIn: r.checkInTime ? new Date(r.checkInTime).toLocaleString('en-IN') : '',
+        checkOut: r.checkOutTime ? new Date(r.checkOutTime).toLocaleString('en-IN') : '',
+        workTime: toShort(r.totalWorkSeconds),
+        breakTime: toShort(r.totalBreakSeconds),
+        breaks: r.sessions?.filter((s) => s.type === 'break').length ?? 0,
+      }));
+
+      const schema = [
+        { column: 'Employee', type: String, width: 22, value: (r) => r.name },
+        { column: 'Phone', type: String, width: 16, value: (r) => r.phone },
+        { column: 'Role', type: String, width: 14, value: (r) => r.role },
+        { column: 'Date', type: String, width: 14, value: (r) => r.date },
+        { column: 'Status', type: String, width: 14, value: (r) => r.status },
+        { column: 'Check In', type: String, width: 20, value: (r) => r.checkIn },
+        { column: 'Check Out', type: String, width: 20, value: (r) => r.checkOut },
+        { column: 'Work Time', type: String, width: 14, value: (r) => r.workTime },
+        { column: 'Break Time', type: String, width: 14, value: (r) => r.breakTime },
+        { column: 'Breaks', type: Number, width: 10, value: (r) => r.breaks },
+      ];
+
+      const tag = filterMode === 'month' ? month.format('YYYY-MM') : date;
+      await writeXlsxFile(rows, {
+        schema,
+        getHeaderStyle: () => ({
+          fontWeight: 'bold',
+          fontSize: 13,
+          textColor: '#ffffff',
+          backgroundColor: '#1f4e78',
+          align: 'center',
+          alignVertical: 'center',
+          height: 26,
+        }),
+        fileName: `attendance-${tag}.xlsx`,
+      });
+
+      toast.success(`Downloaded ${rows.length} records`);
+    } catch (error) {
+      console.error('Failed to export attendance:', error);
+      toast.error('Failed to download attendance Excel');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const summaryCards = [
     { title: 'Working',        value: summary?.working        ?? 0, icon: Play,   bgColor: 'from-green-500 to-emerald-600', shadow: 'shadow-green-500/20' },
@@ -142,12 +214,33 @@ const AttendanceManagement = () => {
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <div className="flex flex-wrap items-center gap-3">
 
-                <DatePicker
-                  label="Date"
-                  value={dayjs(date)}
-                  onChange={(v) => v && setDate(v.format('YYYY-MM-DD'))}
-                  slotProps={{ textField: { size: 'small' } }}
-                />
+                <ToggleButtonGroup
+                  size="small"
+                  exclusive
+                  value={filterMode}
+                  onChange={(_, v) => v && setFilterMode(v)}
+                >
+                  <ToggleButton value="day">Day</ToggleButton>
+                  <ToggleButton value="month">Month</ToggleButton>
+                </ToggleButtonGroup>
+
+                {filterMode === 'day' ? (
+                  <DatePicker
+                    label="Date"
+                    value={dayjs(date)}
+                    onChange={(v) => v && setDate(v.format('YYYY-MM-DD'))}
+                    slotProps={{ textField: { size: 'small' } }}
+                  />
+                ) : (
+                  <DatePicker
+                    label="Month"
+                    views={['year', 'month']}
+                    openTo="month"
+                    value={month}
+                    onChange={(v) => v && setMonth(v)}
+                    slotProps={{ textField: { size: 'small' } }}
+                  />
+                )}
 
                 <TextField
                   select
@@ -171,6 +264,16 @@ const AttendanceManagement = () => {
                   title="Refresh now"
                 >
                   <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+                </button>
+
+                <button
+                  onClick={handleDownload}
+                  disabled={isExporting || !records.length}
+                  className={`h-10 px-4 inline-flex items-center gap-2 rounded-xl border transition-colors cursor-pointer disabled:cursor-not-allowed text-sm font-semibold ${isDarkMode ? 'border-white/10 hover:bg-white/10 text-gray-200' : 'border-gray-200 hover:bg-gray-50 text-gray-700'} disabled:opacity-50`}
+                  title="Download as Excel"
+                >
+                  {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                  Download
                 </button>
 
               </div>
@@ -218,7 +321,9 @@ const AttendanceManagement = () => {
               <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${isDarkMode ? 'bg-white/10' : 'bg-gray-100'}`}>
                 <Users className={`w-8 h-8 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`} />
               </div>
-              <p className={`font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>No records for this date</p>
+              <p className={`font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                {filterMode === 'month' ? 'No records for this month' : 'No records for this date'}
+              </p>
               <p className={`text-sm ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>Nobody has checked in yet.</p>
             </div>
           ) : (

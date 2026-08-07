@@ -82,11 +82,19 @@ const AdminInventoryPage = ({ isDarkMode }) => {
       (r) => new Date(r.purchaseDate).toISOString().slice(0, 7) === monthFilter,
     );
   }, [records, monthFilter]);
-  const summary = inventoryQuery.data?.summary ?? {
-    totalPurchaseValue: 0,
-    gstValue: 0,
-    nonGstValue: 0,
-  };
+  const summary = useMemo(
+    () =>
+      filteredRecords.reduce(
+        (acc, r) => {
+          acc.totalPurchaseValue += r.totalAmount || 0;
+          if (r.gstType === "gst") acc.gstValue += r.totalAmount || 0;
+          else acc.nonGstValue += r.totalAmount || 0;
+          return acc;
+        },
+        { totalPurchaseValue: 0, gstValue: 0, nonGstValue: 0 },
+      ),
+    [filteredRecords],
+  );
 
   const catalogByKey = useMemo(() => {
     // Excludes the record currently being edited so its own sole entry
