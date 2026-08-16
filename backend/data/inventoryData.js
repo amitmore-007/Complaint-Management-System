@@ -52,7 +52,13 @@ export const inventoryData = {
     };
   },
 
-  /** Purchased quantity per item name. */
+  /**
+   * Purchased quantity and spend per item name.
+   *
+   * The spend totals are what let remaining stock be valued at its weighted
+   * average purchase cost. Valuing it at the latest rate instead would
+   * misstate the holding whenever the price moved between purchases.
+   */
   aggregatePurchased: () =>
     InventoryItem.aggregate([
       { $sort: { purchaseDate: -1, createdAt: -1 } },
@@ -65,6 +71,8 @@ export const inventoryData = {
           gstPercent: { $first: "$gstPercent" },
           latestUnitRate: { $first: "$unitRate" },
           purchasedQty: { $sum: "$quantity" },
+          purchasedSubtotal: { $sum: "$subtotal" },
+          purchasedTotalAmount: { $sum: "$totalAmount" },
         },
       },
       { $sort: { itemName: 1 } },

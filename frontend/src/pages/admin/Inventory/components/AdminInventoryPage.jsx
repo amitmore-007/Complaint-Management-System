@@ -20,6 +20,7 @@ import toast from "react-hot-toast";
 import { formatMoneyINR } from "../../../../utils/helpers";
 import {
   useAdminInventoryItems,
+  useAdminStockBalance,
   useCreateInventoryItem,
   useUpdateInventoryItem,
   useDeleteInventoryItem,
@@ -96,6 +97,26 @@ const AdminInventoryPage = ({ isDarkMode }) => {
     [filteredRecords],
   );
 
+  /**
+   * Value of what is actually left on the shelf, as opposed to everything ever
+   * bought. Shares React Query's cache with the stock balance table below, so
+   * this costs no extra request.
+   */
+  const stockBalanceQuery = useAdminStockBalance();
+  const stockSummary = useMemo(() => {
+    const rows = stockBalanceQuery.data ?? [];
+
+    return rows.reduce(
+      (acc, row) => {
+        acc.value += row.remainingValue || 0;
+        acc.valueWithGst += row.remainingValueWithGst || 0;
+        if ((row.remainingQty || 0) > 0) acc.itemsInStock += 1;
+        return acc;
+      },
+      { value: 0, valueWithGst: 0, itemsInStock: 0 },
+    );
+  }, [stockBalanceQuery.data]);
+
   const catalogByKey = useMemo(() => {
     // Excludes the record currently being edited so its own sole entry
     // can still have its GST type corrected, matching backend behavior.
@@ -165,25 +186,52 @@ const AdminInventoryPage = ({ isDarkMode }) => {
 
   return (
     <>
+      {/* Purchases answer "what did we spend"; stock balance answers "what is
+          still on the shelf worth" — different questions, different cards. */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard
-          icon={Wallet}
-          label="Total Purchase Value"
-          value={formatMoneyINR(summary.totalPurchaseValue)}
-          isDarkMode={isDarkMode}
-        />
-        <StatCard
-          icon={Receipt}
-          label="GST Value"
-          value={formatMoneyINR(summary.gstValue)}
-          isDarkMode={isDarkMode}
-        />
-        <StatCard
-          icon={Package}
-          label="Non-GST Value"
-          value={formatMoneyINR(summary.nonGstValue)}
-          isDarkMode={isDarkMode}
-        />
+        {activeTab === "stock-balance" ? (
+          <>
+            <StatCard
+              icon={Wallet}
+              label="Stock in Hand Value"
+              value={formatMoneyINR(stockSummary.value)}
+              isDarkMode={isDarkMode}
+            />
+            <StatCard
+              icon={Receipt}
+              label="Stock Value (incl. GST)"
+              value={formatMoneyINR(stockSummary.valueWithGst)}
+              isDarkMode={isDarkMode}
+            />
+            <StatCard
+              icon={Package}
+              label="Items in Stock"
+              value={stockSummary.itemsInStock}
+              isDarkMode={isDarkMode}
+            />
+          </>
+        ) : (
+          <>
+            <StatCard
+              icon={Wallet}
+              label="Total Purchase Value"
+              value={formatMoneyINR(summary.totalPurchaseValue)}
+              isDarkMode={isDarkMode}
+            />
+            <StatCard
+              icon={Receipt}
+              label="GST Value"
+              value={formatMoneyINR(summary.gstValue)}
+              isDarkMode={isDarkMode}
+            />
+            <StatCard
+              icon={Package}
+              label="Non-GST Value"
+              value={formatMoneyINR(summary.nonGstValue)}
+              isDarkMode={isDarkMode}
+            />
+          </>
+        )}
       </div>
 
       <div className="flex items-center justify-between gap-3 flex-wrap">

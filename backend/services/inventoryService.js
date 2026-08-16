@@ -17,6 +17,25 @@ const computeStockBalances = async () => {
 
   return purchased.map((row) => {
     const usedQty = usedByKey.get(row._id) ?? 0;
+    const remainingQty = row.purchasedQty - usedQty;
+
+    /**
+     * Weighted average cost, not the latest rate: an item bought twice at
+     * different prices is worth what was actually paid on average, and the
+     * latest purchase can be the smaller of the two.
+     */
+    const avgUnitRate = row.purchasedQty
+      ? row.purchasedSubtotal / row.purchasedQty
+      : 0;
+    const avgUnitRateWithGst = row.purchasedQty
+      ? row.purchasedTotalAmount / row.purchasedQty
+      : 0;
+
+    // Used can exceed purchased when a technician logs material that was never
+    // entered as a purchase. Quantity keeps the negative so the discrepancy
+    // stays visible, but stock cannot be worth less than nothing.
+    const valuedQty = Math.max(remainingQty, 0);
+
     return {
       itemId: row.itemId,
       itemName: row.itemName,
@@ -25,7 +44,11 @@ const computeStockBalances = async () => {
       latestUnitRate: row.latestUnitRate,
       purchasedQty: row.purchasedQty,
       usedQty,
-      remainingQty: row.purchasedQty - usedQty,
+      remainingQty,
+      avgUnitRate,
+      avgUnitRateWithGst,
+      remainingValue: valuedQty * avgUnitRate,
+      remainingValueWithGst: valuedQty * avgUnitRateWithGst,
     };
   });
 };

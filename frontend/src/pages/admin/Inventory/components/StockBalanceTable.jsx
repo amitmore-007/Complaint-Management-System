@@ -1,11 +1,25 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { AlertTriangle } from "lucide-react";
 
+import { formatMoneyINR } from "../../../../utils/helpers";
 import { useAdminStockBalance } from "../../../../hooks/useInventory";
 
 const StockBalanceTable = ({ isDarkMode }) => {
   const stockBalanceQuery = useAdminStockBalance();
   const balances = stockBalanceQuery.data ?? [];
+
+  const totals = useMemo(
+    () =>
+      balances.reduce(
+        (acc, row) => {
+          acc.value += row.remainingValue || 0;
+          acc.valueWithGst += row.remainingValueWithGst || 0;
+          return acc;
+        },
+        { value: 0, valueWithGst: 0 },
+      ),
+    [balances],
+  );
 
   if (stockBalanceQuery.isLoading) {
     return (
@@ -46,6 +60,8 @@ const StockBalanceTable = ({ isDarkMode }) => {
             <th className="text-right px-4 py-3">Purchased</th>
             <th className="text-right px-4 py-3">Used</th>
             <th className="text-right px-4 py-3">Remaining</th>
+            <th className="text-right px-4 py-3">Avg Rate</th>
+            <th className="text-right px-4 py-3">Stock Value</th>
           </tr>
         </thead>
         <tbody>
@@ -95,11 +111,50 @@ const StockBalanceTable = ({ isDarkMode }) => {
                     {row.remainingQty}
                   </span>
                 </td>
+                <td
+                  className={`px-4 py-3 text-right ${
+                    isDarkMode ? "text-gray-300" : "text-gray-700"
+                  }`}
+                >
+                  {formatMoneyINR(row.avgUnitRate)}
+                </td>
+                <td
+                  className={`px-4 py-3 text-right font-bold ${
+                    isDarkMode ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {formatMoneyINR(row.remainingValue)}
+                </td>
               </tr>
             );
           })}
         </tbody>
+        <tfoot>
+          <tr
+            className={`border-t-2 ${
+              isDarkMode
+                ? "border-white/20 text-white"
+                : "border-gray-300 text-gray-900"
+            }`}
+          >
+            <td className="px-4 py-3 font-bold" colSpan={5}>
+              Total Stock in Hand Value
+            </td>
+            <td className="px-4 py-3 text-right font-bold">
+              {formatMoneyINR(totals.value)}
+            </td>
+          </tr>
+        </tfoot>
       </table>
+
+      <p
+        className={`px-4 pb-4 text-xs ${
+          isDarkMode ? "text-gray-500" : "text-gray-500"
+        }`}
+      >
+        Valued at weighted average purchase rate, excluding GST. Including GST:{" "}
+        <strong>{formatMoneyINR(totals.valueWithGst)}</strong>.
+      </p>
     </div>
   );
 };
