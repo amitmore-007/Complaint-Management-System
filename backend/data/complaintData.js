@@ -157,6 +157,42 @@ export const complaintData = {
       },
     ]),
 
+  /**
+   * Record a failed geofence check, outside the normal save path.
+   *
+   * Written immediately rather than with the status update, because in
+   * "enforce" mode the update is about to be rejected and never saves — a
+   * blocked attempt would otherwise leave no trace at all. The attempt is
+   * appended (capped at 10) so repeated tries do not overwrite each other.
+   *
+   * `field` is only passed when this call also owns persisting the reading;
+   * in "warn" mode the status update saves it as part of its own write.
+   */
+  recordGeofenceFailure: ({ id, action, reading, field }) =>
+    Complaint.findByIdAndUpdate(id, {
+      $set: {
+        geofenceFlagged: true,
+        ...(field ? { [field]: reading } : {}),
+      },
+      $push: {
+        geofenceAttempts: {
+          $each: [{ action, reading }],
+          $slice: -10,
+        },
+      },
+    }),
+
+  /** Admin geofence review queue — every status update that failed its check. */
+  listGeofenceFlagged: ({ limit = 100 } = {}) =>
+    Complaint.find({ geofenceFlagged: true })
+      .select(
+        "complaintId title status store assignedTechnician startLocation resolveLocation geofenceAttempts updatedAt",
+      )
+      .populate("store", "name location geofenceRadiusMeters")
+      .populate("assignedTechnician", "name phoneNumber")
+      .sort({ updatedAt: -1 })
+      .limit(Math.min(limit, 200)),
+
   listPending: () =>
     Complaint.find({ status: "pending" })
       .populate("createdBy", "phoneNumber")

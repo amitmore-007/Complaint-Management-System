@@ -13,9 +13,14 @@ import { generateNextComplaintId } from "../utils/complaintId.js";
 import { autoAssignComplaintToDefaultTechnician } from "../utils/autoAssign.js";
 import {
   getComplaintAutoAssignEnabled,
+  getComplaintGeofenceMode,
   getResolvedNotifyContacts,
 } from "./settingsService.js";
 import { createHttpError } from "../utils/httpError.js";
+import {
+  evaluateGeofence,
+  geofenceFailureMessage,
+} from "../utils/geofence.js";
 
 const MAX_PHOTOS = 5;
 const VALID_STATUSES = ["assigned", "in-progress", "resolved"];
@@ -224,6 +229,75 @@ const uploadResolutionMedia = async (files) => {
   }
 
   return { photos, videos };
+};
+
+/**
+ * Verify the technician is physically at the store, and record where they were.
+ *
+ * Runs before any Cloudinary upload so a rejected request never burns one.
+ * The snapshot is written in every mode — including "warn", which blocks
+ * nothing — because those recorded distances are what tell an admin whether a
+ * store's radius is right before they switch the mode to "enforce".
+ *
+ * Mutates `complaint`; throws only in "enforce" mode.
+ */
+const applyGeofenceCheck = async ({
+  complaint,
+  technicianId,
+  status,
+  body,
+  context,
+}) => {
+  const mode = await getComplaintGeofenceMode();
+  if (mode === "off") return;
+
+  const [store, lastKnownLocation] = await Promise.all([
+    storeData.findById(complaint.store?._id ?? complaint.store),
+    userData.findLastKnownLocation(technicianId),
+  ]);
+
+  const result = evaluateGeofence({
+    store,
+    body,
+    lastKnownLocation,
+    context: { ...context, mode },
+  });
+
+  // Store has no pin yet, so there is nothing to check — never block.
+  if (!result.applicable) return;
+
+  const isResolve = status === "resolved";
+  const field = isResolve ? "resolveLocation" : "startLocation";
+  complaint[field] = result.snapshot;
+  if (!result.ok) complaint.geofenceFlagged = true;
+
+  // Only a real fix is worth remembering for the next speed check.
+  if (result.snapshot?.lat != null) {
+    await userData.setLastKnownLocation({
+      id: technicianId,
+      lat: result.snapshot.lat,
+      lng: result.snapshot.lng,
+      capturedAt: result.snapshot.capturedAt,
+    });
+  }
+
+  if (result.ok) return;
+
+  const isBlocked = mode === "enforce";
+
+  // Append the attempt now, in both modes. When blocked, the status update
+  // never saves, so this is the only write that happens — and it also owns
+  // persisting the reading itself.
+  await complaintData.recordGeofenceFailure({
+    id: complaint._id,
+    action: isResolve ? "resolve" : "start",
+    reading: result.snapshot,
+    ...(isBlocked ? { field } : {}),
+  });
+
+  if (isBlocked) {
+    throw createHttpError(403, geofenceFailureMessage(result, store.name));
+  }
 };
 
 /** Fire-and-forget notifications; a delivery failure never fails the request. */
@@ -494,6 +568,12 @@ export const complaintService = {
     };
   },
 
+  /** Admin review queue: status updates that failed their geofence check. */
+  listGeofenceFlagged: ({ limit } = {}) =>
+    complaintData.listGeofenceFlagged({
+      limit: Math.min(Math.max(parseInt(limit, 10) || 100, 1), 200),
+    }),
+
   listResolvedAssignments: (technicianId) =>
     complaintData.listAssignedToTechnician({
       technicianId,
@@ -501,8 +581,8 @@ export const complaintService = {
       sort: { completedAt: -1, updatedAt: -1 },
     }),
 
-  updateStatus: async ({ id, technicianId, body, files }) => {
-    const { status, notes, resolutionNotes } = body;
+  updateStatus: async ({ id, technicianId, body, files, context = {} }) => {
+    const { status, notes, resolutionNotes, idempotencyKey } = body;
 
     if (!status) throw createHttpError(400, "Status is required");
     if (!VALID_STATUSES.includes(status)) {
@@ -520,12 +600,30 @@ export const complaintService = {
       throw createHttpError(404, "Complaint not found or not assigned to you");
     }
 
+    /**
+     * A retry — or the offline queue replaying after connectivity returns —
+     * carries the key of the update it already sent. Return the complaint
+     * unchanged rather than re-uploading media, or failing the (now invalid)
+     * transition out of the status this very request already applied.
+     */
+    if (idempotencyKey && complaint.statusUpdateKeys?.includes(idempotencyKey)) {
+      return complaint;
+    }
+
     if (!VALID_TRANSITIONS[complaint.status]?.includes(status)) {
       throw createHttpError(
         400,
         `Cannot change status from ${complaint.status} to ${status}`,
       );
     }
+
+    await applyGeofenceCheck({
+      complaint,
+      technicianId,
+      status,
+      body,
+      context,
+    });
 
     if (status === "resolved") {
       const attendanceToday = await attendanceService.getToday(technicianId);
@@ -563,6 +661,7 @@ export const complaintService = {
 
     complaint.status = status;
     if (notes) complaint.technicianNotes = notes;
+    if (idempotencyKey) complaint.statusUpdateKeys.push(idempotencyKey);
 
     await complaintData.save(complaint);
     await notifyStatusChange(complaint, status);

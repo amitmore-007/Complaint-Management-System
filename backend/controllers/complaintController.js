@@ -1,5 +1,5 @@
 import { complaintService } from "../services/complaintService.js";
-import { respondWithError } from "../utils/httpError.js";
+import { logHttpError, respondWithError } from "../utils/httpError.js";
 
 // GET /api/complaints
 export const listComplaints = async (req, res) => {
@@ -155,6 +155,11 @@ export const updateComplaintStatus = async (req, res) => {
       technicianId: req.user.id,
       body: req.body,
       files: req.files,
+      // Recorded alongside the geofence reading, for audit only.
+      context: {
+        ipAddress: req.ip,
+        userAgent: req.get("user-agent"),
+      },
     });
 
     res.status(200).json({
@@ -163,7 +168,9 @@ export const updateComplaintStatus = async (req, res) => {
       complaint,
     });
   } catch (error) {
-    console.error("Update complaint status error:", error);
+    // Geofence and validation rejections are 4xx — logged as one warning line,
+    // not a stack trace. Only a genuine 500 gets the full dump.
+    logHttpError("Update complaint status error", error);
     respondWithError(res, error, "Internal server error");
   }
 };

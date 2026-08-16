@@ -41,6 +41,23 @@ const userSchema = new mongoose.Schema(
     },
     attendanceToken: { type: String, sparse: true, select: false },
     attendancePin: { type: String, select: false },
+    /**
+     * Last position this user reported on a geofenced action. Kept only so the
+     * next action can check the implied travel speed — a fix that "teleports"
+     * across the city in two minutes is spoofed, which a static radius check
+     * on its own cannot see.
+     */
+    lastKnownLocation: {
+      type: new mongoose.Schema(
+        {
+          lat: Number,
+          lng: Number,
+          capturedAt: Date,
+        },
+        { _id: false },
+      ),
+      default: undefined,
+    },
     // Replaces the write-only Admin.createdClients/createdTechnicians arrays.
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

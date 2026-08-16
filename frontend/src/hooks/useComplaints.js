@@ -7,6 +7,8 @@ import {
 import { complaintService } from "../services/complaintService";
 import { adminKeys } from "./useAdmin";
 import { statsKeys } from "./useStats";
+import { appendPositionTo } from "../utils/geolocation";
+import { enqueueStatusUpdate, isNetworkError } from "../utils/offlineQueue";
 
 export const dashboardKeys = {
   technicianAssignments: () => ["dashboard", "technician", "assignments"],
@@ -27,7 +29,16 @@ export const complaintKeys = {
   clientList: (filters) => [...complaintKeys.client(), "list", filters],
   autoAssignSetting: () => [...complaintKeys.all, "auto-assign-setting"],
   resolvedNotifyContacts: () => [...complaintKeys.all, "resolved-notify-contacts"],
+  geofenceMode: () => [...complaintKeys.all, "geofence-mode"],
+  geofenceFlagged: () => [...complaintKeys.all, "geofence-flagged"],
 };
+
+// Statuses that must be performed at the store, so they carry a position.
+const GEOFENCED_STATUSES = ["in-progress", "resolved"];
+
+const newIdempotencyKey = () =>
+  crypto.randomUUID?.() ??
+  `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 // Fetch complaints for the current page/filters (Admin)
 export const useComplaints = (filters = {}) => {
@@ -367,13 +378,92 @@ export const useUpdateResolvedNotifyContacts = () => {
   });
 };
 
-// Update complaint status (Technician)
+export const useGeofenceMode = () => {
+  return useQuery({
+    queryKey: complaintKeys.geofenceMode(),
+    queryFn: () => complaintService.admin.getGeofenceMode(),
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+};
+
+export const useUpdateGeofenceMode = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (mode) => complaintService.admin.updateGeofenceMode(mode),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: complaintKeys.geofenceMode() });
+    },
+  });
+};
+
+export const useGeofenceFlaggedComplaints = () => {
+  return useQuery({
+    queryKey: complaintKeys.geofenceFlagged(),
+    queryFn: () => complaintService.admin.listGeofenceFlagged(),
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+};
+
+/**
+ * Update complaint status (Technician).
+ *
+ * Owns the two things every status update needs and no page should have to
+ * repeat: the location reading the server geofences against, and an
+ * idempotency key so a retry — whether the technician's or the offline
+ * queue's — cannot apply the same update twice.
+ *
+ * Resolves with `{ queued: true }` when the request never reached the server;
+ * the update is safely in IndexedDB and callers must not treat that as done.
+ */
 export const useUpdateComplaintStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
+    /**
+     * Overrides the global `mutations: { retry: 1 }`. A rejection here is a
+     * decision, not a glitch — off-site, wrong transition, missing notes — and
+     * retrying it just sends a second doomed request that shows the technician
+     * a different error than the real one. Genuine connection failures are
+     * handled below by the offline queue, which is a better answer than an
+     * immediate retry on a connection that is still down.
+     */
+    retry: false,
     mutationFn: async ({ id, payload }) => {
-      return complaintService.assignments.updateStatus(id, payload);
+      const isFormData = payload instanceof FormData;
+      const status = isFormData ? payload.get("status") : payload?.status;
+
+      if (isFormData && GEOFENCED_STATUSES.includes(status)) {
+        if (!payload.has("idempotencyKey")) {
+          payload.append("idempotencyKey", newIdempotencyKey());
+        }
+
+        /**
+         * A failed capture is not a client-side veto. The server owns the
+         * decision: it blocks only in "enforce" mode, and only for a store
+         * that is actually pinned — so send the update anyway and let it
+         * answer. Blocking here would stop work at every unpinned store the
+         * moment a technician denied the permission prompt.
+         */
+        try {
+          await appendPositionTo(payload);
+        } catch (error) {
+          console.warn("Location capture failed:", error.code, error.message);
+          payload.set("locationErrorCode", error.code ?? "UNKNOWN");
+        }
+      }
+
+      try {
+        return await complaintService.assignments.updateStatus(id, payload);
+      } catch (error) {
+        if (isFormData && isNetworkError(error)) {
+          await enqueueStatusUpdate({ complaintId: id, formData: payload });
+          return { queued: true };
+        }
+        throw error;
+      }
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });

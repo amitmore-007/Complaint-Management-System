@@ -1,4 +1,5 @@
 import { systemSettingData } from "../data/systemSettingData.js";
+import { GEOFENCE_MODES } from "../utils/geofence.js";
 import { createHttpError } from "../utils/httpError.js";
 
 /**
@@ -9,6 +10,7 @@ import { createHttpError } from "../utils/httpError.js";
 
 const AUTO_ASSIGN_KEY = "complaint_auto_assign_enabled";
 const CONTACTS_KEY = "resolved_notify_contacts";
+const GEOFENCE_MODE_KEY = "complaint_geofence_mode";
 // Superseded by CONTACTS_KEY; read once and migrated forward.
 const LEGACY_PHONE_KEY = "resolved_notify_phone";
 const LEGACY_NAME_KEY = "resolved_notify_name";
@@ -27,6 +29,17 @@ const DEFAULT_AUTO_ASSIGN_ENABLED = parseBooleanEnv(
   process.env.COMPLAINT_AUTO_ASSIGN_ENABLED,
   true,
 );
+
+/**
+ * Ships in "warn": locations are recorded and out-of-range attempts flagged,
+ * but nothing is blocked. Switch to "enforce" only once the recorded distances
+ * show what a realistic radius per store actually is.
+ */
+const DEFAULT_GEOFENCE_MODE = GEOFENCE_MODES.includes(
+  process.env.COMPLAINT_GEOFENCE_MODE,
+)
+  ? process.env.COMPLAINT_GEOFENCE_MODE
+  : "warn";
 
 const parseContacts = (stringValue) => {
   try {
@@ -56,6 +69,22 @@ export const getComplaintAutoAssignEnabled = async () => {
   });
 
   return setting ? Boolean(setting.booleanValue) : DEFAULT_AUTO_ASSIGN_ENABLED;
+};
+
+/**
+ * The kill switch for geofencing. Read on every technician status update, so
+ * an admin can drop back to "warn" from the settings page the moment something
+ * goes wrong in the field — no redeploy.
+ */
+export const getComplaintGeofenceMode = async () => {
+  const setting = await systemSettingData.findByKey({
+    key: GEOFENCE_MODE_KEY,
+    select: "stringValue",
+  });
+
+  return GEOFENCE_MODES.includes(setting?.stringValue)
+    ? setting.stringValue
+    : DEFAULT_GEOFENCE_MODE;
 };
 
 export const getResolvedNotifyContacts = async () => {
@@ -114,6 +143,32 @@ export const settingsService = {
 
     return {
       autoAssignEnabled: Boolean(setting?.booleanValue),
+      updatedAt: setting?.updatedAt,
+    };
+  },
+
+  getGeofenceMode: async () => ({
+    geofenceMode: await getComplaintGeofenceMode(),
+  }),
+
+  setGeofenceMode: async ({ mode, adminId }) => {
+    if (!GEOFENCE_MODES.includes(mode)) {
+      throw createHttpError(
+        400,
+        `mode must be one of: ${GEOFENCE_MODES.join(", ")}`,
+      );
+    }
+
+    const setting = await systemSettingData.upsert({
+      key: GEOFENCE_MODE_KEY,
+      set: {
+        stringValue: mode,
+        ...(adminId ? { updatedByAdmin: adminId } : {}),
+      },
+    });
+
+    return {
+      geofenceMode: setting?.stringValue ?? mode,
       updatedAt: setting?.updatedAt,
     };
   },

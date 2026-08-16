@@ -18,4 +18,15 @@ export const storeService = {
     });
     return data.store;
   },
+
+  /** Pin the store for geofencing. Pass latitude: null to clear the pin. */
+  updateGeofence: async (storeId, { latitude, longitude, accuracyMeters, radiusMeters }) => {
+    const { data } = await api.put(endpoints.stores.geofence(storeId), {
+      latitude,
+      longitude,
+      accuracyMeters,
+      radiusMeters,
+    });
+    return data.store;
+  },
 };

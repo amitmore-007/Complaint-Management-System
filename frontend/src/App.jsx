@@ -8,6 +8,7 @@ import {
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import useAuthStore from "./store/authStore";
+import { useOfflineStatusSync } from "./hooks/useOfflineStatusSync";
 
 // Landing and Auth Pages
 import Landing from "./pages/Landing";
@@ -32,6 +33,7 @@ import AdminReports from "./pages/admin/Reports";
 import AdminBilling from "./pages/admin/Billing";
 import AdminInventory from "./pages/admin/Inventory";
 import AdminSettings from "./pages/admin/AdminSettings";
+import GeofenceReview from "./pages/admin/GeofenceReview";
 
 // Attendance Pages
 import MyAttendance from "./pages/attendance/MyAttendance";
@@ -169,6 +171,9 @@ const ThemedToaster = () => {
 };
 
 function App() {
+  // Replays complaint status updates that were captured while offline.
+  useOfflineStatusSync();
+
   return (
     <ThemeProvider>
       <Router>
@@ -330,6 +335,15 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["admin"]}>
                   <AdminSettings />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/location-review"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <GeofenceReview />
                 </ProtectedRoute>
               }
             />

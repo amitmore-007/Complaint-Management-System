@@ -8,6 +8,7 @@ import {
   Settings,
   Plus,
   Trash2,
+  MapPin,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
@@ -17,7 +18,34 @@ import {
   useUpdateComplaintAutoAssignSetting,
   useResolvedNotifyContacts,
   useUpdateResolvedNotifyContacts,
+  useGeofenceMode,
+  useUpdateGeofenceMode,
 } from "../../hooks/useComplaints";
+
+/**
+ * Three modes rather than a switch. "warn" records where technicians actually
+ * are without blocking anyone, which is the only honest way to pick a radius
+ * before turning "enforce" on — and the way back if enforcement misfires.
+ */
+const GEOFENCE_MODE_OPTIONS = [
+  {
+    value: "off",
+    label: "Off",
+    summary: "No location is requested or recorded.",
+  },
+  {
+    value: "warn",
+    label: "Record only",
+    summary:
+      "Location is recorded on every start and resolve, and out-of-range attempts are flagged for review — but nothing is blocked.",
+  },
+  {
+    value: "enforce",
+    label: "Enforce",
+    summary:
+      "Technicians cannot start or resolve a complaint unless they are within the store's radius.",
+  },
+];
 
 const SettingCard = ({
   icon: Icon,
@@ -79,6 +107,11 @@ const AdminSettings = () => {
     useResolvedNotifyContacts();
   const updateContactsMutation = useUpdateResolvedNotifyContacts();
 
+  // Location check (geofencing)
+  const { data: geofenceMode = "warn", isLoading: isGeofenceLoading } =
+    useGeofenceMode();
+  const updateGeofenceModeMutation = useUpdateGeofenceMode();
+
   // New contact form state
   const [newPhone, setNewPhone] = useState("");
   const [newName, setNewName] = useState("");
@@ -96,6 +129,25 @@ const AdminSettings = () => {
     } catch (error) {
       toast.error(
         error?.response?.data?.message || "Failed to update auto assign setting",
+      );
+    }
+  };
+
+  const handleSelectGeofenceMode = async (mode) => {
+    if (mode === geofenceMode || updateGeofenceModeMutation.isPending) return;
+
+    try {
+      await updateGeofenceModeMutation.mutateAsync(mode);
+      toast.success(
+        mode === "enforce"
+          ? "Technicians must now be at the store to start or resolve complaints."
+          : mode === "warn"
+            ? "Locations will be recorded and flagged, but nothing is blocked."
+            : "Location checks are off.",
+      );
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message || "Failed to update location check",
       );
     }
   };
@@ -248,6 +300,82 @@ const AdminSettings = () => {
               {autoAssignEnabled
                 ? "New complaints will be assigned automatically on creation."
                 : "New complaints will remain pending until manually assigned."}
+            </span>
+          </div>
+        </SettingCard>
+
+        {/* Location Check (geofencing) */}
+        <SettingCard
+          icon={MapPin}
+          iconBg={isDarkMode ? "bg-emerald-900/40" : "bg-emerald-50"}
+          iconColor={isDarkMode ? "text-emerald-400" : "text-emerald-600"}
+          title="On-Site Location Check"
+          description="Checks that a technician is physically at the store before they start or resolve a complaint. Only applies to stores you have pinned on the map — unpinned stores are never checked."
+        >
+          <div className="space-y-2">
+            {GEOFENCE_MODE_OPTIONS.map((option) => {
+              const isSelected = geofenceMode === option.value;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleSelectGeofenceMode(option.value)}
+                  disabled={isGeofenceLoading || updateGeofenceModeMutation.isPending}
+                  className={`w-full text-left rounded-xl border p-3.5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+                    isSelected
+                      ? isDarkMode
+                        ? "border-emerald-500 bg-emerald-900/20"
+                        : "border-emerald-500 bg-emerald-50"
+                      : isDarkMode
+                        ? "border-white/10 hover:bg-white/5"
+                        : "border-gray-200 hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`mt-0.5 h-4 w-4 flex-shrink-0 rounded-full border-2 ${
+                        isSelected
+                          ? "border-emerald-500 bg-emerald-500"
+                          : isDarkMode
+                            ? "border-gray-600"
+                            : "border-gray-300"
+                      }`}
+                    />
+                    <div className="min-w-0">
+                      <p
+                        className={`text-sm font-medium ${
+                          isDarkMode ? "text-gray-200" : "text-gray-800"
+                        }`}
+                      >
+                        {option.label}
+                      </p>
+                      <p
+                        className={`text-xs mt-0.5 leading-relaxed ${
+                          isDarkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
+                        {option.summary}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div
+            className={`mt-4 flex items-start gap-2 text-xs rounded-lg px-3 py-2 ${
+              isDarkMode
+                ? "bg-white/10 text-gray-400"
+                : "bg-gray-100 text-gray-500"
+            }`}
+          >
+            <CheckCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
+            <span>
+              Run in <strong>Record only</strong> for a couple of weeks first —
+              the recorded distances show what radius each store actually needs
+              before you switch to Enforce.
             </span>
           </div>
         </SettingCard>

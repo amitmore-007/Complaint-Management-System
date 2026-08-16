@@ -187,10 +187,27 @@ const TechnicianAssignments = () => {
         }
       }
 
-      await updateStatusMutation.mutateAsync({
-        id: complaintId,
-        payload: formData,
-      });
+      // Capturing a good GPS fix takes a few seconds — say so rather than
+      // leaving the technician staring at a spinner.
+      const locatingToast = toast.loading("Confirming you are at the store…");
+
+      let result;
+      try {
+        result = await updateStatusMutation.mutateAsync({
+          id: complaintId,
+          payload: formData,
+        });
+      } finally {
+        toast.dismiss(locatingToast);
+      }
+
+      // Never reached the server — parked on this device by the offline queue.
+      if (result?.queued) {
+        toast.success(
+          "No connection. Saved on this device and will sync automatically.",
+        );
+        return;
+      }
 
       toast.success(
         `Complaint ${
@@ -205,7 +222,14 @@ const TechnicianAssignments = () => {
       }
     } catch (error) {
       console.error("âŒ Update status error:", error);
-      toast.error(error.response?.data?.message || "Failed to update status");
+      // Geolocation failures carry their own instruction ("enable location",
+      // "move near a window"), so surface error.message when there is no
+      // server response to quote.
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to update status",
+      );
     }
   };
 

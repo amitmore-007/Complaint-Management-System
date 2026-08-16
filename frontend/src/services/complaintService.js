@@ -157,6 +157,25 @@ export const complaintService = {
       return Boolean(data?.setting?.autoAssignEnabled);
     },
 
+    getGeofenceMode: async () => {
+      const { data } = await api.get(endpoints.admin.settings.geofenceMode);
+      return data?.setting?.geofenceMode ?? "warn";
+    },
+
+    updateGeofenceMode: async (mode) => {
+      const { data } = await api.patch(endpoints.admin.settings.geofenceMode, {
+        mode,
+      });
+      return data?.setting?.geofenceMode ?? mode;
+    },
+
+    listGeofenceFlagged: async () => {
+      const { data } = await api.get(
+        endpoints.admin.complaints.geofenceFlagged,
+      );
+      return data.complaints ?? [];
+    },
+
     getResolvedNotifyContacts: async () => {
       const { data } = await api.get(
         endpoints.admin.settings.resolvedNotifyContacts,

@@ -42,8 +42,12 @@ export const storeData = {
 
   list: () => Store.find({}),
 
+  // Carries the geofence pin too — the admin store list shows which stores are
+  // pinned, and an unpinned store is silently ungated.
   listActiveSorted: () =>
-    Store.find({ isActive: true }).select("name managers isActive").sort({ name: 1 }),
+    Store.find({ isActive: true })
+      .select("name managers isActive location geofenceRadiusMeters")
+      .sort({ name: 1 }),
 
   findByExactNameWithStatus: (name) => {
     const trimmed = String(name || "").trim();

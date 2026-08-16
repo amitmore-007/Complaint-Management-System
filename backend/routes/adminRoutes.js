@@ -15,6 +15,9 @@ import {
   updateComplaintAutoAssignSetting,
   getResolvedNotifyContactsSetting,
   updateResolvedNotifyContactsSetting,
+  getGeofenceModeSetting,
+  updateGeofenceModeSetting,
+  listGeofenceFlaggedComplaints,
   generateAttendanceToken,
   revokeAttendanceToken,
 } from "../controllers/adminController.js";
@@ -49,6 +52,12 @@ router.patch(
   updateComplaintAutoAssignSetting,
 );
 
+router.get(
+  "/complaints/geofence-flagged",
+  authenticateAdmin,
+  listGeofenceFlaggedComplaints,
+);
+
 // user management - clients
 router.get("/clients", authenticateAdmin, getAllClients);
 router.post("/clients", authenticateAdmin, createClient);
@@ -81,6 +90,12 @@ router.patch(
   "/settings/resolved-notify-contacts",
   authenticateAdmin,
   updateResolvedNotifyContactsSetting,
+);
+router.get("/settings/geofence-mode", authenticateAdmin, getGeofenceModeSetting);
+router.patch(
+  "/settings/geofence-mode",
+  authenticateAdmin,
+  updateGeofenceModeSetting,
 );
 
 // billing

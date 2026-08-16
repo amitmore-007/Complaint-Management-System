@@ -18,6 +18,7 @@ import {
   CalendarCheck,
   Menu,
   Boxes,
+  ShieldAlert,
 } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import useAuthStore from "../../store/authStore";
@@ -67,6 +68,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           { icon: Users, label: "Manage Clients", path: "/admin/clients" },
           { icon: Wrench, label: "Manage Technicians", path: "/admin/technicians" },
           { icon: Package, label: "Asset Management", path: "/admin/assets" },
+          { icon: ShieldAlert, label: "Location Review", path: "/admin/location-review" },
           { icon: Settings, label: "Settings", path: "/admin/settings" },
           { icon: CalendarCheck, label: "Attendance", path: "/admin/attendance" },
           { icon: Clock, label: "My Attendance", path: "/admin/my-attendance" },

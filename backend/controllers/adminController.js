@@ -1,4 +1,5 @@
 import { assignmentService } from "../services/assignmentService.js";
+import { complaintService } from "../services/complaintService.js";
 import { userService } from "../services/userService.js";
 import { dashboardService } from "../services/dashboardService.js";
 import { settingsService } from "../services/settingsService.js";
@@ -80,6 +81,47 @@ export const updateComplaintAutoAssignSetting = async (req, res) => {
     });
   } catch (error) {
     console.error("Update complaint auto-assign setting error:", error);
+    respondWithError(res, error, "Internal server error");
+  }
+};
+
+export const getGeofenceModeSetting = async (req, res) => {
+  try {
+    const setting = await settingsService.getGeofenceMode();
+    res.status(200).json({ success: true, setting });
+  } catch (error) {
+    console.error("Get geofence mode setting error:", error);
+    respondWithError(res, error, "Internal server error");
+  }
+};
+
+export const updateGeofenceModeSetting = async (req, res) => {
+  try {
+    const setting = await settingsService.setGeofenceMode({
+      mode: req.body.mode,
+      adminId: req.user.id,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `Location check set to ${setting.geofenceMode}`,
+      setting,
+    });
+  } catch (error) {
+    console.error("Update geofence mode setting error:", error);
+    respondWithError(res, error, "Internal server error");
+  }
+};
+
+export const listGeofenceFlaggedComplaints = async (req, res) => {
+  try {
+    const complaints = await complaintService.listGeofenceFlagged({
+      limit: req.query.limit,
+    });
+
+    res.status(200).json({ success: true, complaints });
+  } catch (error) {
+    console.error("List geofence flagged complaints error:", error);
     respondWithError(res, error, "Internal server error");
   }
 };

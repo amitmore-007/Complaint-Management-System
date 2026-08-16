@@ -37,6 +37,7 @@ export const endpoints = {
       assign: "/admin/complaints/assign",
       reassign: (complaintId) => `/admin/complaints/${complaintId}/reassign`,
       autoAssign: "/admin/complaints/auto-assign",
+      geofenceFlagged: "/admin/complaints/geofence-flagged",
     },
     technicians: {
       root: "/admin/technicians",
@@ -57,6 +58,7 @@ export const endpoints = {
     },
     settings: {
       resolvedNotifyContacts: "/admin/settings/resolved-notify-contacts",
+      geofenceMode: "/admin/settings/geofence-mode",
     },
   },
 
@@ -83,6 +85,7 @@ export const endpoints = {
     root: "/stores",
     upsert: "/stores/upsert",
     managers: (storeId) => `/stores/${storeId}/managers`,
+    geofence: (storeId) => `/stores/${storeId}/geofence`,
   },
 
   attendance: {

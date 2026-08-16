@@ -164,10 +164,27 @@ const TechnicianDashboard = () => {
         return;
       }
 
-      await updateStatusMutation.mutateAsync({
-        id: complaintId,
-        payload: formData,
-      });
+      // Capturing a good GPS fix takes a few seconds — say so rather than
+      // leaving the technician staring at a spinner.
+      const locatingToast = toast.loading("Confirming you are at the store…");
+
+      let result;
+      try {
+        result = await updateStatusMutation.mutateAsync({
+          id: complaintId,
+          payload: formData,
+        });
+      } finally {
+        toast.dismiss(locatingToast);
+      }
+
+      // Never reached the server — parked on this device by the offline queue.
+      if (result?.queued) {
+        toast.success(
+          "No connection. Saved on this device and will sync automatically.",
+        );
+        return;
+      }
 
       toast.success(
         `Complaint ${

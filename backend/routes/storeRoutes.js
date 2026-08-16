@@ -4,6 +4,7 @@ import { authorizeRoles } from "../middleware/roleAuth.js";
 import {
   listStores,
   updateStoreManagers,
+  updateStoreGeofence,
   upsertStoreByName,
 } from "../controllers/storeController.js";
 
@@ -26,6 +27,14 @@ router.put(
   authenticateToken,
   authorizeRoles("admin"),
   updateStoreManagers
+);
+
+// Admin pins the store on the map — this is what turns geofencing on for it
+router.put(
+  "/:id/geofence",
+  authenticateToken,
+  authorizeRoles("admin"),
+  updateStoreGeofence
 );
 
 export default router;

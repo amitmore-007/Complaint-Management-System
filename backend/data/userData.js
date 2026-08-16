@@ -47,6 +47,17 @@ export const userData = {
 
   deleteById: (id) => User.findByIdAndDelete(id),
 
+  /** Position of this user's last geofenced action, for the next speed check. */
+  findLastKnownLocation: async (id) => {
+    const user = await User.findById(id).select("lastKnownLocation");
+    return user?.lastKnownLocation ?? null;
+  },
+
+  setLastKnownLocation: ({ id, lat, lng, capturedAt }) =>
+    User.findByIdAndUpdate(id, {
+      lastKnownLocation: { lat, lng, capturedAt },
+    }),
+
   setAttendanceToken: ({ id, attendanceToken, attendancePin }) =>
     User.findByIdAndUpdate(id, { attendanceToken, attendancePin }),
 

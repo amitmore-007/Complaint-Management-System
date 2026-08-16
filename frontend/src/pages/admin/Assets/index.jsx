@@ -5,6 +5,7 @@ import DashboardLayout from "../../../components/layout/DashboardLayout";
 import ManageListTab from "./components/ManageListTab";
 import SubmittedRecordsTab from "./components/SubmittedRecordsTab";
 import ContactNumbersTab from "./components/ContactNumbersTab";
+import StoreLocationsTab from "./components/StoreLocationsTab";
 
 const AdminAssetsPage = () => {
   const { isDarkMode } = useTheme();
@@ -75,6 +76,18 @@ const AdminAssetsPage = () => {
           >
             Contact No.s
           </button>
+          <button
+            onClick={() => setActiveTab("locations")}
+            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
+              activeTab === "locations"
+                ? "bg-blue-600 text-white"
+                : isDarkMode
+                  ? "text-gray-400 hover:text-white hover:bg-white/5"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-white"
+            }`}
+          >
+            Store Locations
+          </button>
         </div>
 
         {/* Content */}
@@ -99,7 +112,7 @@ const AdminAssetsPage = () => {
             >
               <SubmittedRecordsTab isDarkMode={isDarkMode} />
             </motion.div>
-          ) : (
+          ) : activeTab === "contacts" ? (
             <motion.div
               key="contacts"
               initial={{ opacity: 0, x: 20 }}
@@ -108,6 +121,16 @@ const AdminAssetsPage = () => {
               className="space-y-6"
             >
               <ContactNumbersTab isDarkMode={isDarkMode} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="locations"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              <StoreLocationsTab isDarkMode={isDarkMode} />
             </motion.div>
           )}
         </AnimatePresence>

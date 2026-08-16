@@ -16,6 +16,18 @@ export const useStoresList = (params = {}) => {
   });
 };
 
+export const useUpdateStoreGeofence = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ storeId, ...payload }) =>
+      storeService.updateGeofence(storeId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: storeKeys.all });
+    },
+  });
+};
+
 export const useUpdateStoreManagers = () => {
   const queryClient = useQueryClient();
 
