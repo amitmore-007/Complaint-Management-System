@@ -71,8 +71,25 @@ const resolveStore = async (storeId) => {
   return store;
 };
 
-const buildListFilter = async ({ status, priority, storeId, store, search }) => {
+const buildListFilter = async ({
+  status,
+  priority,
+  storeId,
+  store,
+  search,
+  month,
+}) => {
   const filter = {};
+
+  // `month` is a "YYYY-MM" tag; anything else is ignored rather than throwing,
+  // so a stale query string cannot break the list.
+  if (/^\d{4}-(0[1-9]|1[0-2])$/.test(String(month ?? ""))) {
+    const [year, monthIndex] = month.split("-").map(Number);
+    filter.createdAt = {
+      $gte: new Date(year, monthIndex - 1, 1),
+      $lt: new Date(year, monthIndex, 1),
+    };
+  }
 
   if (status && status !== "all") {
     filter.status = status === "unresolved" ? { $ne: "resolved" } : status;

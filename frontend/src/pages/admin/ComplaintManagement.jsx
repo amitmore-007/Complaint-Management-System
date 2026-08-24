@@ -1,6 +1,11 @@
 ﻿import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import writeXlsxFile from "write-excel-file/browser";
+import dayjs from "dayjs";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import {
   Search,
   Filter,
@@ -50,6 +55,7 @@ const ComplaintManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
   const [locationFilter, setLocationFilter] = useState("all");
+  const [monthFilter, setMonthFilter] = useState("");
   const [selectedComplaintId, setSelectedComplaintId] = useState(null);
   const [selectedAssignComplaint, setSelectedAssignComplaint] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -78,6 +84,7 @@ const ComplaintManagement = () => {
     priority: priorityFilter,
     store: locationFilter,
     search: debouncedSearch,
+    month: monthFilter,
   };
   const { data: complaintsData, isLoading } = useComplaints(queryFilters);
   const complaints = complaintsData?.complaints ?? [];
@@ -141,11 +148,50 @@ const ComplaintManagement = () => {
     [stores],
   );
 
+  const muiTheme = React.useMemo(
+    () => createTheme({ palette: { mode: isDarkMode ? "dark" : "light" } }),
+    [isDarkMode],
+  );
+
+  // Makes the MUI field match the plain selects beside it: same 38px height,
+  // 8px radius, 14px text and border colours as the Tailwind inputs.
+  const monthFieldSx = React.useMemo(
+    () => ({
+      width: "100%",
+      "& .MuiOutlinedInput-root": {
+        height: 38,
+        borderRadius: "8px",
+        fontSize: "0.875rem",
+        backgroundColor: isDarkMode ? "#1a1a1a" : "#ffffff",
+        color: isDarkMode ? "#ffffff" : "#111827",
+      },
+      "& .MuiOutlinedInput-notchedOutline": {
+        borderColor: isDarkMode ? "rgba(255,255,255,0.1)" : "#d1d5db",
+      },
+      "&:hover .MuiOutlinedInput-notchedOutline": {
+        borderColor: isDarkMode ? "rgba(255,255,255,0.2)" : "#9ca3af",
+      },
+      "& .Mui-focused .MuiOutlinedInput-notchedOutline": {
+        borderColor: "#3b82f6",
+        borderWidth: "2px",
+      },
+      "& .MuiSvgIcon-root": { fontSize: "1.15rem" },
+    }),
+    [isDarkMode],
+  );
+
   const totalPages = Math.max(1, pagination.pages);
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, statusFilter, priorityFilter, locationFilter, itemsPerPage]);
+  }, [
+    debouncedSearch,
+    statusFilter,
+    priorityFilter,
+    locationFilter,
+    monthFilter,
+    itemsPerPage,
+  ]);
 
   React.useEffect(() => {
     if (currentPage > totalPages) {
@@ -478,7 +524,7 @@ const ComplaintManagement = () => {
               : "bg-white border-gray-200"
           }`}
         >
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             {/* Search */}
             <div className="md:col-span-2">
               <div className="relative">
@@ -556,6 +602,32 @@ const ComplaintManagement = () => {
                 inputClassName="h-[38px] py-0 text-sm"
               />
             </div>
+
+            {/* Month Filter */}
+            <div>
+              <ThemeProvider theme={muiTheme}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    views={["year", "month"]}
+                    openTo="month"
+                    format="YYYY-MM"
+                    value={monthFilter ? dayjs(`${monthFilter}-01`) : null}
+                    onChange={(v) =>
+                      setMonthFilter(v ? v.format("YYYY-MM") : "")
+                    }
+                    slotProps={{
+                      textField: {
+                        size: "small",
+                        fullWidth: true,
+                        placeholder: "All Months",
+                        sx: monthFieldSx,
+                      },
+                      field: { clearable: true },
+                    }}
+                  />
+                </LocalizationProvider>
+              </ThemeProvider>
+            </div>
           </div>
         </div>
 
@@ -572,7 +644,9 @@ const ComplaintManagement = () => {
                   isDarkMode ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                {locationFilter !== "all"
+                {monthFilter
+                  ? `No complaints for ${monthFilter}`
+                  : locationFilter !== "all"
                   ? `No complaints for ${locationFilter}`
                   : searchTerm ||
                       statusFilter !== "all" ||
