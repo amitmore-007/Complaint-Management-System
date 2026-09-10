@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, MapPin } from "lucide-react";
+import { Check, ChevronDown, MapPin, Plus } from "lucide-react";
 
 const StoreDropdown = ({
   isDarkMode,
@@ -9,6 +9,10 @@ const StoreDropdown = ({
   placeholder = "Select a store",
   compact = false,
   inputClassName = "",
+  // Lets the caller offer "add this as a new store" when the typed name
+  // matches nothing in `options`. Must return the created store (or throw).
+  onCreateOption,
+  creatingOption = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(value || "");
@@ -41,6 +45,27 @@ const StoreDropdown = ({
       String(name).toLowerCase().includes(q),
     );
   }, [query, sortedOptions, open, value]);
+
+  const trimmedQuery = query.trim();
+  const hasExactMatch = sortedOptions.some(
+    (name) => String(name).toLowerCase() === trimmedQuery.toLowerCase(),
+  );
+  const showCreateOption =
+    Boolean(onCreateOption) && trimmedQuery.length > 0 && !hasExactMatch;
+
+  const handleCreate = async () => {
+    if (!onCreateOption || creatingOption) return;
+    try {
+      const created = await onCreateOption(trimmedQuery);
+      const name = created?.name || trimmedQuery;
+      onChange?.(name);
+      setQuery(name);
+      setOpen(false);
+      setActiveIndex(-1);
+    } catch {
+      // onCreateOption already surfaces its own error toast.
+    }
+  };
 
   useEffect(() => {
     if (!open) {
@@ -114,7 +139,10 @@ const StoreDropdown = ({
               activeIndex >= 0
                 ? filteredOptions[activeIndex]
                 : filteredOptions[0];
-            if (!picked) return;
+            if (!picked) {
+              if (showCreateOption) handleCreate();
+              return;
+            }
             onChange?.(picked);
             setQuery(picked);
             setOpen(false);
@@ -157,7 +185,7 @@ const StoreDropdown = ({
           role="listbox"
         >
           <div className={`max-h-44 overflow-y-auto ${isDarkMode ? "dark-scrollbar" : ""}`}>
-            {filteredOptions.length === 0 ? (
+            {filteredOptions.length === 0 && !showCreateOption ? (
               <div
                 className={`px-4 py-3 text-sm ${
                   isDarkMode ? "text-gray-400" : "text-gray-600"
@@ -199,6 +227,33 @@ const StoreDropdown = ({
                 </button>
               );
             })}
+
+            {showCreateOption && (
+              <button
+                type="button"
+                disabled={creatingOption}
+                onClick={handleCreate}
+                onMouseEnter={() => setActiveIndex(-1)}
+                className={`w-full px-4 py-2.5 text-left flex items-center gap-2 text-sm font-medium transition-colors disabled:opacity-60 ${
+                  filteredOptions.length > 0
+                    ? isDarkMode
+                      ? "border-t border-white/10"
+                      : "border-t border-gray-100"
+                    : ""
+                } ${
+                  isDarkMode
+                    ? "text-blue-400 hover:bg-white/10"
+                    : "text-blue-600 hover:bg-gray-50"
+                }`}
+              >
+                <Plus className="h-4 w-4 shrink-0" />
+                <span className="truncate">
+                  {creatingOption
+                    ? "Adding store..."
+                    : `Add "${trimmedQuery}" as new store`}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       )}

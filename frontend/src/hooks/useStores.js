@@ -16,6 +16,17 @@ export const useStoresList = (params = {}) => {
   });
 };
 
+export const useUpsertStore = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (storeName) => storeService.upsertByName(storeName),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: storeKeys.all });
+    },
+  });
+};
+
 export const useUpdateStoreGeofence = () => {
   const queryClient = useQueryClient();
 

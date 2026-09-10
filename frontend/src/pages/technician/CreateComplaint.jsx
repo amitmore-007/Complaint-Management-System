@@ -19,7 +19,7 @@ import {
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import { useStoresList } from "../../hooks/useStores";
+import { useStoresList, useUpsertStore } from "../../hooks/useStores";
 import StoreDropdown from "../../components/common/StoreDropdown";
 import {
   useCreateTechnicianComplaint,
@@ -42,21 +42,44 @@ const TechnicianCreateComplaint = () => {
   // Stores come from the live collection now — the old hardcoded STORE_OPTIONS
   // list could drift from what actually exists in the database.
   const { data: stores = [] } = useStoresList();
+  // Stores created on the fly via the "Add as new store" option, merged in
+  // immediately so they're usable before the list query refetches.
+  const [customStores, setCustomStores] = useState([]);
+  const allStores = useMemo(
+    () => [...stores, ...customStores],
+    [stores, customStores],
+  );
   const storeOptions = useMemo(
     () =>
-      stores
+      allStores
         .map((s) => s.name)
         .filter(Boolean)
         .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })),
-    [stores],
+    [allStores],
   );
   const storeIdByName = useMemo(
     () =>
-      new Map(stores.map((s) => [String(s.name).trim().toLowerCase(), s._id])),
-    [stores],
+      new Map(
+        allStores.map((s) => [String(s.name).trim().toLowerCase(), s._id]),
+      ),
+    [allStores],
   );
   const storeIdFor = (name) =>
     storeIdByName.get(String(name || "").trim().toLowerCase()) ?? "";
+
+  const upsertStoreMutation = useUpsertStore();
+  const handleCreateStore = async (name) => {
+    try {
+      const store = await upsertStoreMutation.mutateAsync(name);
+      setCustomStores((prev) => [...prev, store]);
+      toast.success(`Store "${store.name}" added`);
+      return store;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to add store");
+      throw error;
+    }
+  };
+
   const navigate = useNavigate();
 
   const [mode, setMode] = useState("single");
@@ -305,6 +328,8 @@ const TechnicianCreateComplaint = () => {
                     options={storeOptions}
                     value={selectedLocation}
                     onChange={(name) => setValue("location", name, { shouldValidate: true })}
+                    onCreateOption={handleCreateStore}
+                    creatingOption={upsertStoreMutation.isPending}
                   />
                   {errors.location && <p className="mt-1 text-xs text-red-600">{errors.location.message}</p>}
                 </div>
@@ -541,6 +566,8 @@ const TechnicianCreateComplaint = () => {
                             options={storeOptions}
                             value={row.location}
                             onChange={(name) => updateRow(row.id, "location", name)}
+                            onCreateOption={handleCreateStore}
+                            creatingOption={upsertStoreMutation.isPending}
                           />
                           {bulkErrors[row.id]?.location && (
                             <p className="mt-1 text-xs text-red-500">{bulkErrors[row.id].location}</p>

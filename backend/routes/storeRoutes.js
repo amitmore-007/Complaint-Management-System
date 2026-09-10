@@ -13,11 +13,12 @@ const router = express.Router();
 // Accessible to all authenticated users (for complaint dropdown)
 router.get("/", authenticateToken, listStores);
 
-// Admin can upsert stores by name if needed
+// Admin/technician can upsert stores by name — lets a complaint be raised
+// against a custom store not yet in the list, get-or-create by name.
 router.post(
   "/upsert",
   authenticateToken,
-  authorizeRoles("admin"),
+  authorizeRoles("admin", "technician"),
   upsertStoreByName
 );
 
