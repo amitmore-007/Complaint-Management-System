@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 
+import useAuthStore from "../../../../store/authStore";
 import { formatMoneyINR } from "../../../../utils/helpers";
 import {
   useAdminInventoryItems,
@@ -58,6 +59,9 @@ const StatCard = ({ icon: Icon, label, value, isDarkMode }) => (
 );
 
 const AdminInventoryPage = ({ isDarkMode }) => {
+  const { user } = useAuthStore();
+  const canManage = user?.role === "admin";
+
   const inventoryQuery = useAdminInventoryItems({ page: 1, limit: 100 });
   const createMutation = useCreateInventoryItem();
   const updateMutation = useUpdateInventoryItem();
@@ -343,7 +347,7 @@ const AdminInventoryPage = ({ isDarkMode }) => {
                 <th className="text-right px-4 py-3">GST %</th>
                 <th className="text-right px-4 py-3">GST Amount</th>
                 <th className="text-right px-4 py-3">Total Amount</th>
-                <th className="text-right px-4 py-3">Actions</th>
+                {canManage && <th className="text-right px-4 py-3">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -410,32 +414,34 @@ const AdminInventoryPage = ({ isDarkMode }) => {
                   >
                     {formatMoneyINR(r.totalAmount)}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => openEditModal(r)}
-                        className={`p-2 rounded-xl border ${
-                          isDarkMode
-                            ? "border-white/10 text-gray-200 hover:bg-white/5"
-                            : "border-gray-200 text-gray-700 hover:bg-gray-50"
-                        }`}
-                        type="button"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => openDeleteModal(r)}
-                        className={`p-2 rounded-xl border ${
-                          isDarkMode
-                            ? "border-white/10 text-red-300 hover:bg-white/5"
-                            : "border-gray-200 text-red-600 hover:bg-red-50"
-                        }`}
-                        type="button"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
+                  {canManage && (
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openEditModal(r)}
+                          className={`p-2 rounded-xl border ${
+                            isDarkMode
+                              ? "border-white/10 text-gray-200 hover:bg-white/5"
+                              : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                          }`}
+                          type="button"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(r)}
+                          className={`p-2 rounded-xl border ${
+                            isDarkMode
+                              ? "border-white/10 text-red-300 hover:bg-white/5"
+                              : "border-gray-200 text-red-600 hover:bg-red-50"
+                          }`}
+                          type="button"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

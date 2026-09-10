@@ -21,7 +21,11 @@ import {
   generateAttendanceToken,
   revokeAttendanceToken,
 } from "../controllers/adminController.js";
-import { authenticateAdmin } from "../middleware/roleAuth.js";
+import {
+  authenticateAdmin,
+  authenticateAny,
+  authorizeRoles,
+} from "../middleware/roleAuth.js";
 import {
   adminCreateInventoryItem,
   adminListInventoryItems,
@@ -101,10 +105,19 @@ router.patch(
 // billing
 // Billing lives at /api/billing/* — listing is shared and role-scoped.
 
-// inventory
-router.get("/inventory", authenticateAdmin, adminListInventoryItems);
-router.get("/inventory/stock-balance", authenticateAdmin, adminGetStockBalance);
-router.post("/inventory", authenticateAdmin, adminCreateInventoryItem);
+// inventory — view and purchase-entry creation open to technicians too;
+// edit/delete stay admin-only.
+const authenticateInventoryViewer = [
+  authenticateAny,
+  authorizeRoles("admin", "technician"),
+];
+router.get("/inventory", ...authenticateInventoryViewer, adminListInventoryItems);
+router.get(
+  "/inventory/stock-balance",
+  ...authenticateInventoryViewer,
+  adminGetStockBalance,
+);
+router.post("/inventory", ...authenticateInventoryViewer, adminCreateInventoryItem);
 router.put("/inventory/:id", authenticateAdmin, adminUpdateInventoryItem);
 router.delete("/inventory/:id", authenticateAdmin, adminDeleteInventoryItem);
 

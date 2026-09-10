@@ -55,6 +55,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           { icon: CheckCircle, label: "Resolved Assignments", path: "/technician/resolved-assignments" },
           { icon: FileText, label: "My Complaints", path: "/technician/my-complaints" },
           { icon: Package, label: "Asset Management", path: "/technician/assets" },
+          { icon: Boxes, label: "Inventory Dashboard", path: "/admin/inventory" },
           { icon: Clock, label: "My Attendance", path: "/technician/attendance" },
         ];
       case "admin":
