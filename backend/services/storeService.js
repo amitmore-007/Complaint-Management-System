@@ -16,6 +16,7 @@ const normalizeManagers = (managers) =>
     .map((m) => ({
       name: String(m?.name || "").trim(),
       phoneNumber: normalizePhoneNumber(m?.phoneNumber || ""),
+      notifyOnResolve: m?.notifyOnResolve === true,
     }))
     .filter((m) => m.name && m.phoneNumber);
 

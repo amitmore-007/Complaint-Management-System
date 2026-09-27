@@ -327,47 +327,54 @@ const notifyStatusChange = async (complaint, status) => {
   const recipientPhone = notifyCreator ? complaint.createdBy?.phoneNumber : null;
   const recipientName = notifyCreator ? complaint.createdBy?.name : null;
 
-  if (recipientPhone) {
+  // phone -> name. One message per number; when a number appears in several
+  // lists, the first (most specific) entry decides the greeting name.
+  const recipients = new Map();
+  const addRecipient = (rawPhone, name) => {
+    const phone = normalizeIndianPhone10Digits(rawPhone);
+    if (!phone) {
+      console.warn(`Skipping contact "${name}" — unparseable phone`);
+      return;
+    }
+    if (!recipients.has(phone)) recipients.set(phone, name);
+  };
+
+  if (status === "resolved") {
+    // A store's opted-in contacts hear only about their own store.
+    for (const m of complaint.store?.managers || []) {
+      if (m.notifyOnResolve) addRecipient(m.phoneNumber, m.name);
+    }
+    // Global contacts hear about every store. A settings read failure must not
+    // cost the store contacts or the creator their message.
     try {
-      // Deliberately silent when work merely starts.
-      if (status !== "in-progress") {
-        const result = await sendStatusUpdateNotification(
-          recipientPhone,
-          complaint.complaintId,
-          status,
-          recipientName,
-          storeName,
-          issueTitle,
-        );
-        if (!result.success) {
-          console.error("Failed to send status update:", result.error);
-        }
+      for (const contact of await getResolvedNotifyContacts()) {
+        addRecipient(contact.phone, contact.name || recipientName);
       }
     } catch (error) {
-      console.error("Notification sending error:", error);
+      console.error("Failed to load resolved notify contacts:", error);
     }
   }
 
-  if (status !== "resolved") return;
+  // Deliberately silent to the creator when work merely starts.
+  if (recipientPhone && status !== "in-progress") {
+    addRecipient(recipientPhone, recipientName);
+  }
 
-  for (const contact of await getResolvedNotifyContacts()) {
-    const phone = normalizeIndianPhone10Digits(contact.phone);
-    if (!phone) {
-      console.warn(`Skipping contact "${contact.name}" — unparseable phone`);
-      continue;
-    }
-
+  for (const [phone, name] of recipients) {
     try {
-      await sendStatusUpdateNotification(
+      const result = await sendStatusUpdateNotification(
         phone,
         complaint.complaintId,
         status,
-        contact.name || recipientName,
+        name,
         storeName,
         issueTitle,
       );
+      if (!result.success) {
+        console.error(`Failed to send status update to ${phone}:`, result.error);
+      }
     } catch (error) {
-      console.error("Resolved contact notification error:", error);
+      console.error("Notification sending error:", error);
     }
   }
 };

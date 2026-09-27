@@ -12,6 +12,11 @@ const storeManagerSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    // Opt-in: most store contacts are for technicians to call, not to message.
+    notifyOnResolve: {
+      type: Boolean,
+      default: false,
+    },
   },
   { _id: false }
 );

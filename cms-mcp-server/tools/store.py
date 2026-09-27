@@ -38,6 +38,8 @@ def register(mcp):
 
         args:
             storeId (str): id of the store.
-            managers (list[dict]): full replacement list, each item: { name, phoneNumber }.
+            managers (list[dict]): full replacement list, each item: { name, phoneNumber, notifyOnResolve }.
+                notifyOnResolve (bool, default false): WhatsApp this contact when a complaint
+                at this store is resolved. Carry existing values over, or they reset to false.
         """
         return store.update_store_managers({"storeId": storeId, "managers": managers}, get_auth())

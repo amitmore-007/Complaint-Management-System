@@ -1,6 +1,6 @@
 ﻿import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Edit, Phone, Plus, Search, Trash2, X, Loader2 } from "lucide-react";
+import { Bell, Edit, Phone, Plus, Search, Trash2, X, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import {
   useStoresList,
@@ -52,7 +52,7 @@ const ContactNumbersTab = ({ isDarkMode }) => {
   const addStoreContactRow = () => {
     setStoreManagersForContacts((prev) => [
       ...prev,
-      { name: "", phoneNumber: "" },
+      { name: "", phoneNumber: "", notifyOnResolve: false },
     ]);
   };
 
@@ -207,7 +207,15 @@ const ContactNumbersTab = ({ isDarkMode }) => {
                       key={`${store._id}-${idx}`}
                       className="flex items-center justify-between gap-3"
                     >
-                      <span className="truncate">
+                      <span className="truncate flex items-center gap-1.5">
+                        {m?.notifyOnResolve && (
+                          <Bell
+                            className={`h-3.5 w-3.5 flex-shrink-0 ${
+                              isDarkMode ? "text-amber-400" : "text-amber-600"
+                            }`}
+                            aria-label="Notified on resolve"
+                          />
+                        )}
                         {m?.name || "(No label)"}
                       </span>
                       <span
@@ -380,7 +388,41 @@ const ContactNumbersTab = ({ isDarkMode }) => {
                             }`}
                           />
                         </div>
-                        <div className="mt-3 flex justify-end">
+                        <div className="mt-3 flex items-center justify-between gap-3">
+                          <label
+                            className={`flex items-center gap-2.5 text-sm cursor-pointer select-none ${
+                              isDarkMode ? "text-gray-300" : "text-gray-700"
+                            }`}
+                          >
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-checked={!!m?.notifyOnResolve}
+                              onClick={() =>
+                                updateStoreContactRow(
+                                  index,
+                                  "notifyOnResolve",
+                                  !m?.notifyOnResolve,
+                                )
+                              }
+                              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${
+                                m?.notifyOnResolve
+                                  ? "bg-amber-500"
+                                  : isDarkMode
+                                    ? "bg-gray-600"
+                                    : "bg-gray-300"
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                                  m?.notifyOnResolve
+                                    ? "translate-x-6"
+                                    : "translate-x-1"
+                                }`}
+                              />
+                            </button>
+                            <span>Inform when resolved</span>
+                          </label>
                           <button
                             type="button"
                             onClick={() => removeStoreContactRow(index)}

@@ -386,7 +386,7 @@ const AdminSettings = () => {
           iconBg={isDarkMode ? "bg-amber-900/40" : "bg-amber-50"}
           iconColor={isDarkMode ? "text-amber-400" : "text-amber-600"}
           title="Resolution Notification Contacts"
-          description="These people receive a WhatsApp message every time a complaint is resolved. You can add multiple contacts."
+          description="These people receive a WhatsApp message every time a complaint is resolved, at any store. To notify someone only for one store, add them under Assets → Contact Numbers and turn on “Inform when resolved”."
         >
           <div className="space-y-3">
             {/* Saved contacts list */}
