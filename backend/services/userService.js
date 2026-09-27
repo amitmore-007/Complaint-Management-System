@@ -84,6 +84,9 @@ const updateManagedUser = async ({ role, id, name, phoneNumber, isActive }) => {
       throw createHttpError(400, "Phone number already in use");
     }
     user.phoneNumber = normalizedPhone;
+    // Old number may now belong to someone else — kill every session issued
+    // under it so a device still holding a token loses access.
+    user.tokenVersion = (user.tokenVersion ?? 0) + 1;
   }
 
   if (name) user.name = name.trim();

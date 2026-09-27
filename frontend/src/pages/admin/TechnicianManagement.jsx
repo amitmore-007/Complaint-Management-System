@@ -6,6 +6,7 @@ import {
   UserCheck,
   UserX,
   Trash2,
+  Pencil,
   Phone,
   Calendar,
   Activity,
@@ -437,6 +438,16 @@ const TechnicianManagement = () => {
                               )}
                             </>
                           )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(technician)}
+                          disabled={actionLoading === technician._id}
+                          title="Edit technician"
+                          className="px-3 py-2 bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 rounded-lg text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Pencil className="h-4 w-4" />
                         </button>
 
                         <button
