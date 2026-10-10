@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 import fs from "fs";
 import connectDB from "./config/database.js";
 import { seedStores } from "./utils/seedStores.js";
+import { startSmartDevicePoller } from "./services/smartDeviceService.js";
 
 // Route imports
 import authRoutes from "./routes/authRoutes.js";
@@ -89,6 +90,9 @@ const startServer = async () => {
       console.error("❌ Store seed on start failed:", error);
     }
   }
+
+  // Background sync of Tuya smart-breaker status and energy logs.
+  startSmartDevicePoller();
 
   // Start server
   app.listen(PORT, "0.0.0.0", () => {

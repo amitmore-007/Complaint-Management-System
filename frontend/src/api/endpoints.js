@@ -56,6 +56,12 @@ export const endpoints = {
       byId: (id) => `/admin/inventory/${id}`,
       stockBalance: "/admin/inventory/stock-balance",
     },
+    smartDevices: {
+      root: "/admin/smart-devices",
+      sync: "/admin/smart-devices/sync",
+      energy: (deviceId) => `/admin/smart-devices/${deviceId}/energy`,
+      power: (deviceId) => `/admin/smart-devices/${deviceId}/power`,
+    },
     settings: {
       resolvedNotifyContacts: "/admin/settings/resolved-notify-contacts",
       geofenceMode: "/admin/settings/geofence-mode",

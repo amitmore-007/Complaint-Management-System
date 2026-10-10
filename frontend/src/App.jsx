@@ -32,6 +32,7 @@ import AdminCreateComplaint from "./pages/admin/CreateComplaint";
 import AdminReports from "./pages/admin/Reports";
 import AdminBilling from "./pages/admin/Billing";
 import AdminInventory from "./pages/admin/Inventory";
+import AdminSmartDevices from "./pages/admin/SmartDevices";
 import AdminSettings from "./pages/admin/AdminSettings";
 import GeofenceReview from "./pages/admin/GeofenceReview";
 
@@ -326,6 +327,15 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["admin", "technician"]}>
                   <AdminInventory />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/smart-devices"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminSmartDevices />
                 </ProtectedRoute>
               }
             />

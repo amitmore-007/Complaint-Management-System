@@ -33,6 +33,12 @@ import {
   adminDeleteInventoryItem,
   adminGetStockBalance,
 } from "../controllers/inventoryController.js";
+import {
+  adminListSmartDevices,
+  adminSyncSmartDevices,
+  adminGetSmartDeviceEnergy,
+  adminGetSmartDevicePower,
+} from "../controllers/smartDeviceController.js";
 
 const router = express.Router();
 
@@ -120,5 +126,19 @@ router.get(
 router.post("/inventory", ...authenticateInventoryViewer, adminCreateInventoryItem);
 router.put("/inventory/:id", authenticateAdmin, adminUpdateInventoryItem);
 router.delete("/inventory/:id", authenticateAdmin, adminDeleteInventoryItem);
+
+// smart devices (Tuya smart breakers — energy monitoring)
+router.get("/smart-devices", authenticateAdmin, adminListSmartDevices);
+router.post("/smart-devices/sync", authenticateAdmin, adminSyncSmartDevices);
+router.get(
+  "/smart-devices/:deviceId/energy",
+  authenticateAdmin,
+  adminGetSmartDeviceEnergy,
+);
+router.get(
+  "/smart-devices/:deviceId/power",
+  authenticateAdmin,
+  adminGetSmartDevicePower,
+);
 
 export default router;
