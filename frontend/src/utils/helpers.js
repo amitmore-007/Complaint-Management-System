@@ -95,6 +95,20 @@ export const formatMoneyINR = (
   return `₹${num.toFixed(decimals)}`;
 };
 
+export const formatDateTime = (value, fallback = "—") => {
+  if (!value) return fallback;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
 export const slugifyFilePart = (value, fallback = "item") => {
   const slug = String(value || "")
     .trim()

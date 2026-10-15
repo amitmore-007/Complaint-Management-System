@@ -19,6 +19,7 @@ import { useTheme } from "../../context/ThemeContext";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import useAuthStore from "../../store/authStore";
 import VideoPlayer from "../../components/player/VideoPlayer";
+import ComplaintSheetPreview from "../../components/common/ComplaintSheetPreview";
 import { useResolvedComplaints } from "../../hooks/useComplaints";
 import { useTechnicianBillingRecords } from "../../hooks/useBilling";
 
@@ -508,6 +509,17 @@ const ResolvedAssignments = () => {
                             </div>
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Signed complaint sheet */}
+                    {complaint.complaintSheet?.uploadedAt && (
+                      <div className="mt-3 max-w-md">
+                        <ComplaintSheetPreview
+                          complaintId={complaint._id}
+                          sheet={complaint.complaintSheet}
+                          isDarkMode={isDarkMode}
+                        />
                       </div>
                     )}
                   </div>

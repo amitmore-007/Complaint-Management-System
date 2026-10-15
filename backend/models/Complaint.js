@@ -150,6 +150,19 @@ const complaintSchema = new mongoose.Schema(
         },
       },
     ],
+    // Photo or PDF of the signed hard-copy complaint sheet, required to resolve.
+    // Photos live on Cloudinary (url + publicId); PDFs in a private S3 bucket
+    // (key only — viewers fetch a signed URL from GET /complaints/:id/sheet).
+    complaintSheet: {
+      storage: { type: String, enum: ["cloudinary", "s3"] },
+      url: String,
+      publicId: String,
+      key: String,
+      originalName: String,
+      mimeType: String,
+      resourceType: String,
+      uploadedAt: Date,
+    },
     resolutionNotes: {
       type: String,
       trim: true,

@@ -15,6 +15,7 @@ export const endpoints = {
     root: "/complaints",
     bulk: "/complaints/bulk",
     byId: (complaintId) => `/complaints/${complaintId}`,
+    sheet: (complaintId) => `/complaints/${complaintId}/sheet`,
     duplicate: (complaintId) => `/complaints/${complaintId}/duplicate`,
     assigned: "/complaints/assigned/me",
     assignedResolved: "/complaints/assigned/me/resolved",

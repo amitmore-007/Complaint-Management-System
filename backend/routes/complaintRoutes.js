@@ -4,6 +4,7 @@ import multer from "multer";
 import {
   listComplaints,
   getComplaintById,
+  getComplaintSheetUrl,
   createComplaint,
   updateComplaint,
   deleteComplaint,
@@ -30,11 +31,23 @@ const upload = multer({
   },
 });
 
-// Resolution media — images and video, so a much larger cap.
+// Resolution media — images and video, so a much larger cap. The complaint
+// sheet may also be a PDF.
 const statusUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
+    if (file.fieldname === "complaintSheet") {
+      if (
+        file.mimetype.startsWith("image/") ||
+        file.mimetype === "application/pdf"
+      ) {
+        cb(null, true);
+      } else {
+        cb(new Error("Complaint sheet must be an image or PDF"), false);
+      }
+      return;
+    }
     if (
       file.mimetype.startsWith("image/") ||
       file.mimetype.startsWith("video/")
@@ -69,6 +82,7 @@ router.patch(
   statusUpload.fields([
     { name: "resolutionPhotos", maxCount: 5 },
     { name: "resolutionVideos", maxCount: 2 },
+    { name: "complaintSheet", maxCount: 1 },
   ]),
   updateComplaintStatus,
 );
@@ -79,6 +93,7 @@ router.post("/:id/duplicate", authenticateAny, duplicateComplaint);
 router.get("/", authenticateAny, listComplaints);
 router.post("/", authenticateAny, upload.array("photos", 5), createComplaint);
 
+router.get("/:id/sheet", authenticateAny, getComplaintSheetUrl);
 router.get("/:id", authenticateAny, getComplaintById);
 router.put("/:id", authenticateAny, upload.array("photos", 5), updateComplaint);
 router.delete("/:id", authenticateAny, deleteComplaint);

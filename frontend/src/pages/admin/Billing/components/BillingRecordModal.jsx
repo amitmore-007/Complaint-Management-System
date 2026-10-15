@@ -2,6 +2,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Download, Eye, Save, X } from "lucide-react";
 
+import { formatDateTime } from "../../../../utils/helpers";
+
 const BillingRecordModal = ({
   open,
   record,
@@ -51,6 +53,23 @@ const BillingRecordModal = ({
               >
                 {record.technician?.name} • {record.complaint?.complaintId} •{" "}
                 {record.complaint?.title}
+              </p>
+              <p
+                className={`${
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                } text-xs mt-1`}
+              >
+                {record.materialsUsed
+                  ? `Materials used on: ${formatDateTime(
+                      record.complaint?.resolvedAt
+                    )} • `
+                  : ""}
+                Submitted: {formatDateTime(record.submittedAt)}
+                {record.updatedByAdminAt
+                  ? ` • Edited by ${
+                      record.updatedByAdmin?.name ?? "admin"
+                    }: ${formatDateTime(record.updatedByAdminAt)}`
+                  : ""}
               </p>
             </div>
 

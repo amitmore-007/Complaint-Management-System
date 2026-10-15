@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Eye } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
+import { formatDateTime } from "../../../../utils/helpers";
+
 const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
   const location = useLocation();
   const [detailsModal, setDetailsModal] = useState({
@@ -88,6 +90,23 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                   >
                     {record.complaint?.complaintId} ·{" "}
                     {record.complaint?.store?.name}
+                  </p>
+                  {record.materialsUsed ? (
+                    <p
+                      className={`text-xs ${
+                        isDarkMode ? "text-gray-400" : "text-gray-600"
+                      }`}
+                    >
+                      Materials used on:{" "}
+                      {formatDateTime(record.complaint?.resolvedAt)}
+                    </p>
+                  ) : null}
+                  <p
+                    className={`text-xs ${
+                      isDarkMode ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
+                    Submitted: {formatDateTime(record.submittedAt)}
                   </p>
                 </div>
 
@@ -192,6 +211,18 @@ const SubmittedBillingTab = ({ isDarkMode, submittedQuery }) => {
                   >
                     {detailsModal.record.complaint?.complaintId} ·{" "}
                     {detailsModal.record.complaint?.title}
+                  </p>
+                  <p
+                    className={`${
+                      isDarkMode ? "text-gray-400" : "text-gray-600"
+                    } text-xs mt-1`}
+                  >
+                    {detailsModal.record.materialsUsed
+                      ? `Materials used on: ${formatDateTime(
+                          detailsModal.record.complaint?.resolvedAt
+                        )} · `
+                      : ""}
+                    Submitted: {formatDateTime(detailsModal.record.submittedAt)}
                   </p>
                 </div>
                 <button

@@ -48,6 +48,7 @@ import {
 import { useAdminTechnicians } from "../../hooks/useAdmin";
 import { useStoresList } from "../../hooks/useStores";
 import VideoPlayer from "../../components/player/VideoPlayer";
+import ComplaintSheetPreview from "../../components/common/ComplaintSheetPreview";
 
 const ComplaintManagement = () => {
   const { isDarkMode } = useTheme();
@@ -1486,7 +1487,8 @@ const ComplaintManagement = () => {
                     {complaintDetails.status === "resolved" &&
                       (complaintDetails.resolutionNotes ||
                         complaintDetails.resolutionPhotos?.length > 0 ||
-                        complaintDetails.resolutionVideos?.length > 0) && (
+                        complaintDetails.resolutionVideos?.length > 0 ||
+                        complaintDetails.complaintSheet?.uploadedAt) && (
                         <div
                           className={`p-4 rounded-lg border ${
                             isDarkMode
@@ -1557,6 +1559,16 @@ const ComplaintManagement = () => {
                                 </ul>
                               </div>
                             )}
+
+                          {complaintDetails.complaintSheet?.uploadedAt && (
+                            <div className="mb-4">
+                              <ComplaintSheetPreview
+                                complaintId={complaintDetails._id}
+                                sheet={complaintDetails.complaintSheet}
+                                isDarkMode={isDarkMode}
+                              />
+                            </div>
+                          )}
 
                           {complaintDetails.resolvedAt && (
                             <div className="mb-4">

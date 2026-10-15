@@ -53,6 +53,12 @@ export const complaintService = {
     return data.complaint;
   },
 
+  /** Short-lived viewable URL for the signed complaint sheet. */
+  getSheetUrl: async (complaintId) => {
+    const { data } = await api.get(endpoints.complaints.sheet(complaintId));
+    return { url: data.url, mimeType: data.mimeType };
+  },
+
   create: async (formData) => {
     const { data } = await api.post(endpoints.complaints.root, formData, {
       headers: { "Content-Type": "multipart/form-data" },

@@ -31,6 +31,21 @@ export const getComplaintById = async (req, res) => {
   }
 };
 
+// GET /api/complaints/:id/sheet
+export const getComplaintSheetUrl = async (req, res) => {
+  try {
+    const sheet = await complaintService.getSheetUrl({
+      id: req.params.id,
+      user: req.user,
+    });
+
+    res.status(200).json({ success: true, ...sheet });
+  } catch (error) {
+    console.error("Get complaint sheet error:", error);
+    respondWithError(res, error, "Internal server error");
+  }
+};
+
 // POST /api/complaints
 export const createComplaint = async (req, res) => {
   try {

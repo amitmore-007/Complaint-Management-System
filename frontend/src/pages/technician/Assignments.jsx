@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Eye,
   Camera,
+  Video,
   Share2,
   Search,
   ChevronDown,
@@ -31,7 +32,9 @@ import {
 } from "../../hooks/useComplaints";
 import { useTechnicianInventoryItemNames } from "../../hooks/useInventory";
 import { makeRowId } from "../../utils/helpers";
+import VideoPlayer from "../../components/player/VideoPlayer";
 import MaterialsUsedFields from "./components/MaterialsUsedFields";
+import ComplaintSheetField from "./components/ComplaintSheetField";
 
 const emptyMaterialRow = () => ({
   rowId: makeRowId(),
@@ -71,6 +74,8 @@ const TechnicianAssignments = () => {
     materialsUsed: false,
     materials: [emptyMaterialRow()],
     photos: [],
+    videos: [],
+    sheet: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showStartWorkConfirm, setShowStartWorkConfirm] = useState(false);
@@ -185,6 +190,14 @@ const TechnicianAssignments = () => {
             formData.append("resolutionPhotos", photo);
           });
         }
+        if (resolutionData.videos && resolutionData.videos.length > 0) {
+          resolutionData.videos.forEach((video) => {
+            formData.append("resolutionVideos", video);
+          });
+        }
+        if (resolutionData.sheet) {
+          formData.append("complaintSheet", resolutionData.sheet);
+        }
       }
 
       // Capturing a good GPS fix takes a few seconds — say so rather than
@@ -292,6 +305,8 @@ const TechnicianAssignments = () => {
       materialsUsed: false,
       materials: [emptyMaterialRow()],
       photos: [],
+      videos: [],
+      sheet: null,
     });
   };
 
@@ -349,11 +364,20 @@ const TechnicianAssignments = () => {
       materialsUsed: false,
       materials: [emptyMaterialRow()],
       photos: [],
+      videos: [],
+      sheet: null,
     });
   };
 
   const isResolutionSubmittable = () => {
     if (!resolutionData.notes.trim()) return false;
+    if (
+      !resolutionData.photos.length ||
+      !resolutionData.videos.length ||
+      !resolutionData.sheet
+    ) {
+      return false;
+    }
     if (!resolutionData.materialsUsed) return true;
     return (resolutionData.materials ?? []).some(
       (m) => m.itemId && Number(m.quantity) > 0
@@ -363,11 +387,17 @@ const TechnicianAssignments = () => {
   const handleResolutionSubmit = async () => {
     if (!selectedComplaint) return;
     if (!isResolutionSubmittable()) {
-      toast.error(
-        resolutionData.materialsUsed
-          ? "Please select at least one material with a quantity"
-          : "Resolution notes are required"
-      );
+      let message = "Please select at least one material with a quantity";
+      if (!resolutionData.notes.trim()) {
+        message = "Resolution notes are required";
+      } else if (!resolutionData.photos.length) {
+        message = "Please add at least one resolution photo";
+      } else if (!resolutionData.videos.length) {
+        message = "Please add at least one resolution video";
+      } else if (!resolutionData.sheet) {
+        message = "Please upload the signed complaint sheet";
+      }
+      toast.error(message);
       return;
     }
 
@@ -405,6 +435,50 @@ const TechnicianAssignments = () => {
       photos: prev.photos.filter((_, i) => i !== index),
     }));
   };
+
+  const handleVideoChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + resolutionData.videos.length > 2) {
+      toast.error("Maximum 2 videos allowed");
+      return;
+    }
+    const oversized = files.find((f) => f.size > 100 * 1024 * 1024);
+    if (oversized) {
+      toast.error("Each video must be under 100 MB");
+      return;
+    }
+    setResolutionData((prev) => ({
+      ...prev,
+      videos: [...prev.videos, ...files],
+    }));
+    // reset the input so the same file can be re-selected after removal
+    e.target.value = "";
+  };
+
+  const removeVideo = (index) => {
+    setResolutionData((prev) => ({
+      ...prev,
+      videos: prev.videos.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleSheetChange = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+      toast.error("Complaint sheet must be a photo or PDF");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Complaint sheet must be under 10 MB");
+      return;
+    }
+    setResolutionData((prev) => ({ ...prev, sheet: file }));
+  };
+
+  const removeSheet = () =>
+    setResolutionData((prev) => ({ ...prev, sheet: null }));
 
   const buildWhatsAppShareUrl = (complaint) => {
     const technician = complaint.assignedTechnician?.name;
@@ -1051,7 +1125,7 @@ const TechnicianAssignments = () => {
                         isDarkMode ? "text-gray-300" : "text-gray-700"
                       }`}
                     >
-                      Resolution Proof Photos (Optional)
+                      Resolution Proof Photos *
                     </label>
 
                     <div
@@ -1116,6 +1190,85 @@ const TechnicianAssignments = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Resolution Videos */}
+                  <div>
+                    <label
+                      className={`block text-sm font-medium mb-2 ${
+                        isDarkMode ? "text-gray-300" : "text-gray-700"
+                      }`}
+                    >
+                      Resolution Proof Videos * (max 2 × 100 MB)
+                    </label>
+
+                    <div
+                      className={`border-2 border-dashed rounded-xl p-6 text-center ${
+                        isDarkMode
+                          ? "border-white/10 hover:border-gray-500"
+                          : "border-gray-300 hover:border-gray-400"
+                      }`}
+                    >
+                      <input
+                        type="file"
+                        multiple
+                        accept="video/mp4,video/quicktime,video/webm,video/avi,video/*"
+                        onChange={handleVideoChange}
+                        className="hidden"
+                        id="resolution-videos"
+                      />
+                      <label
+                        htmlFor="resolution-videos"
+                        className="cursor-pointer"
+                      >
+                        <Video
+                          className={`h-8 w-8 mx-auto mb-2 ${
+                            isDarkMode ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        />
+                        <p
+                          className={`text-sm ${
+                            isDarkMode ? "text-gray-400" : "text-gray-600"
+                          }`}
+                        >
+                          Click to add videos showing the resolved work
+                        </p>
+                        <p
+                          className={`text-xs mt-1 ${
+                            isDarkMode ? "text-gray-500" : "text-gray-500"
+                          }`}
+                        >
+                          MP4, MOV, WebM — up to 100 MB each, max 2 videos
+                        </p>
+                      </label>
+                    </div>
+
+                    {/* Video Previews */}
+                    {resolutionData.videos.length > 0 && (
+                      <div className="flex gap-3 mt-4">
+                        {resolutionData.videos.map((video, index) => (
+                          <div
+                            key={index}
+                            className="relative w-48 flex-shrink-0 rounded-xl overflow-hidden"
+                          >
+                            <VideoPlayer src={URL.createObjectURL(video)} />
+                            <button
+                              onClick={() => removeVideo(index)}
+                              className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors shadow-md z-10"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <ComplaintSheetField
+                    sheet={resolutionData.sheet}
+                    onChange={handleSheetChange}
+                    onRemove={removeSheet}
+                    isDarkMode={isDarkMode}
+                  />
 
                   {/* Action Buttons */}
                   <div className="flex space-x-4">

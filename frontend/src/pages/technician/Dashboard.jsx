@@ -35,6 +35,7 @@ import { useTechnicianInventoryItemNames } from "../../hooks/useInventory";
 import { makeRowId } from "../../utils/helpers";
 import VideoPlayer from "../../components/player/VideoPlayer";
 import MaterialsUsedFields from "./components/MaterialsUsedFields";
+import ComplaintSheetField from "./components/ComplaintSheetField";
 
 const emptyMaterialRow = () => ({
   rowId: makeRowId(),
@@ -106,6 +107,7 @@ const TechnicianDashboard = () => {
     materials: [emptyMaterialRow()],
     photos: [],
     videos: [],
+    sheet: null,
   });
   const inventoryItemsQuery = useTechnicianInventoryItemNames();
   const inventoryItems = inventoryItemsQuery.data ?? [];
@@ -150,6 +152,9 @@ const TechnicianDashboard = () => {
           resolutionData.videos.forEach((video) => {
             formData.append("resolutionVideos", video);
           });
+        }
+        if (resolutionData.sheet) {
+          formData.append("complaintSheet", resolutionData.sheet);
         }
       }
 
@@ -313,6 +318,7 @@ const TechnicianDashboard = () => {
       materials: [emptyMaterialRow()],
       photos: [],
       videos: [],
+      sheet: null,
     });
   };
 
@@ -325,6 +331,7 @@ const TechnicianDashboard = () => {
       materials: [emptyMaterialRow()],
       photos: [],
       videos: [],
+      sheet: null,
     });
   };
 
@@ -353,6 +360,13 @@ const TechnicianDashboard = () => {
 
   const isResolutionSubmittable = () => {
     if (!resolutionData.notes.trim()) return false;
+    if (
+      !resolutionData.photos.length ||
+      !resolutionData.videos.length ||
+      !resolutionData.sheet
+    ) {
+      return false;
+    }
     if (!resolutionData.materialsUsed) return true;
     return (resolutionData.materials ?? []).some(
       (m) => m.itemId && Number(m.quantity) > 0
@@ -365,6 +379,21 @@ const TechnicianDashboard = () => {
     // Validate resolution notes
     if (!resolutionData.notes.trim()) {
       toast.error("Resolution notes are required");
+      return;
+    }
+
+    if (!resolutionData.photos.length) {
+      toast.error("Please add at least one resolution photo");
+      return;
+    }
+
+    if (!resolutionData.videos.length) {
+      toast.error("Please add at least one resolution video");
+      return;
+    }
+
+    if (!resolutionData.sheet) {
+      toast.error("Please upload the signed complaint sheet");
       return;
     }
 
@@ -436,6 +465,24 @@ const TechnicianDashboard = () => {
       videos: prev.videos.filter((_, i) => i !== index),
     }));
   };
+
+  const handleSheetChange = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+      toast.error("Complaint sheet must be a photo or PDF");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Complaint sheet must be under 10 MB");
+      return;
+    }
+    setResolutionData((prev) => ({ ...prev, sheet: file }));
+  };
+
+  const removeSheet = () =>
+    setResolutionData((prev) => ({ ...prev, sheet: null }));
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -1295,7 +1342,7 @@ const TechnicianDashboard = () => {
                         isDarkMode ? "text-gray-300" : "text-gray-700"
                       }`}
                     >
-                      Resolution Proof Photos (Optional)
+                      Resolution Proof Photos *
                     </label>
 
                     <div
@@ -1368,7 +1415,7 @@ const TechnicianDashboard = () => {
                         isDarkMode ? "text-gray-300" : "text-gray-700"
                       }`}
                     >
-                      Resolution Proof Videos (Optional, max 2 Ã— 100 MB)
+                      Resolution Proof Videos * (max 2 × 100 MB)
                     </label>
 
                     <div
@@ -1432,6 +1479,13 @@ const TechnicianDashboard = () => {
                       </div>
                     )}
                   </div>
+
+                  <ComplaintSheetField
+                    sheet={resolutionData.sheet}
+                    onChange={handleSheetChange}
+                    onRemove={removeSheet}
+                    isDarkMode={isDarkMode}
+                  />
 
                   {/* Action Buttons */}
                   <div className="flex space-x-4">

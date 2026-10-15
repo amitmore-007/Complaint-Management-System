@@ -6,8 +6,10 @@ import { attendanceService } from "./attendanceService.js";
 import {
   uploadToCloudinary,
   uploadVideoToCloudinary,
+  uploadDocumentToCloudinary,
   deleteFromCloudinary,
 } from "../config/cloudinary.js";
+import { uploadToS3, getS3ViewUrl, deleteFromS3 } from "../config/s3.js";
 import { sendStatusUpdateNotification } from "../config/msg91.js";
 import { generateNextComplaintId } from "../utils/complaintId.js";
 import { autoAssignComplaintToDefaultTechnician } from "../utils/autoAssign.js";
@@ -23,6 +25,7 @@ import {
 } from "../utils/geofence.js";
 
 const MAX_PHOTOS = 5;
+const MAX_SHEET_BYTES = 10 * 1024 * 1024;
 const VALID_STATUSES = ["assigned", "in-progress", "resolved"];
 const VALID_TRANSITIONS = {
   assigned: ["in-progress"],
@@ -245,7 +248,26 @@ const uploadResolutionMedia = async (files) => {
     }
   }
 
-  return { photos, videos };
+  let sheet = null;
+  const sheetFile = files?.complaintSheet?.[0];
+  if (sheetFile) {
+    try {
+      const uploaded =
+        sheetFile.mimetype === "application/pdf"
+          ? { ...(await uploadToS3(sheetFile)), storage: "s3" }
+          : await uploadDocumentToCloudinary(sheetFile);
+      sheet = { ...uploaded, uploadedAt: new Date() };
+    } catch (error) {
+      console.error("Complaint sheet upload error:", error);
+      for (const photo of photos) await deleteFromCloudinary(photo.publicId);
+      for (const video of videos) {
+        await deleteFromCloudinary(video.publicId, "video");
+      }
+      throw createHttpError(400, "Failed to upload complaint sheet");
+    }
+  }
+
+  return { photos, videos, sheet };
 };
 
 /**
@@ -410,6 +432,26 @@ export const complaintService = {
     return complaint;
   },
 
+  /**
+   * Viewable URL for the signed complaint sheet. S3 PDFs are private, so the
+   * caller gets a 10-minute signed link; visibility follows getById.
+   */
+  getSheetUrl: async ({ id, user }) => {
+    const complaint = await complaintData.findByIdForUser({ id, user });
+    if (!complaint) throw createHttpError(404, "Complaint not found");
+
+    const sheet = complaint.complaintSheet;
+    if (sheet?.key) {
+      return {
+        url: await getS3ViewUrl(sheet.key, { contentType: sheet.mimeType }),
+        mimeType: sheet.mimeType,
+      };
+    }
+    if (sheet?.url) return { url: sheet.url, mimeType: sheet.mimeType };
+
+    throw createHttpError(404, "No complaint sheet uploaded");
+  },
+
   create: async ({ user, body, files }) => {
     const { title, description, priority, storeId } = body;
 
@@ -467,12 +509,24 @@ export const complaintService = {
     const assets = [
       ...(complaint.photos ?? []),
       ...(complaint.resolutionPhotos ?? []),
-      ...(complaint.resolutionVideos ?? []),
     ];
     for (const asset of assets) {
       if (asset?.publicId) {
         await deleteFromCloudinary(asset.publicId).catch(() => {});
       }
+    }
+    for (const video of complaint.resolutionVideos ?? []) {
+      if (video?.publicId) {
+        await deleteFromCloudinary(video.publicId, "video").catch(() => {});
+      }
+    }
+    if (complaint.complaintSheet?.key) {
+      await deleteFromS3(complaint.complaintSheet.key);
+    } else if (complaint.complaintSheet?.publicId) {
+      await deleteFromCloudinary(
+        complaint.complaintSheet.publicId,
+        complaint.complaintSheet.resourceType || "image",
+      ).catch(() => {});
     }
 
     await complaintData.deleteById(id);
@@ -665,6 +719,29 @@ export const complaintService = {
         );
       }
 
+      if (!files?.resolutionPhotos?.length) {
+        throw createHttpError(
+          400,
+          "At least one resolution photo is required to resolve the complaint",
+        );
+      }
+      if (!files?.resolutionVideos?.length) {
+        throw createHttpError(
+          400,
+          "At least one resolution video is required to resolve the complaint",
+        );
+      }
+      const sheetFile = files?.complaintSheet?.[0];
+      if (!sheetFile) {
+        throw createHttpError(
+          400,
+          "Please upload the signed complaint sheet (photo or PDF) to resolve the complaint",
+        );
+      }
+      if (sheetFile.size > MAX_SHEET_BYTES) {
+        throw createHttpError(400, "Complaint sheet must be under 10 MB");
+      }
+
       const materialsUsed = ["true", true, "1"].includes(body.materialsUsed);
       const materials = materialsUsed
         ? await validateMaterials(body.materials)
@@ -679,6 +756,7 @@ export const complaintService = {
       complaint.materials = materials;
       if (media.photos.length) complaint.resolutionPhotos = media.photos;
       if (media.videos.length) complaint.resolutionVideos = media.videos;
+      if (media.sheet) complaint.complaintSheet = media.sheet;
     } else if (status === "in-progress") {
       complaint.startedAt = new Date();
     }

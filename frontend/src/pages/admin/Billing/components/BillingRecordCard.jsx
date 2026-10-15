@@ -1,7 +1,7 @@
 ﻿import React, { useMemo } from "react";
 import { Eye } from "lucide-react";
 
-import { formatMoneyINR } from "../../../../utils/helpers";
+import { formatDateTime, formatMoneyINR } from "../../../../utils/helpers";
 
 const BillingRecordCard = ({ record, isDarkMode, onView }) => {
   const total = useMemo(
@@ -46,6 +46,24 @@ const BillingRecordCard = ({ record, isDarkMode, onView }) => {
           >
             <span className="font-semibold">Location:</span>{" "}
             {record.complaint?.store?.name}
+          </p>
+          {record.materialsUsed ? (
+            <p
+              className={`${
+                isDarkMode ? "text-gray-400" : "text-gray-600"
+              } text-sm`}
+            >
+              <span className="font-semibold">Materials used on:</span>{" "}
+              {formatDateTime(record.complaint?.resolvedAt)}
+            </p>
+          ) : null}
+          <p
+            className={`${
+              isDarkMode ? "text-gray-400" : "text-gray-600"
+            } text-sm`}
+          >
+            <span className="font-semibold">Submitted:</span>{" "}
+            {formatDateTime(record.submittedAt)}
           </p>
           <p
             className={`${

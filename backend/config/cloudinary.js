@@ -99,9 +99,51 @@ export const uploadVideoToCloudinary = async (
   }
 };
 
-export const deleteFromCloudinary = async (publicId) => {
+/**
+ * Photo of scanned paperwork (the signed complaint sheet). Skips the
+ * aggressive compression used for resolution photos, since handwriting has to
+ * stay readable. PDFs do not come here — they go to S3 (config/s3.js).
+ */
+export const uploadDocumentToCloudinary = async (
+  file,
+  folder = "cms-complaint-sheets"
+) => {
+  if (!file?.buffer) {
+    throw new Error("Missing required parameter - file buffer");
+  }
+
+  const options = {
+    folder,
+    resource_type: "image",
+    transformation: [{ width: 2400, height: 2400, crop: "limit" }],
+  };
+
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      options,
+      (error, result) => {
+        if (error) {
+          console.error("Cloudinary document upload error:", error);
+          reject(new Error("Failed to upload document"));
+        } else {
+          resolve({
+            publicId: result.public_id,
+            url: result.secure_url,
+            originalName: file.originalname,
+            mimeType: file.mimetype,
+            storage: "cloudinary",
+            resourceType: options.resource_type,
+          });
+        }
+      }
+    );
+    uploadStream.end(file.buffer);
+  });
+};
+
+export const deleteFromCloudinary = async (publicId, resourceType = "image") => {
   try {
-    await cloudinary.uploader.destroy(publicId);
+    await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
   } catch (error) {
     console.error("Cloudinary delete error:", error);
   }

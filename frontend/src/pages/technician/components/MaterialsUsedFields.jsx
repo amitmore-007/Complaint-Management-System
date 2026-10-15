@@ -1,8 +1,10 @@
 import React from "react";
 import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 
+import InventoryItemPicker from "./InventoryItemPicker";
+
 // Resolution-time material selection: technician picks inventory items
-// (by dropdown) and quantity only — price/rate is resolved server-side
+// (by searchable dropdown) and quantity only — price/rate is resolved server-side
 // from the inventory catalog and is never sent to or shown in this UI.
 const MaterialsUsedFields = ({
   isDarkMode,
@@ -17,11 +19,6 @@ const MaterialsUsedFields = ({
   const fieldClass = `px-3 py-2 rounded-xl border text-sm ${
     isDarkMode
       ? "bg-white/10 border-white/10 text-white"
-      : "bg-white border-gray-200 text-gray-900"
-  }`;
-  const selectClass = `px-3 py-2 rounded-xl border text-sm ${
-    isDarkMode
-      ? "bg-[#1a1a1a] border-white/10 text-white"
       : "bg-white border-gray-200 text-gray-900"
   }`;
 
@@ -86,20 +83,12 @@ const MaterialsUsedFields = ({
               return (
                 <div key={m.rowId}>
                   <div className="flex items-center gap-2">
-                    <select
+                    <InventoryItemPicker
+                      isDarkMode={isDarkMode}
+                      items={inventoryItems}
                       value={m.itemId}
-                      onChange={(e) =>
-                        onUpdateRow(m.rowId, { itemId: e.target.value })
-                      }
-                      className={`${selectClass} flex-1 min-w-0`}
-                    >
-                      <option value="">Select item</option>
-                      {inventoryItems.map((item) => (
-                        <option key={item.itemId} value={item.itemId}>
-                          {item.itemName} ({item.remainingQty ?? 0} left)
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(itemId) => onUpdateRow(m.rowId, { itemId })}
+                    />
                     <input
                       type="number"
                       value={m.quantity}

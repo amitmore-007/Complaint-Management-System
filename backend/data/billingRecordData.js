@@ -2,7 +2,7 @@ import BillingRecord from "../models/BillingRecord.js";
 
 const COMPLAINT_POPULATE = {
   path: "complaint",
-  select: "complaintId title description status store",
+  select: "complaintId title description status store resolvedAt",
   populate: { path: "store", select: "name" },
 };
 
