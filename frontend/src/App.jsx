@@ -53,14 +53,19 @@ import TechnicianBilling from "./pages/technician/Billing";
 import "./App.css";
 
 // Protected Route Component
-const ProtectedRoute = ({ children, allowedRoles }) => {
+// `requires` names a per-user permission flag sent by the server (admins
+// always pass it).
+const ProtectedRoute = ({ children, allowedRoles, requires }) => {
   const { isAuthenticated, user } = useAuthStore();
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/role-selection" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  if (
+    (allowedRoles && !allowedRoles.includes(user.role)) ||
+    (requires && user.role !== "admin" && !user[requires])
+  ) {
     return <Navigate to={`/${user.role}/dashboard`} replace />;
   }
 
@@ -334,7 +339,10 @@ function App() {
             <Route
               path="/admin/smart-devices"
               element={
-                <ProtectedRoute allowedRoles={["admin"]}>
+                <ProtectedRoute
+                  allowedRoles={["admin", "technician"]}
+                  requires="canViewSmartDevices"
+                >
                   <AdminSmartDevices />
                 </ProtectedRoute>
               }

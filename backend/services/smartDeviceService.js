@@ -1,6 +1,7 @@
 import { DateTime } from "luxon";
 import { smartDeviceData } from "../data/smartDeviceData.js";
 import { createHttpError } from "../utils/httpError.js";
+import { normalizePhoneNumber } from "../utils/phone.js";
 import {
   isTuyaConfigured,
   setTuyaCallListener,
@@ -85,6 +86,18 @@ export const getConfiguredDeviceIds = () =>
     .split(",")
     .map((id) => id.trim())
     .filter(Boolean);
+
+// Technicians (10-digit phones) who may also open the Smart Devices tab.
+const getTechnicianViewerPhones = () =>
+  (process.env.SMART_DEVICE_TECHNICIAN_PHONES || "")
+    .split(",")
+    .map((phone) => normalizePhoneNumber(phone.trim()))
+    .filter(Boolean);
+
+export const canViewSmartDevices = (user) =>
+  user?.role === "admin" ||
+  (user?.role === "technician" &&
+    getTechnicianViewerPhones().includes(normalizePhoneNumber(user.phoneNumber)));
 
 const isConfigured = () =>
   isTuyaConfigured() && getConfiguredDeviceIds().length > 0;

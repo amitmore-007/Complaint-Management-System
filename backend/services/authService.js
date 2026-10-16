@@ -4,6 +4,7 @@ import { sendOTP } from "../config/msg91.js";
 import { normalizePhoneNumber } from "../utils/phone.js";
 import { generateAuthToken, generateOTP } from "../utils/authToken.js";
 import { createHttpError } from "../utils/httpError.js";
+import { canViewSmartDevices } from "./smartDeviceService.js";
 
 const OTP_TTL_MS = 10 * 60 * 1000;
 
@@ -41,6 +42,7 @@ const publicUser = (user) => ({
   role: user.role,
   isActive: user.isActive,
   lastLogin: user.lastLogin,
+  canViewSmartDevices: canViewSmartDevices(user),
 });
 
 export const authService = {

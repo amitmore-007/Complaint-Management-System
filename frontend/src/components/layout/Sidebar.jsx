@@ -57,6 +57,9 @@ const Sidebar = ({ isOpen, onClose }) => {
           { icon: FileText, label: "My Complaints", path: "/technician/my-complaints" },
           { icon: Package, label: "Asset Management", path: "/technician/assets" },
           { icon: Boxes, label: "Inventory Dashboard", path: "/admin/inventory" },
+          ...(user.canViewSmartDevices
+            ? [{ icon: PlugZap, label: "Smart Devices", path: "/admin/smart-devices" }]
+            : []),
           { icon: Clock, label: "My Attendance", path: "/technician/attendance" },
         ];
       case "admin":

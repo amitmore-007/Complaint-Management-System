@@ -39,6 +39,7 @@ import {
   adminGetSmartDeviceEnergy,
   adminGetSmartDevicePower,
 } from "../controllers/smartDeviceController.js";
+import { canViewSmartDevices } from "../services/smartDeviceService.js";
 
 const router = express.Router();
 
@@ -127,17 +128,32 @@ router.post("/inventory", ...authenticateInventoryViewer, adminCreateInventoryIt
 router.put("/inventory/:id", authenticateAdmin, adminUpdateInventoryItem);
 router.delete("/inventory/:id", authenticateAdmin, adminDeleteInventoryItem);
 
-// smart devices (Tuya smart breakers — energy monitoring)
-router.get("/smart-devices", authenticateAdmin, adminListSmartDevices);
-router.post("/smart-devices/sync", authenticateAdmin, adminSyncSmartDevices);
+// smart devices (Tuya smart breakers — energy monitoring) — admins, plus the
+// technicians listed in SMART_DEVICE_TECHNICIAN_PHONES.
+const authenticateSmartDeviceViewer = [
+  authenticateAny,
+  (req, res, next) =>
+    canViewSmartDevices(req.user)
+      ? next()
+      : res.status(403).json({
+          success: false,
+          message: "Access denied. Insufficient permissions.",
+        }),
+];
+router.get("/smart-devices", ...authenticateSmartDeviceViewer, adminListSmartDevices);
+router.post(
+  "/smart-devices/sync",
+  ...authenticateSmartDeviceViewer,
+  adminSyncSmartDevices,
+);
 router.get(
   "/smart-devices/:deviceId/energy",
-  authenticateAdmin,
+  ...authenticateSmartDeviceViewer,
   adminGetSmartDeviceEnergy,
 );
 router.get(
   "/smart-devices/:deviceId/power",
-  authenticateAdmin,
+  ...authenticateSmartDeviceViewer,
   adminGetSmartDevicePower,
 );
 
