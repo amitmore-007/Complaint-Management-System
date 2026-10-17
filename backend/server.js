@@ -18,6 +18,7 @@ import equipmentRoutes from "./routes/equipmentRoutes.js";
 import statsRoutes from "./routes/statsRoutes.js";
 import storeRoutes from "./routes/storeRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
+import storeApprovalRoutes from "./routes/storeApprovalRoutes.js";
 import mcpOAuthRoutes from "./routes/mcpOAuthRoutes.js";
 
 // For ES modules
@@ -134,6 +135,7 @@ app.use("/api/equipment", equipmentRoutes);
 app.use("/api/stores", storeRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/store-approval", storeApprovalRoutes);
 app.use("/mcp-oauth", mcpOAuthRoutes);
 
 // 404 handler

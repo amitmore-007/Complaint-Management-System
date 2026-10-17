@@ -40,6 +40,65 @@ const statusLocationSchema = new mongoose.Schema(
   { _id: false }
 );
 
+/**
+ * Store manager sign-off for a technician's visit. Informational only — it
+ * never blocks Start Work; it exists so a technician (and admin) knows before
+ * travelling whether the store has said "not now".
+ *
+ * Each recipient gets their own link token so the response is attributable.
+ * Only a SHA-256 hash of the token is stored.
+ */
+const storeApprovalSchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: ["pending", "approved", "declined"],
+      default: "pending",
+    },
+    requestedAt: Date,
+    expiresAt: Date,
+    recipients: {
+      type: [
+        new mongoose.Schema(
+          {
+            name: String,
+            phoneNumber: String,
+            tokenHash: String,
+            delivered: Boolean,
+          },
+          {
+            _id: false,
+            // Never ship link hashes to the apps.
+            toJSON: {
+              transform: (doc, ret) => {
+                delete ret.tokenHash;
+                return ret;
+              },
+            },
+          },
+        ),
+      ],
+      default: [],
+    },
+    respondedAt: Date,
+    // The manager who answered, or the admin who approved on their behalf.
+    respondedBy: {
+      name: String,
+      phoneNumber: String,
+    },
+    overriddenBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    reason: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
+  },
+  { _id: false },
+);
+
 const complaintSchema = new mongoose.Schema(
   {
     complaintId: {
@@ -235,6 +294,11 @@ const complaintSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    // Absent when the store has no contact marked "Approves visits".
+    storeApproval: {
+      type: storeApprovalSchema,
+      default: undefined,
+    },
   },
   {
     timestamps: true,
@@ -258,6 +322,11 @@ complaintSchema.index({ store: 1 });
 complaintSchema.index({ geofenceFlagged: 1, updatedAt: -1 });
 // Idempotency lookups on retry/offline replay.
 complaintSchema.index({ statusUpdateKeys: 1 });
+// Public approval link lookups.
+complaintSchema.index(
+  { "storeApproval.recipients.tokenHash": 1 },
+  { sparse: true },
+);
 
 // Backward compatibility for legacy complaints created before creatorType existed.
 complaintSchema.pre("validate", function (next) {

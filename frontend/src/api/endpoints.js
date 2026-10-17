@@ -37,6 +37,10 @@ export const endpoints = {
     complaints: {
       assign: "/admin/complaints/assign",
       reassign: (complaintId) => `/admin/complaints/${complaintId}/reassign`,
+      storeApprovalApprove: (complaintId) =>
+        `/admin/complaints/${complaintId}/store-approval/approve`,
+      storeApprovalResend: (complaintId) =>
+        `/admin/complaints/${complaintId}/store-approval/resend`,
       autoAssign: "/admin/complaints/auto-assign",
       geofenceFlagged: "/admin/complaints/geofence-flagged",
     },
@@ -109,6 +113,11 @@ export const endpoints = {
       status:  (token) => `/attendance/portal/${token}/status`,
       record:  (token) => `/attendance/portal/${token}/record`,
     },
+  },
+  // Public page opened from the store manager's WhatsApp link.
+  storeApproval: {
+    byToken: (token) => `/store-approval/${token}`,
+    respond: (token) => `/store-approval/${token}/respond`,
   },
   adminUsers: {
     attendanceToken: (userId) => `/admin/users/${userId}/attendance-token`,

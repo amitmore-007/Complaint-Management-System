@@ -40,6 +40,7 @@ import GeofenceReview from "./pages/admin/GeofenceReview";
 import MyAttendance from "./pages/attendance/MyAttendance";
 import AttendanceManagement from "./pages/admin/AttendanceManagement";
 import AttendancePortal from "./pages/attendance/AttendancePortal";
+import StoreApproval from "./pages/storeApproval/StoreApproval";
 
 // Technician Pages
 import TechnicianDashboard from "./pages/technician/Dashboard";
@@ -459,6 +460,9 @@ function App() {
 
             {/* Attendance Portal — public, no auth required */}
             <Route path="/attendance/portal/:token" element={<AttendancePortal />} />
+
+            {/* Store manager visit approval — public link from WhatsApp */}
+            <Route path="/store-approval/:token" element={<StoreApproval />} />
 
             {/* Fallback Route */}
             <Route path="*" element={<Navigate to="/" replace />} />

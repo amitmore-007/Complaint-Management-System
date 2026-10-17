@@ -32,6 +32,9 @@ import { useTechnicianBillingRecords } from "../../hooks/useBilling";
 import { useTechnicianInventoryItemNames } from "../../hooks/useInventory";
 import { makeRowId } from "../../utils/helpers";
 import ResolutionModal from "./components/ResolutionModal";
+import StoreApprovalBadge, {
+  StoreApprovalNote,
+} from "../../components/common/StoreApprovalBadge";
 
 const emptyMaterialRow = () => ({
   rowId: makeRowId(),
@@ -845,7 +848,7 @@ const TechnicianDashboard = () => {
                         <h3 className="text-lg sm:text-xl font-bold text-white truncate">
                           {complaint.title}
                         </h3>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span
                             className={`px-3 py-1 text-xs sm:text-sm font-semibold rounded-full whitespace-nowrap ${getStatusColor(
                               complaint.status
@@ -860,8 +863,18 @@ const TechnicianDashboard = () => {
                           >
                             {complaint.priority} Priority
                           </span>
+                          <StoreApprovalBadge
+                            approval={complaint.storeApproval}
+                            isDarkMode={isDarkMode}
+                          />
                         </div>
                       </div>
+
+                      <StoreApprovalNote
+                        approval={complaint.storeApproval}
+                        isDarkMode={isDarkMode}
+                        className="mb-3"
+                      />
 
                       <p className="text-gray-300 mb-4 text-sm sm:text-base line-clamp-2">
                         {complaint.description}

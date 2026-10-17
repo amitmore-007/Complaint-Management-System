@@ -193,6 +193,26 @@ export const complaintData = {
       .sort({ updatedAt: -1 })
       .limit(Math.min(limit, 200)),
 
+  /** Complaint owning a store-approval link, by the link token's hash. */
+  findByApprovalTokenHash: (tokenHash) =>
+    Complaint.findOne({ "storeApproval.recipients.tokenHash": tokenHash }).populate(
+      POPULATE,
+    ),
+
+  /**
+   * Record a store's answer only if nobody has answered yet, so two managers
+   * tapping at once cannot both win.
+   */
+  respondToStoreApproval: ({ tokenHash, set }) =>
+    Complaint.findOneAndUpdate(
+      {
+        "storeApproval.recipients.tokenHash": tokenHash,
+        "storeApproval.status": "pending",
+      },
+      { $set: set },
+      { new: true },
+    ).populate(POPULATE),
+
   listPending: () =>
     Complaint.find({ status: "pending" })
       .populate("createdBy", "phoneNumber")

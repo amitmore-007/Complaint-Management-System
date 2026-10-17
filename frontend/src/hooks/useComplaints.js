@@ -309,6 +309,31 @@ export const useAssignComplaint = () => {
   });
 };
 
+const useStoreApprovalMutation = (mutationFn) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn,
+    onSuccess: (_data, complaintId) => {
+      queryClient.invalidateQueries({ queryKey: complaintKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: complaintKeys.detail(complaintId) });
+      queryClient.invalidateQueries({ queryKey: complaintKeys.technician() });
+    },
+  });
+};
+
+// Approve a technician's visit on the store's behalf (Admin)
+export const useApproveStoreVisit = () =>
+  useStoreApprovalMutation((complaintId) =>
+    complaintService.admin.approveStoreVisit(complaintId),
+  );
+
+// Send fresh approval links to the store's contacts (Admin)
+export const useResendStoreApproval = () =>
+  useStoreApprovalMutation((complaintId) =>
+    complaintService.admin.resendStoreApproval(complaintId),
+  );
+
 // Reassign complaint (Admin) — for already-assigned or in-progress complaints
 export const useReassignComplaint = () => {
   const queryClient = useQueryClient();

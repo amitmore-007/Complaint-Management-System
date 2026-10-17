@@ -49,6 +49,8 @@ import { useAdminTechnicians } from "../../hooks/useAdmin";
 import { useStoresList } from "../../hooks/useStores";
 import VideoPlayer from "../../components/player/VideoPlayer";
 import ComplaintSheetPreview from "../../components/common/ComplaintSheetPreview";
+import StoreApprovalBadge from "../../components/common/StoreApprovalBadge";
+import StoreApprovalPanel from "./components/StoreApprovalPanel";
 
 const ComplaintManagement = () => {
   const { isDarkMode } = useTheme();
@@ -693,6 +695,12 @@ const ComplaintManagement = () => {
                         >
                           {complaint.priority} Priority
                         </span>
+                        {complaint.status !== "resolved" && (
+                          <StoreApprovalBadge
+                            approval={complaint.storeApproval}
+                            isDarkMode={isDarkMode}
+                          />
+                        )}
                       </div>
                     </div>
 
@@ -1318,6 +1326,11 @@ const ComplaintManagement = () => {
                         </div>
                       </div>
                     )}
+
+                    <StoreApprovalPanel
+                      complaint={complaintDetails}
+                      isDarkMode={isDarkMode}
+                    />
 
                     {/* Timeline */}
                     <div>

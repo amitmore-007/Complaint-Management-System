@@ -40,6 +40,10 @@ import {
   adminGetSmartDevicePower,
 } from "../controllers/smartDeviceController.js";
 import { canViewSmartDevices } from "../services/smartDeviceService.js";
+import {
+  adminApproveStoreVisit,
+  adminResendStoreApproval,
+} from "../controllers/storeApprovalController.js";
 
 const router = express.Router();
 
@@ -52,6 +56,16 @@ router.get("/dashboard/stats", authenticateAdmin, getDashboardStats);
 // Only genuinely admin-only complaint operations live here.
 router.post("/complaints/assign", authenticateAdmin, assignComplaint);
 router.patch("/complaints/:id/reassign", authenticateAdmin, reassignComplaint);
+router.post(
+  "/complaints/:id/store-approval/approve",
+  authenticateAdmin,
+  adminApproveStoreVisit,
+);
+router.post(
+  "/complaints/:id/store-approval/resend",
+  authenticateAdmin,
+  adminResendStoreApproval,
+);
 router.get(
   "/complaints/auto-assign",
   authenticateAdmin,

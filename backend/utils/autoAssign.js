@@ -1,5 +1,7 @@
 import { userData } from "../data/userData.js";
+import { complaintData } from "../data/complaintData.js";
 import { sendAssignmentNotification } from "../config/msg91.js";
+import { storeApprovalService } from "../services/storeApprovalService.js";
 
 const DEFAULT_TECHNICIAN_PHONE_FALLBACK = "9545445133";
 
@@ -49,9 +51,9 @@ export const autoAssignComplaintToDefaultTechnician = async ({
 
   await complaint.save();
 
-  // The template needs the store name; `store` may still be an unpopulated ref
-  // when this is called straight after creation.
-  await complaint.populate("store", "name");
+  // The templates need the store name, its contacts and the technician; refs
+  // may still be unpopulated when this is called straight after creation.
+  await complaintData.populate(complaint);
 
   try {
     await sendAssignmentNotification(
@@ -65,6 +67,8 @@ export const autoAssignComplaintToDefaultTechnician = async ({
     // Non-fatal: assignment is still successful even if WhatsApp send fails.
     console.error("❌ Default assignment WhatsApp error:", err?.message || err);
   }
+
+  await storeApprovalService.requestApprovalSafely(complaint);
 
   return { assigned: true, technicianId: technician._id };
 };

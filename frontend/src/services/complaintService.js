@@ -151,6 +151,20 @@ export const complaintService = {
       return data;
     },
 
+    approveStoreVisit: async (complaintId) => {
+      const { data } = await api.post(
+        endpoints.admin.complaints.storeApprovalApprove(complaintId),
+      );
+      return data;
+    },
+
+    resendStoreApproval: async (complaintId) => {
+      const { data } = await api.post(
+        endpoints.admin.complaints.storeApprovalResend(complaintId),
+      );
+      return data;
+    },
+
     getAutoAssignSetting: async () => {
       const { data } = await api.get(endpoints.admin.complaints.autoAssign);
       return Boolean(data?.setting?.autoAssignEnabled);

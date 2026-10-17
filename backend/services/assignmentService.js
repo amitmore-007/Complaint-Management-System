@@ -2,6 +2,7 @@ import { complaintData } from "../data/complaintData.js";
 import { userData } from "../data/userData.js";
 import { sendAssignmentNotification } from "../config/msg91.js";
 import { createHttpError } from "../utils/httpError.js";
+import { storeApprovalService } from "./storeApprovalService.js";
 
 const REASSIGNABLE = ["assigned", "in-progress"];
 
@@ -65,6 +66,7 @@ export const assignmentService = {
 
     await complaintData.save(complaint);
     await notifyTechnician(technician, complaint, "assignment");
+    await storeApprovalService.requestApprovalSafely(complaint);
 
     return complaint;
   },
@@ -93,6 +95,8 @@ export const assignmentService = {
 
     await complaintData.save(complaint);
     await notifyTechnician(technician, complaint, "reassignment");
+    // Fresh links naming the new technician; the old ones stop working.
+    await storeApprovalService.requestApprovalSafely(complaint);
 
     return complaint;
   }

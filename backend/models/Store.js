@@ -17,6 +17,12 @@ const storeManagerSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Opt-in: gets a WhatsApp link to approve or decline a technician's visit
+    // whenever a complaint at this store is assigned.
+    approvesVisits: {
+      type: Boolean,
+      default: false,
+    },
   },
   { _id: false }
 );

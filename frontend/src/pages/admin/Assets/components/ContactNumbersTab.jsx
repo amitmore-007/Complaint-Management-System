@@ -1,11 +1,46 @@
 ﻿import React, { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, Edit, Phone, Plus, Search, Trash2, X, Loader2 } from "lucide-react";
+import {
+  Bell,
+  Edit,
+  Phone,
+  Plus,
+  Search,
+  ShieldCheck,
+  Trash2,
+  X,
+  Loader2,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import {
   useStoresList,
   useUpdateStoreManagers,
 } from "../../../../hooks/useStores";
+
+const ContactToggle = ({ checked, onChange, label, activeClass, isDarkMode }) => (
+  <label
+    className={`flex items-center gap-2.5 text-sm cursor-pointer select-none ${
+      isDarkMode ? "text-gray-300" : "text-gray-700"
+    }`}
+  >
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${
+        checked ? activeClass : isDarkMode ? "bg-gray-600" : "bg-gray-300"
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+          checked ? "translate-x-6" : "translate-x-1"
+        }`}
+      />
+    </button>
+    <span>{label}</span>
+  </label>
+);
 
 const ContactNumbersTab = ({ isDarkMode }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,7 +87,7 @@ const ContactNumbersTab = ({ isDarkMode }) => {
   const addStoreContactRow = () => {
     setStoreManagersForContacts((prev) => [
       ...prev,
-      { name: "", phoneNumber: "", notifyOnResolve: false },
+      { name: "", phoneNumber: "", notifyOnResolve: false, approvesVisits: false },
     ]);
   };
 
@@ -214,6 +249,14 @@ const ContactNumbersTab = ({ isDarkMode }) => {
                               isDarkMode ? "text-amber-400" : "text-amber-600"
                             }`}
                             aria-label="Notified on resolve"
+                          />
+                        )}
+                        {m?.approvesVisits && (
+                          <ShieldCheck
+                            className={`h-3.5 w-3.5 flex-shrink-0 ${
+                              isDarkMode ? "text-emerald-400" : "text-emerald-600"
+                            }`}
+                            aria-label="Approves technician visits"
                           />
                         )}
                         {m?.name || "(No label)"}
@@ -388,41 +431,27 @@ const ContactNumbersTab = ({ isDarkMode }) => {
                             }`}
                           />
                         </div>
-                        <div className="mt-3 flex items-center justify-between gap-3">
-                          <label
-                            className={`flex items-center gap-2.5 text-sm cursor-pointer select-none ${
-                              isDarkMode ? "text-gray-300" : "text-gray-700"
-                            }`}
-                          >
-                            <button
-                              type="button"
-                              role="switch"
-                              aria-checked={!!m?.notifyOnResolve}
-                              onClick={() =>
-                                updateStoreContactRow(
-                                  index,
-                                  "notifyOnResolve",
-                                  !m?.notifyOnResolve,
-                                )
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex flex-col gap-2">
+                            <ContactToggle
+                              checked={!!m?.notifyOnResolve}
+                              onChange={(value) =>
+                                updateStoreContactRow(index, "notifyOnResolve", value)
                               }
-                              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-200 ${
-                                m?.notifyOnResolve
-                                  ? "bg-amber-500"
-                                  : isDarkMode
-                                    ? "bg-gray-600"
-                                    : "bg-gray-300"
-                              }`}
-                            >
-                              <span
-                                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                                  m?.notifyOnResolve
-                                    ? "translate-x-6"
-                                    : "translate-x-1"
-                                }`}
-                              />
-                            </button>
-                            <span>Inform when resolved</span>
-                          </label>
+                              label="Inform when resolved"
+                              activeClass="bg-amber-500"
+                              isDarkMode={isDarkMode}
+                            />
+                            <ContactToggle
+                              checked={!!m?.approvesVisits}
+                              onChange={(value) =>
+                                updateStoreContactRow(index, "approvesVisits", value)
+                              }
+                              label="Approves technician visits"
+                              activeClass="bg-emerald-500"
+                              isDarkMode={isDarkMode}
+                            />
+                          </div>
                           <button
                             type="button"
                             onClick={() => removeStoreContactRow(index)}

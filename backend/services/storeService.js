@@ -17,6 +17,7 @@ const normalizeManagers = (managers) =>
       name: String(m?.name || "").trim(),
       phoneNumber: normalizePhoneNumber(m?.phoneNumber || ""),
       notifyOnResolve: m?.notifyOnResolve === true,
+      approvesVisits: m?.approvesVisits === true,
     }))
     .filter((m) => m.name && m.phoneNumber);
 

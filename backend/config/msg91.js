@@ -365,10 +365,117 @@ export const sendStatusUpdateNotification = async (
   );
 };
 
+/**
+ * Send any approved template. `body` fills {{1}}..{{n}} in order; `urlButton`
+ * fills the dynamic suffix of the template's first URL button. WhatsApp
+ * rejects empty variables, so blanks are sent as "-".
+ */
+const sendTemplate = async ({ phoneNumber, template, body = [], urlButton }) => {
+  const digits = String(phoneNumber || "").replace(/\D/g, "");
+  const to = digits.length === 10 ? `91${digits}` : digits;
+  if (!to) return { success: false, error: "Missing phone number" };
+
+  const components = Object.fromEntries(
+    body.map((value, i) => [
+      `body_${i + 1}`,
+      { type: "text", value: String(value ?? "").trim() || "-" },
+    ]),
+  );
+  if (urlButton) {
+    components.button_1 = { type: "text", subtype: "url", value: urlButton };
+  }
+
+  try {
+    const response = await axios.post(
+      MSG91_API_URL,
+      {
+        integrated_number: process.env.MSG91_INTEGRATED_NUMBER,
+        content_type: "template",
+        payload: {
+          messaging_product: "whatsapp",
+          type: "template",
+          template: {
+            name: template,
+            language: { code: "en", policy: "deterministic" },
+            namespace: process.env.MSG91_NAMESPACE,
+            to_and_components: [{ to: [to], components }],
+          },
+        },
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          authkey: process.env.MSG91_AUTHKEY,
+          accept: "application/json",
+        },
+      },
+    );
+
+    if (response.data.status === "success") {
+      return { success: true, messageId: response.data.request_id };
+    }
+    console.warn(`⚠️ MSG91 ${template} non-success for ${to}:`, JSON.stringify(response.data));
+    return { success: false, error: response.data.errors || `Failed to send ${template}` };
+  } catch (error) {
+    console.error(`❌ MSG91 ${template} error for ${to}:`, error.response?.data || error.message);
+    return { success: false, error: error.response?.data?.message || error.message };
+  }
+};
+
+/** Ask a store contact to approve a technician's visit (link button). */
+export const sendStoreVisitApprovalRequest = ({
+  phoneNumber,
+  managerName,
+  complaintId,
+  issueTitle,
+  storeName,
+  technicianName,
+  technicianPhone,
+  token,
+}) =>
+  sendTemplate({
+    phoneNumber,
+    template: "store_visit_approval",
+    body: [managerName, complaintId, issueTitle, storeName, technicianName, technicianPhone],
+    urlButton: token,
+  });
+
+/** Tell a technician or admin that the store approved the visit. */
+export const sendStoreVisitApproved = ({
+  phoneNumber,
+  recipientName,
+  complaintId,
+  storeName,
+  approvedBy,
+}) =>
+  sendTemplate({
+    phoneNumber,
+    template: "store_visit_approved",
+    body: [recipientName, complaintId, storeName, approvedBy],
+  });
+
+/** Tell a technician or admin that the store asked to hold the visit. */
+export const sendStoreVisitDeclined = ({
+  phoneNumber,
+  recipientName,
+  complaintId,
+  storeName,
+  declinedBy,
+  reason,
+}) =>
+  sendTemplate({
+    phoneNumber,
+    template: "store_visit_declined",
+    body: [recipientName, complaintId, storeName, declinedBy, reason || "No reason given"],
+  });
+
 export default {
   sendOTP,
   sendStatusUpdate,
   sendAssignmentNotification,
   sendProgressUpdate,
   sendStatusUpdateNotification,
+  sendStoreVisitApprovalRequest,
+  sendStoreVisitApproved,
+  sendStoreVisitDeclined,
 };
