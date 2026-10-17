@@ -373,7 +373,6 @@ const TechnicianAssignments = () => {
     if (!resolutionData.notes.trim()) return false;
     if (
       !resolutionData.photos.length ||
-      !resolutionData.videos.length ||
       !resolutionData.sheet
     ) {
       return false;
@@ -392,8 +391,6 @@ const TechnicianAssignments = () => {
         message = "Resolution notes are required";
       } else if (!resolutionData.photos.length) {
         message = "Please add at least one resolution photo";
-      } else if (!resolutionData.videos.length) {
-        message = "Please add at least one resolution video";
       } else if (!resolutionData.sheet) {
         message = "Please upload the signed complaint sheet";
       }
@@ -470,8 +467,8 @@ const TechnicianAssignments = () => {
       toast.error("Complaint sheet must be a photo or PDF");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Complaint sheet must be under 10 MB");
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Complaint sheet must be under 30 MB");
       return;
     }
     setResolutionData((prev) => ({ ...prev, sheet: file }));
@@ -1198,7 +1195,7 @@ const TechnicianAssignments = () => {
                         isDarkMode ? "text-gray-300" : "text-gray-700"
                       }`}
                     >
-                      Resolution Proof Videos * (max 2 × 100 MB)
+                      Resolution Proof Videos (optional, max 2 × 100 MB)
                     </label>
 
                     <div

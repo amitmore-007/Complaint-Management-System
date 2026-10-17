@@ -25,7 +25,7 @@ import {
 } from "../utils/geofence.js";
 
 const MAX_PHOTOS = 5;
-const MAX_SHEET_BYTES = 10 * 1024 * 1024;
+const MAX_SHEET_BYTES = 50 * 1024 * 1024;
 const VALID_STATUSES = ["assigned", "in-progress", "resolved"];
 const VALID_TRANSITIONS = {
   assigned: ["in-progress"],
@@ -725,12 +725,6 @@ export const complaintService = {
           "At least one resolution photo is required to resolve the complaint",
         );
       }
-      if (!files?.resolutionVideos?.length) {
-        throw createHttpError(
-          400,
-          "At least one resolution video is required to resolve the complaint",
-        );
-      }
       const sheetFile = files?.complaintSheet?.[0];
       if (!sheetFile) {
         throw createHttpError(
@@ -739,7 +733,7 @@ export const complaintService = {
         );
       }
       if (sheetFile.size > MAX_SHEET_BYTES) {
-        throw createHttpError(400, "Complaint sheet must be under 10 MB");
+        throw createHttpError(400, "Complaint sheet must be under 50 MB");
       }
 
       const materialsUsed = ["true", true, "1"].includes(body.materialsUsed);

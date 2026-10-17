@@ -362,7 +362,6 @@ const TechnicianDashboard = () => {
     if (!resolutionData.notes.trim()) return false;
     if (
       !resolutionData.photos.length ||
-      !resolutionData.videos.length ||
       !resolutionData.sheet
     ) {
       return false;
@@ -384,11 +383,6 @@ const TechnicianDashboard = () => {
 
     if (!resolutionData.photos.length) {
       toast.error("Please add at least one resolution photo");
-      return;
-    }
-
-    if (!resolutionData.videos.length) {
-      toast.error("Please add at least one resolution video");
       return;
     }
 
@@ -474,8 +468,8 @@ const TechnicianDashboard = () => {
       toast.error("Complaint sheet must be a photo or PDF");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Complaint sheet must be under 10 MB");
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Complaint sheet must be under 30 MB");
       return;
     }
     setResolutionData((prev) => ({ ...prev, sheet: file }));
@@ -1415,7 +1409,7 @@ const TechnicianDashboard = () => {
                         isDarkMode ? "text-gray-300" : "text-gray-700"
                       }`}
                     >
-                      Resolution Proof Videos * (max 2 × 100 MB)
+                      Resolution Proof Videos (optional, max 2 × 100 MB)
                     </label>
 
                     <div

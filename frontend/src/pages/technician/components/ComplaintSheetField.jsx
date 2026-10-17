@@ -84,7 +84,7 @@ const ComplaintSheetField = ({ sheet, onChange, onRemove, isDarkMode }) => {
               Click to upload a photo or PDF of the signed hard-copy sheet
             </p>
             <p className="text-xs mt-1 text-gray-500">
-              JPG, PNG or PDF — one file, up to 10 MB
+              JPG, PNG or PDF — one file, up to 50 MB
             </p>
           </label>
         </div>
