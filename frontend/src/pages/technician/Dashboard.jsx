@@ -18,8 +18,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  Camera,
-  Video,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../../context/ThemeContext";
@@ -33,9 +31,7 @@ import { useResolvedComplaints } from "../../hooks/useComplaints";
 import { useTechnicianBillingRecords } from "../../hooks/useBilling";
 import { useTechnicianInventoryItemNames } from "../../hooks/useInventory";
 import { makeRowId } from "../../utils/helpers";
-import VideoPlayer from "../../components/player/VideoPlayer";
-import MaterialsUsedFields from "./components/MaterialsUsedFields";
-import ComplaintSheetField from "./components/ComplaintSheetField";
+import ResolutionModal from "./components/ResolutionModal";
 
 const emptyMaterialRow = () => ({
   rowId: makeRowId(),
@@ -469,7 +465,7 @@ const TechnicianDashboard = () => {
       return;
     }
     if (file.size > 50 * 1024 * 1024) {
-      toast.error("Complaint sheet must be under 30 MB");
+      toast.error("Complaint sheet must be under 50 MB");
       return;
     }
     setResolutionData((prev) => ({ ...prev, sheet: file }));
@@ -1236,283 +1232,28 @@ const TechnicianDashboard = () => {
 
         {/* Resolution Modal */}
         {showResolutionModal && selectedComplaint && (
-          <div
-            className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100]"
-            style={{
-              margin: 0,
-              padding: 0,
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
+          <ResolutionModal
+            complaint={selectedComplaint}
+            resolutionData={resolutionData}
+            setResolutionData={setResolutionData}
+            inventoryItems={inventoryItems}
+            materialHandlers={{
+              onToggleUsed: toggleResolutionMaterialsUsed,
+              onAddRow: addResolutionMaterialRow,
+              onRemoveRow: removeResolutionMaterialRow,
+              onUpdateRow: updateResolutionMaterialRow,
             }}
-          >
-            <div
-              className={`w-full max-w-2xl max-h-[95vh] overflow-y-auto mx-4 my-4 rounded-2xl shadow-2xl ${
-                isDarkMode ? "bg-[#111] dark-scrollbar" : "bg-white"
-              }`}
-            >
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h3
-                    className={`text-xl font-semibold ${
-                      isDarkMode ? "text-white" : "text-gray-900"
-                    }`}
-                  >
-                    Mark Complaint as Resolved
-                  </h3>
-                  <button
-                    onClick={closeResolutionModal}
-                    className={`p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    }`}
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-
-                <div className="space-y-6">
-                  <div>
-                    <h4
-                      className={`font-medium mb-2 ${
-                        isDarkMode ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      {selectedComplaint.title}
-                    </h4>
-                    <p
-                      className={`text-sm ${
-                        isDarkMode ? "text-gray-400" : "text-gray-600"
-                      }`}
-                    >
-                      ID: {selectedComplaint.complaintId}
-                    </p>
-                  </div>
-
-                  {/* Resolution Notes */}
-                  <div>
-                    <label
-                      className={`block text-sm font-medium mb-2 ${
-                        isDarkMode ? "text-gray-300" : "text-gray-700"
-                      }`}
-                    >
-                      Resolution Notes *
-                    </label>
-                    <textarea
-                      value={resolutionData.notes}
-                      onChange={(e) =>
-                        setResolutionData((prev) => ({
-                          ...prev,
-                          notes: e.target.value,
-                        }))
-                      }
-                      rows={4}
-                      placeholder="Describe how the complaint was resolved..."
-                      className={`w-full px-4 py-3 border rounded-xl transition-all duration-200 ${
-                        isDarkMode
-                          ? "bg-white/10 border-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          : "bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      }`}
-                      required
-                    />
-                  </div>
-
-                  {/* Materials Used */}
-                  <MaterialsUsedFields
-                    isDarkMode={isDarkMode}
-                    materialsUsed={resolutionData.materialsUsed}
-                    materials={resolutionData.materials ?? []}
-                    inventoryItems={inventoryItems}
-                    onToggleUsed={toggleResolutionMaterialsUsed}
-                    onAddRow={addResolutionMaterialRow}
-                    onRemoveRow={removeResolutionMaterialRow}
-                    onUpdateRow={updateResolutionMaterialRow}
-                  />
-
-                  {/* Resolution Photos */}
-                  <div>
-                    <label
-                      className={`block text-sm font-medium mb-2 ${
-                        isDarkMode ? "text-gray-300" : "text-gray-700"
-                      }`}
-                    >
-                      Resolution Proof Photos *
-                    </label>
-
-                    <div
-                      className={`border-2 border-dashed rounded-xl p-6 text-center ${
-                        isDarkMode
-                          ? "border-white/10 hover:border-gray-500"
-                          : "border-gray-300 hover:border-gray-400"
-                      }`}
-                    >
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handlePhotoChange}
-                        className="hidden"
-                        id="resolution-photos"
-                      />
-                      <label
-                        htmlFor="resolution-photos"
-                        className="cursor-pointer"
-                      >
-                        <Camera
-                          className={`h-8 w-8 mx-auto mb-2 ${
-                            isDarkMode ? "text-gray-400" : "text-gray-500"
-                          }`}
-                        />
-                        <p
-                          className={`text-sm ${
-                            isDarkMode ? "text-gray-400" : "text-gray-600"
-                          }`}
-                        >
-                          Click to add photos showing the resolved work
-                        </p>
-                        <p
-                          className={`text-xs mt-1 ${
-                            isDarkMode ? "text-gray-500" : "text-gray-500"
-                          }`}
-                        >
-                          Maximum 5 photos, up to 10MB each
-                        </p>
-                      </label>
-                    </div>
-
-                    {/* Photo Preview */}
-                    {resolutionData.photos.length > 0 && (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                        {resolutionData.photos.map((photo, index) => (
-                          <div key={index} className="relative group">
-                            <img
-                              src={URL.createObjectURL(photo)}
-                              alt={`Resolution proof ${index + 1}`}
-                              className="w-full h-24 object-cover rounded-lg"
-                            />
-                            <button
-                              onClick={() => removePhoto(index)}
-                              className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Resolution Videos */}
-                  <div>
-                    <label
-                      className={`block text-sm font-medium mb-2 ${
-                        isDarkMode ? "text-gray-300" : "text-gray-700"
-                      }`}
-                    >
-                      Resolution Proof Videos (optional, max 2 × 100 MB)
-                    </label>
-
-                    <div
-                      className={`border-2 border-dashed rounded-xl p-6 text-center ${
-                        isDarkMode
-                          ? "border-white/10 hover:border-gray-500"
-                          : "border-gray-300 hover:border-gray-400"
-                      }`}
-                    >
-                      <input
-                        type="file"
-                        multiple
-                        accept="video/mp4,video/quicktime,video/webm,video/avi,video/*"
-                        onChange={handleVideoChange}
-                        className="hidden"
-                        id="resolution-videos"
-                      />
-                      <label
-                        htmlFor="resolution-videos"
-                        className="cursor-pointer"
-                      >
-                        <Video
-                          className={`h-8 w-8 mx-auto mb-2 ${
-                            isDarkMode ? "text-gray-400" : "text-gray-500"
-                          }`}
-                        />
-                        <p
-                          className={`text-sm ${
-                            isDarkMode ? "text-gray-400" : "text-gray-600"
-                          }`}
-                        >
-                          Click to add videos showing the resolved work
-                        </p>
-                        <p
-                          className={`text-xs mt-1 ${
-                            isDarkMode ? "text-gray-500" : "text-gray-500"
-                          }`}
-                        >
-                          MP4, MOV, WebM — up to 100 MB each, max 2 videos
-                        </p>
-                      </label>
-                    </div>
-
-                    {/* Video Previews */}
-                    {resolutionData.videos.length > 0 && (
-                      <div className="flex gap-3 mt-4">
-                        {resolutionData.videos.map((video, index) => (
-                          <div
-                            key={index}
-                            className="relative w-48 flex-shrink-0 rounded-xl overflow-hidden"
-                          >
-                            <VideoPlayer src={URL.createObjectURL(video)} />
-                            <button
-                              onClick={() => removeVideo(index)}
-                              className="absolute top-2 right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors shadow-md z-10"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <ComplaintSheetField
-                    sheet={resolutionData.sheet}
-                    onChange={handleSheetChange}
-                    onRemove={removeSheet}
-                    isDarkMode={isDarkMode}
-                  />
-
-                  {/* Action Buttons */}
-                  <div className="flex space-x-4">
-                    <button
-                      onClick={closeResolutionModal}
-                      className={`flex-1 py-3 px-4 border rounded-xl font-semibold transition-all duration-200 ${
-                        isDarkMode
-                          ? "border-white/10 text-gray-300 hover:bg-white/10"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                      }`}
-                    >
-                      Cancel
-                    </button>
-
-                    <button
-                      onClick={handleResolutionSubmit}
-                      disabled={!isResolutionSubmittable() || isSubmitting}
-                      className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold flex items-center justify-center space-x-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                    >
-                      {isSubmitting ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      ) : (
-                        <>
-                          <CheckSquare className="h-5 w-5" />
-                          <span>Mark as Resolved</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            onPhotoChange={handlePhotoChange}
+            onRemovePhoto={removePhoto}
+            onVideoChange={handleVideoChange}
+            onRemoveVideo={removeVideo}
+            onSheetChange={handleSheetChange}
+            onRemoveSheet={removeSheet}
+            onClose={closeResolutionModal}
+            onSubmit={handleResolutionSubmit}
+            isSubmitting={isSubmitting}
+            isDarkMode={isDarkMode}
+          />
         )}
       </div>
     </DashboardLayout>

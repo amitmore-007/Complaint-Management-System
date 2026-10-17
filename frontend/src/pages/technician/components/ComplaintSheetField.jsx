@@ -1,18 +1,16 @@
 import { FileText, X } from "lucide-react";
 
+import UploadDropzone, { FieldLabel } from "./UploadDropzone";
+
 /** Required upload for the signed hard-copy complaint sheet (photo or PDF). */
 const ComplaintSheetField = ({ sheet, onChange, onRemove, isDarkMode }) => {
   const isPdf = sheet?.type === "application/pdf";
 
   return (
     <div>
-      <label
-        className={`block text-sm font-medium mb-2 ${
-          isDarkMode ? "text-gray-300" : "text-gray-700"
-        }`}
-      >
-        Signed Complaint Sheet *
-      </label>
+      <FieldLabel required isDarkMode={isDarkMode}>
+        Signed complaint sheet
+      </FieldLabel>
 
       {sheet ? (
         <div
@@ -32,7 +30,7 @@ const ComplaintSheetField = ({ sheet, onChange, onRemove, isDarkMode }) => {
             <img
               src={URL.createObjectURL(sheet)}
               alt="Complaint sheet"
-              className="h-16 w-16 object-cover rounded-lg flex-shrink-0"
+              className="h-12 w-12 object-cover rounded-lg flex-shrink-0"
             />
           )}
           <div className="min-w-0 flex-1">
@@ -50,44 +48,22 @@ const ComplaintSheetField = ({ sheet, onChange, onRemove, isDarkMode }) => {
           <button
             type="button"
             onClick={onRemove}
+            aria-label="Remove complaint sheet"
             className="w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center flex-shrink-0"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       ) : (
-        <div
-          className={`border-2 border-dashed rounded-xl p-6 text-center ${
-            isDarkMode
-              ? "border-white/10 hover:border-gray-500"
-              : "border-gray-300 hover:border-gray-400"
-          }`}
-        >
-          <input
-            type="file"
-            accept="image/*,application/pdf"
-            onChange={onChange}
-            className="hidden"
-            id="complaint-sheet"
-          />
-          <label htmlFor="complaint-sheet" className="cursor-pointer">
-            <FileText
-              className={`h-8 w-8 mx-auto mb-2 ${
-                isDarkMode ? "text-gray-400" : "text-gray-500"
-              }`}
-            />
-            <p
-              className={`text-sm ${
-                isDarkMode ? "text-gray-400" : "text-gray-600"
-              }`}
-            >
-              Click to upload a photo or PDF of the signed hard-copy sheet
-            </p>
-            <p className="text-xs mt-1 text-gray-500">
-              JPG, PNG or PDF — one file, up to 50 MB
-            </p>
-          </label>
-        </div>
+        <UploadDropzone
+          id="complaint-sheet"
+          icon={FileText}
+          title="Upload signed sheet"
+          hint="Photo or PDF of the hard copy, up to 50 MB"
+          accept="image/*,application/pdf"
+          onChange={onChange}
+          isDarkMode={isDarkMode}
+        />
       )}
     </div>
   );
