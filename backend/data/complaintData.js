@@ -135,6 +135,16 @@ export const complaintData = {
       ...(createdAt ? { createdAt } : {}),
     }),
 
+  /** Resolved in [from, to), dated by completedAt, falling back to resolvedAt. */
+  countResolvedBetween: ({ from, to }) =>
+    Complaint.countDocuments({
+      status: "resolved",
+      $or: [
+        { completedAt: { $ne: null, $gte: from, $lt: to } },
+        { completedAt: null, resolvedAt: { $ne: null, $gte: from, $lt: to } },
+      ],
+    }),
+
   /** Quantity of each inventory item consumed across all complaints. */
   aggregateMaterialUsage: (inventoryCollectionName) =>
     Complaint.aggregate([

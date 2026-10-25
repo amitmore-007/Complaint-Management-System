@@ -7,6 +7,7 @@ import fs from "fs";
 import connectDB from "./config/database.js";
 import { seedStores } from "./utils/seedStores.js";
 import { startSmartDevicePoller } from "./services/smartDeviceService.js";
+import { startDailyReportScheduler } from "./services/dailyReportService.js";
 
 // Route imports
 import authRoutes from "./routes/authRoutes.js";
@@ -20,6 +21,7 @@ import storeRoutes from "./routes/storeRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
 import storeApprovalRoutes from "./routes/storeApprovalRoutes.js";
 import mcpOAuthRoutes from "./routes/mcpOAuthRoutes.js";
+import internalRoutes from "./routes/internalRoutes.js";
 
 // For ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -95,6 +97,9 @@ const startServer = async () => {
   // Background sync of Tuya smart-breaker status and energy logs.
   startSmartDevicePoller();
 
+  // WhatsApp daily summary to admins; catches up any day the cron missed.
+  startDailyReportScheduler();
+
   // Start server
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server running on port ${PORT}`);
@@ -136,6 +141,7 @@ app.use("/api/stores", storeRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/store-approval", storeApprovalRoutes);
+app.use("/api/internal", internalRoutes);
 app.use("/mcp-oauth", mcpOAuthRoutes);
 
 // 404 handler

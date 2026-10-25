@@ -469,6 +469,21 @@ export const sendStoreVisitDeclined = ({
     body: [recipientName, complaintId, storeName, declinedBy, reason || "No reason given"],
   });
 
+/** Daily complaint summary for an admin, covering one finished IST day. */
+export const sendDailySummary = ({
+  phoneNumber,
+  recipientName,
+  dateLabel,
+  raised,
+  resolved,
+  resolvedThisMonth,
+}) =>
+  sendTemplate({
+    phoneNumber,
+    template: "daily_complaint_summary",
+    body: [recipientName, dateLabel, raised, resolved, resolvedThisMonth],
+  });
+
 export default {
   sendOTP,
   sendStatusUpdate,
@@ -478,4 +493,5 @@ export default {
   sendStoreVisitApprovalRequest,
   sendStoreVisitApproved,
   sendStoreVisitDeclined,
+  sendDailySummary,
 };
