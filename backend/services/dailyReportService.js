@@ -19,6 +19,8 @@ import { createHttpError } from "../utils/httpError.js";
 const TIMEZONE = "Asia/Kolkata";
 // Lets anything resolved at 23:59 finish saving before its day is counted.
 const SETTLE_MINUTES = 5;
+// Scheduled sends wait until this IST hour, so admins get it in the morning.
+const SEND_FROM_HOUR = 9;
 // A "sending" claim this old means the process died mid-run; take it over.
 const STALE_CLAIM_MINUTES = 15;
 const CATCH_UP_INTERVAL_MS = 30 * 60 * 1000;
@@ -139,6 +141,9 @@ const sendTest = async ({ date = lastCompletedDay(), phone }) => {
 /** Entry point for the external cron. Never throws — it runs detached. */
 const runScheduled = async () => {
   if (!isEnabled()) return { status: "disabled" };
+  if (DateTime.now().setZone(TIMEZONE).hour < SEND_FROM_HOUR) {
+    return { status: "too-early" };
+  }
   try {
     return await ensureSent();
   } catch (error) {
