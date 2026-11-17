@@ -102,6 +102,7 @@ export const endpoints = {
   attendance: {
     checkIn: '/attendance/check-in',
     checkOut: '/attendance/check-out',
+    absent: '/attendance/absent',
     breakStart: '/attendance/break/start',
     breakEnd: '/attendance/break/end',
     today: '/attendance/today',

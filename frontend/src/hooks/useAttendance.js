@@ -50,6 +50,7 @@ const useMutateAttendance = (mutationFn) => {
     mutationFn,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.today() });
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.history() });
       queryClient.invalidateQueries({ queryKey: ['attendance', 'all'] });
       queryClient.invalidateQueries({ queryKey: ['attendance', 'summary'] });
     },
@@ -57,6 +58,7 @@ const useMutateAttendance = (mutationFn) => {
 };
 
 export const useCheckIn = () => useMutateAttendance(attendanceService.checkIn);
-export const useStartBreak = () => useMutateAttendance(attendanceService.startBreak);
+export const useMarkAbsent = () => useMutateAttendance(attendanceService.markAbsent);
+export const useStartBreak =() => useMutateAttendance(attendanceService.startBreak);
 export const useEndBreak = () => useMutateAttendance(attendanceService.endBreak);
 export const useCheckOut = () => useMutateAttendance(attendanceService.checkOut);

@@ -42,6 +42,13 @@ const StatusPill = ({ status }) => {
         Checked Out
       </span>
     );
+  if (status === 'absent')
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-700">
+        <span className="w-2 h-2 rounded-full bg-red-500" />
+        Absent
+      </span>
+    );
   return null;
 };
 
@@ -167,14 +174,20 @@ const AttendancePortal = () => {
   };
 
   const handleAction = async (action) => {
+    let reason;
+    if (action === 'mark_absent') {
+      reason = window.prompt('Mark yourself absent today?\nReason (optional):', '');
+      if (reason === null) return; // cancelled
+    }
+
     setActing(true);
     try {
       const { data } = await portalApi.post(
         endpoints.attendance.portal.record(token),
-        { action },
+        { action, reason },
         { headers: { Authorization: `Bearer ${sessionToken}` } }
       );
-      const labels = { check_in: 'Checked In', check_out: 'Checked Out', break_start: 'Break Started', break_end: 'Break Ended' };
+      const labels = { check_in: 'Checked In', check_out: 'Checked Out', break_start: 'Break Started', break_end: 'Break Ended', mark_absent: 'Marked Absent' };
       setActionDone(labels[action] || 'Done');
       setAttendance(data.attendance);
       setScreen('done');
@@ -264,15 +277,20 @@ const AttendancePortal = () => {
               {attendance ? (
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 space-y-2 text-center">
                   <StatusPill status={status} />
+                  {status === 'absent' && attendance.absentReason && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 break-words">Reason: {attendance.absentReason}</p>
+                  )}
                   {attendance.checkInTime && (
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       In {fmtTime(attendance.checkInTime)}
                       {attendance.checkOutTime && ` · Out ${fmtTime(attendance.checkOutTime)}`}
                     </p>
                   )}
-                  <p className="text-xs font-mono text-gray-500 dark:text-gray-400">
-                    Work {toHM(attendance.totalWorkSeconds)}
-                  </p>
+                  {status !== 'absent' && (
+                    <p className="text-xs font-mono text-gray-500 dark:text-gray-400">
+                      Work {toHM(attendance.totalWorkSeconds)}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 text-center">
@@ -282,7 +300,13 @@ const AttendancePortal = () => {
 
               <div className="space-y-2.5">
                 {!status && (
-                  <ActionBtn label="Check In" color="green" icon="login" onClick={() => handleAction('check_in')} loading={acting} />
+                  <>
+                    <ActionBtn label="Check In" color="green" icon="login" onClick={() => handleAction('check_in')} loading={acting} />
+                    <ActionBtn label="Mark Absent" color="red" icon="absent" onClick={() => handleAction('mark_absent')} loading={acting} />
+                  </>
+                )}
+                {status === 'absent' && (
+                  <ActionBtn label="Came in after all? Check In" color="green" icon="login" onClick={() => handleAction('check_in')} loading={acting} />
                 )}
                 {status === 'working' && (
                   <>
@@ -337,6 +361,7 @@ const COLORS = {
   amber: 'bg-amber-500 hover:bg-amber-600',
   blue:  'bg-blue-600 hover:bg-blue-700',
   slate: 'bg-slate-600 hover:bg-slate-700',
+  red:   'bg-red-600 hover:bg-red-700',
 };
 
 const ActionBtn = ({ label, color, onClick, loading }) => (

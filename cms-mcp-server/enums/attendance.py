@@ -5,6 +5,7 @@ class AttendanceStatus(str, Enum):
     WORKING = "working"
     ON_BREAK = "on_break"
     CHECKED_OUT = "checked_out"
+    ABSENT = "absent"
 
 
 class AttendanceSessionType(str, Enum):

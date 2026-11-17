@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogIn, LogOut, Coffee, Play, History, ChevronDown, ChevronUp, Clock, CalendarCheck } from 'lucide-react';
+import { LogIn, LogOut, Coffee, Play, History, ChevronDown, ChevronUp, Clock, CalendarCheck, UserX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import useAuthStore from '../../store/authStore';
@@ -9,6 +9,7 @@ import {
   useTodayAttendance,
   useAttendanceHistory,
   useCheckIn,
+  useMarkAbsent,
   useStartBreak,
   useEndBreak,
   useCheckOut,
@@ -63,6 +64,15 @@ const STATUS = {
     historyText: 'text-gray-600',
     historyDot: 'bg-gray-400',
   },
+  absent: {
+    label: 'Absent',
+    dot: 'bg-red-500',
+    badge: 'bg-red-500/10 text-red-400 border-red-500/20',
+    timerColor: 'text-red-400',
+    historyBg: 'bg-red-100',
+    historyText: 'text-red-700',
+    historyDot: 'bg-red-500',
+  },
 };
 
 // ── live timer ───────────────────────────────────────────────────────────────
@@ -99,18 +109,22 @@ const MyAttendance = () => {
   const { isDarkMode } = useTheme();
   const { user } = useAuthStore();
   const [showHistory, setShowHistory] = useState(false);
+  const [showAbsentForm, setShowAbsentForm] = useState(false);
+  const [absentReason, setAbsentReason] = useState('');
 
   const { data: attendance, isLoading } = useTodayAttendance();
   const { data: history = [], isLoading: histLoading } = useAttendanceHistory(30);
 
   const checkInMutation    = useCheckIn();
+  const markAbsentMutation = useMarkAbsent();
   const startBreakMutation = useStartBreak();
   const endBreakMutation   = useEndBreak();
   const checkOutMutation   = useCheckOut();
 
   const isAnyLoading =
-    checkInMutation.isPending || startBreakMutation.isPending ||
-    endBreakMutation.isPending || checkOutMutation.isPending;
+    checkInMutation.isPending || markAbsentMutation.isPending ||
+    startBreakMutation.isPending || endBreakMutation.isPending ||
+    checkOutMutation.isPending;
 
   const handle = (mutation, label) => async () => {
     try {
@@ -121,7 +135,19 @@ const MyAttendance = () => {
     }
   };
 
+  const handleMarkAbsent = async () => {
+    try {
+      await markAbsentMutation.mutateAsync(absentReason.trim());
+      toast.success('Marked absent for today');
+      setShowAbsentForm(false);
+      setAbsentReason('');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Could not mark absent');
+    }
+  };
+
   const status = attendance?.currentStatus;
+  const isAbsent = status === 'absent';
   const cfg = status ? STATUS[status] : null;
   const breakCount = attendance ? attendance.sessions.filter((s) => s.type === 'break').length : 0;
 
@@ -130,7 +156,10 @@ const MyAttendance = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-xl mx-auto py-6 px-4 space-y-4">
+      <div className="max-w-5xl mx-auto py-6 px-4 space-y-4">
+
+        {/* check-in card stays compact; history below uses the full width */}
+        <div className="max-w-xl mx-auto space-y-4">
 
         {/* ── page header ── */}
         <div>
@@ -182,6 +211,21 @@ const MyAttendance = () => {
             {isLoading ? (
               <div className="flex justify-center py-4">
                 <div className={`animate-spin w-6 h-6 rounded-full border-2 border-t-blue-500 ${isDarkMode ? 'border-white/10' : 'border-gray-200'}`} />
+              </div>
+            ) : isAbsent ? (
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                  <UserX className="w-5 h-5 text-red-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                    You are marked absent today
+                  </p>
+                  <p className={`text-xs mt-0.5 break-words ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                    {attendance.absentReason ? `Reason: ${attendance.absentReason}` : 'No reason given'}
+                    {attendance.markedAbsentAt && ` · at ${fmtTime(attendance.markedAbsentAt)}`}
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="flex items-center justify-between">
@@ -235,7 +279,75 @@ const MyAttendance = () => {
 
           {/* action buttons */}
           <div className={`px-5 pb-5 space-y-3`}>
-            {!attendance && !isLoading && (
+            {!attendance && !isLoading && !showAbsentForm && (
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={handle(checkInMutation, 'Check-in')}
+                  disabled={isAnyLoading}
+                  className="py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isAnyLoading
+                    ? <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    : <LogIn className="w-4 h-4" />}
+                  Check In
+                </button>
+                <button
+                  onClick={() => setShowAbsentForm(true)}
+                  disabled={isAnyLoading}
+                  className={`py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 border transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+                    isDarkMode
+                      ? 'border-red-500/30 text-red-400 hover:bg-red-500/10'
+                      : 'border-red-200 text-red-600 hover:bg-red-50'
+                  }`}
+                >
+                  <UserX className="w-4 h-4" />
+                  Mark Absent
+                </button>
+              </div>
+            )}
+
+            {!attendance && !isLoading && showAbsentForm && (
+              <div className="space-y-3">
+                <textarea
+                  value={absentReason}
+                  onChange={(e) => setAbsentReason(e.target.value)}
+                  maxLength={200}
+                  rows={2}
+                  autoFocus
+                  placeholder="Reason (optional), e.g. sick leave"
+                  className={`w-full px-3 py-2 rounded-lg border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-500/40 ${
+                    isDarkMode
+                      ? 'bg-white/5 border-white/10 text-white placeholder-gray-600'
+                      : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400'
+                  }`}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => { setShowAbsentForm(false); setAbsentReason(''); }}
+                    disabled={isAnyLoading}
+                    className={`py-2.5 rounded-lg text-sm font-semibold border transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+                      isDarkMode
+                        ? 'border-white/10 text-gray-300 hover:bg-white/5'
+                        : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleMarkAbsent}
+                    disabled={isAnyLoading}
+                    className="py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {markAbsentMutation.isPending
+                      ? <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      : <UserX className="w-4 h-4" />}
+                    Confirm Absent
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {isAbsent && (
               <button
                 onClick={handle(checkInMutation, 'Check-in')}
                 disabled={isAnyLoading}
@@ -244,7 +356,7 @@ const MyAttendance = () => {
                 {isAnyLoading
                   ? <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                   : <LogIn className="w-4 h-4" />}
-                Check In
+                Came in after all? Check In
               </button>
             )}
 
@@ -311,6 +423,8 @@ const MyAttendance = () => {
           </div>
         </motion.div>
 
+        </div>
+
         {/* ── history ── */}
         <div className={`rounded-2xl border overflow-hidden ${surface}`}>
           <button
@@ -365,7 +479,14 @@ const MyAttendance = () => {
                           const s = STATUS[r.currentStatus] || STATUS.checked_out;
                           return (
                             <tr key={r._id} className={`border-t transition-colors ${isDarkMode ? 'border-white/10 hover:bg-white/5' : 'border-gray-100 hover:bg-gray-50/60'}`}>
-                              <td className={`px-4 py-3 font-medium text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{fmtDate(r.date)}</td>
+                              <td className={`px-4 py-3 font-medium text-xs ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                                {fmtDate(r.date)}
+                                {r.currentStatus === 'absent' && r.absentReason && (
+                                  <p className={`font-normal mt-0.5 max-w-[320px] truncate ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} title={r.absentReason}>
+                                    {r.absentReason}
+                                  </p>
+                                )}
+                              </td>
                               <td className={`px-4 py-3 text-xs font-mono ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{fmtTime(r.checkInTime)}</td>
                               <td className={`px-4 py-3 text-xs font-mono ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{fmtTime(r.checkOutTime)}</td>
                               <td className={`px-4 py-3 font-mono font-semibold text-xs ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{toShort(r.totalWorkSeconds)}</td>

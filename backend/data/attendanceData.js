@@ -11,7 +11,7 @@ export const attendanceData = {
   findActive: (userId) =>
     Attendance.findOne({
       userId: String(userId),
-      currentStatus: { $ne: "checked_out" },
+      currentStatus: { $nin: ["checked_out", "absent"] },
     }),
 
   listForUser: ({ userId, limit }) =>

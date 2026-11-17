@@ -58,7 +58,13 @@ export const attendanceService = {
     const todayRecord = await attendanceData.findByUserAndDate({ userId, date });
 
     // Split shift: re-open today's closed record rather than creating a second.
+    // An absent record turns into a normal working day if the user shows up.
     if (todayRecord) {
+      if (todayRecord.currentStatus === "absent") {
+        todayRecord.checkInTime = now;
+        todayRecord.absentReason = null;
+        todayRecord.markedAbsentAt = null;
+      }
       todayRecord.currentStatus = "working";
       todayRecord.currentSessionStart = now;
       todayRecord.checkOutTime = null;
@@ -82,6 +88,41 @@ export const attendanceService = {
     });
 
     return { record, created: true };
+  },
+
+  /** Only before any check-in today; a later check-in clears the absence. */
+  markAbsent: async (
+    { id: userId, role: userRole, name: userName, phoneNumber: userPhone },
+    reason,
+  ) => {
+    const date = todayDate();
+    const absentReason = typeof reason === "string" ? reason.trim().slice(0, 200) || null : null;
+
+    if (await attendanceData.findActive(userId)) {
+      throw createHttpError(400, "You are checked in. Please check out first.");
+    }
+
+    const todayRecord = await attendanceData.findByUserAndDate({ userId, date });
+    if (todayRecord) {
+      throw createHttpError(
+        400,
+        todayRecord.currentStatus === "absent"
+          ? "You are already marked absent today."
+          : "You have already checked in today.",
+      );
+    }
+
+    return attendanceData.create({
+      userId: String(userId),
+      userRole,
+      userName,
+      userPhone,
+      date,
+      currentStatus: "absent",
+      absentReason,
+      markedAbsentAt: new Date(),
+      sessions: [],
+    });
   },
 
   startBreak: async (userId) => {
@@ -158,14 +199,17 @@ export const attendanceService = {
     ]);
 
     const totalActive = activeAdmins + activeTechnicians;
-    const totalCheckedIn = records.length;
+    const absent = records.filter((r) => r.currentStatus === "absent").length;
+    const totalCheckedIn = records.length - absent;
 
     return {
       working: records.filter((r) => r.currentStatus === "working").length,
       on_break: records.filter((r) => r.currentStatus === "on_break").length,
       checked_out: records.filter((r) => r.currentStatus === "checked_out").length,
+      absent,
       total_checked_in: totalCheckedIn,
-      not_checked_in: Math.max(0, totalActive - totalCheckedIn),
+      // Absent users have answered for the day, so they are not "not checked in".
+      not_checked_in: Math.max(0, totalActive - records.length),
       total_active: totalActive,
     };
   },

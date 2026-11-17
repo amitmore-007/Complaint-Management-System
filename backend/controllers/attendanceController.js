@@ -17,6 +17,17 @@ export const checkIn = async (req, res) => {
   }
 };
 
+// POST /api/attendance/absent  { reason? }
+export const markAbsent = async (req, res) => {
+  try {
+    const attendance = await attendanceService.markAbsent(req.user, req.body?.reason);
+    res.status(201).json({ success: true, attendance });
+  } catch (error) {
+    console.error("Mark absent error:", error);
+    respondWithError(res, error, "Internal server error");
+  }
+};
+
 // POST /api/attendance/break/start
 export const startBreak = async (req, res) => {
   try {
@@ -138,6 +149,7 @@ export const createPortalRecord = async (req, res) => {
     check_out: checkOut,
     break_start: startBreak,
     break_end: endBreak,
+    mark_absent: markAbsent,
   };
 
   const handler = handlers[req.body.action];
@@ -145,7 +157,7 @@ export const createPortalRecord = async (req, res) => {
     return res.status(400).json({
       success: false,
       message:
-        "Invalid action. Allowed: check_in, check_out, break_start, break_end",
+        "Invalid action. Allowed: check_in, check_out, break_start, break_end, mark_absent",
     });
   }
 

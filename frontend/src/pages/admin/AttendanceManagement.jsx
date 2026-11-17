@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Clock, Coffee, LogIn, LogOut, UserX, Play, RefreshCw, Download, Loader2 } from 'lucide-react';
+import { Users, Clock, Coffee, LogIn, LogOut, UserX, CalendarX, Play, RefreshCw, Download, Loader2 } from 'lucide-react';
 import dayjs from 'dayjs';
 import writeXlsxFile from 'write-excel-file/browser';
 import toast from 'react-hot-toast';
@@ -54,6 +54,12 @@ const StatusBadge = ({ status }) => {
     return (
       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />On Break
+      </span>
+    );
+  if (status === 'absent')
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />Absent
       </span>
     );
   return (
@@ -141,6 +147,7 @@ const AttendanceManagement = () => {
         workTime: toShort(r.totalWorkSeconds),
         breakTime: toShort(r.totalBreakSeconds),
         breaks: r.sessions?.filter((s) => s.type === 'break').length ?? 0,
+        absentReason: r.currentStatus === 'absent' ? r.absentReason || '' : '',
       }));
 
       const schema = [
@@ -154,6 +161,7 @@ const AttendanceManagement = () => {
         { column: 'Work Time', type: String, width: 14, value: (r) => r.workTime },
         { column: 'Break Time', type: String, width: 14, value: (r) => r.breakTime },
         { column: 'Breaks', type: Number, width: 10, value: (r) => r.breaks },
+        { column: 'Absent Reason', type: String, width: 30, value: (r) => r.absentReason },
       ];
 
       const tag = filterMode === 'month' ? month.format('YYYY-MM') : date;
@@ -184,6 +192,7 @@ const AttendanceManagement = () => {
     { title: 'Working',        value: summary?.working        ?? 0, icon: Play,   bgColor: 'from-green-500 to-emerald-600', shadow: 'shadow-green-500/20' },
     { title: 'On Break',       value: summary?.on_break       ?? 0, icon: Coffee, bgColor: 'from-amber-500 to-orange-500',  shadow: 'shadow-amber-500/20' },
     { title: 'Checked Out',    value: summary?.checked_out    ?? 0, icon: LogOut, bgColor: 'from-slate-500 to-gray-600',    shadow: 'shadow-gray-500/20'  },
+    { title: 'Absent',         value: summary?.absent         ?? 0, icon: CalendarX, bgColor: 'from-fuchsia-500 to-pink-600', shadow: 'shadow-pink-500/20' },
     { title: 'Not Checked In', value: summary?.not_checked_in ?? 0, icon: UserX,  bgColor: 'from-red-500 to-rose-600',      shadow: 'shadow-red-500/20'   },
   ];
 
@@ -282,7 +291,7 @@ const AttendanceManagement = () => {
         </div>
 
         {/* â”€â”€ summary cards â”€â”€ */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {summaryCards.map((card, i) => (
             <motion.div
               key={card.title}
@@ -375,7 +384,14 @@ const AttendanceManagement = () => {
                           </span>
                         </td>
 
-                        <td className={tdClass}><StatusBadge status={r.currentStatus} /></td>
+                        <td className={tdClass}>
+                          <StatusBadge status={r.currentStatus} />
+                          {r.currentStatus === 'absent' && r.absentReason && (
+                            <p className={`text-xs mt-1 max-w-[180px] truncate ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} title={r.absentReason}>
+                              {r.absentReason}
+                            </p>
+                          )}
+                        </td>
 
                         <td className={`${tdClass} font-mono text-xs tabular-nums`}>{fmtTime(r.checkInTime)}</td>
                         <td className={`${tdClass} font-mono text-xs tabular-nums ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>{fmtTime(r.checkOutTime)}</td>

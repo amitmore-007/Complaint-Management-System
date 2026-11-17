@@ -7,6 +7,11 @@ export const attendanceService = {
     return data.attendance;
   },
 
+  markAbsent: async (reason) => {
+    const { data } = await api.post(endpoints.attendance.absent, { reason });
+    return data.attendance;
+  },
+
   startBreak: async () => {
     const { data } = await api.post(endpoints.attendance.breakStart);
     return data.attendance;

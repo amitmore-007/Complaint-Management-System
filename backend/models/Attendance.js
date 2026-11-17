@@ -23,9 +23,11 @@ const attendanceSchema = new mongoose.Schema(
 
     currentStatus: {
       type: String,
-      enum: ['working', 'on_break', 'checked_out'],
+      enum: ['working', 'on_break', 'checked_out', 'absent'],
       default: 'working',
     },
+    absentReason: { type: String, trim: true, maxlength: 200, default: null },
+    markedAbsentAt: { type: Date, default: null },
     currentSessionStart: { type: Date, default: null },
 
     sessions: [sessionSchema],

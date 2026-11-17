@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   checkIn,
+  markAbsent,
   startBreak,
   endBreak,
   checkOut,
@@ -18,6 +19,7 @@ const router = express.Router();
 
 // any authenticated user
 router.post('/check-in', authenticateAny, checkIn);
+router.post('/absent', authenticateAny, markAbsent);
 router.post('/break/start', authenticateAny, startBreak);
 router.post('/break/end', authenticateAny, endBreak);
 router.post('/check-out', authenticateAny, checkOut);
